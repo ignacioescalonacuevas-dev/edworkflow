@@ -200,12 +200,10 @@ export function PatientDetail({ patient }: PatientDetailProps) {
       </div>
 
       {/* Timer */}
-      <div className="rounded-xl gradient-card border border-border p-4">
-        <TimerDisplay
-          startTime={patient.arrivalTime}
-          onEdit={patient.status !== 'discharged' && patient.status !== 'transferred' ? (time) => updateArrivalTime(patient.id, time) : undefined}
-        />
-      </div>
+      <TimerDisplay
+        startTime={patient.arrivalTime}
+        onEdit={patient.status !== 'discharged' && patient.status !== 'transferred' ? (time) => updateArrivalTime(patient.id, time) : undefined}
+      />
 
       {/* Admission Form */}
       <AdmissionForm

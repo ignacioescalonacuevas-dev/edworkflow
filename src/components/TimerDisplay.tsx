@@ -8,10 +8,9 @@ interface TimerDisplayProps {
   startTime: Date | string;
   onEdit?: (newTime: Date) => void;
   label?: string;
-  size?: 'sm' | 'lg';
 }
 
-export function TimerDisplay({ startTime, onEdit, label = 'Time in ED', size = 'lg' }: TimerDisplayProps) {
+export function TimerDisplay({ startTime, onEdit, label = 'Time in ED' }: TimerDisplayProps) {
   const [elapsed, setElapsed] = useState('00:00:00');
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
@@ -49,45 +48,48 @@ export function TimerDisplay({ startTime, onEdit, label = 'Time in ED', size = '
   };
 
   return (
-    <div className={`flex flex-col items-center gap-2 ${size === 'lg' ? 'p-6' : 'p-3'}`}>
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Clock className={size === 'lg' ? 'h-5 w-5' : 'h-4 w-4'} />
-        <span className={size === 'lg' ? 'text-sm' : 'text-xs'}>{label}</span>
-      </div>
-      
-      <div className={`font-mono font-bold text-primary ${size === 'lg' ? 'text-5xl' : 'text-2xl'}`}>
-        {elapsed}
+    <div className="flex items-center justify-between py-3 px-4 rounded-lg bg-muted/30 border border-border">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Clock className="h-4 w-4" />
+          <span className="text-sm">{label}:</span>
+        </div>
+        <div className="font-mono font-bold text-primary text-xl">
+          {elapsed}
+        </div>
       </div>
 
-      {onEdit && (
-        <Popover open={isEditing} onOpenChange={setIsEditing}>
-          <PopoverTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <Edit2 className="h-3 w-3" />
-              <span className="text-xs">Arrival: {formatTime(startTime)}</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-4 bg-card border-border">
-            <div className="flex flex-col gap-3">
-              <span className="text-sm font-medium">Edit arrival time</span>
-              <Input
-                type="time"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                className="bg-input border-border"
-              />
-              <div className="flex gap-2">
-                <Button size="sm" onClick={handleEdit}>Save</Button>
-                <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>Cancel</Button>
+      <div className="flex items-center gap-2 text-muted-foreground text-sm">
+        <span>Arrival: {formatTime(startTime)}</span>
+        {onEdit && (
+          <Popover open={isEditing} onOpenChange={setIsEditing}>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              >
+                <Edit2 className="h-3 w-3" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-4 bg-card border-border">
+              <div className="flex flex-col gap-3">
+                <span className="text-sm font-medium">Edit arrival time</span>
+                <Input
+                  type="time"
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  className="bg-input border-border"
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleEdit}>Save</Button>
+                  <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>Cancel</Button>
+                </div>
               </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-      )}
+            </PopoverContent>
+          </Popover>
+        )}
+      </div>
     </div>
   );
 }
