@@ -61,6 +61,7 @@ export function LogGenerator({ patient }: LogGeneratorProps) {
       lines.push('');
       lines.push('--- ADMISSION ---');
       lines.push(`Specialty: ${patient.admission.specialty}`);
+      lines.push(`Consultant: ${patient.admission.consultantName || 'Not specified'}`);
       lines.push(`Registrar contacted: ${patient.admission.registrarCalled ? 'Yes' : 'No'}`);
       lines.push('Safety Checklist:');
       lines.push(`  • Administrative admission: ${patient.admission.adminComplete ? '✓' : '✗'}`);

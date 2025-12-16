@@ -37,6 +37,7 @@ export interface Order {
 
 export interface AdmissionData {
   specialty: string;
+  consultantName: string;
   registrarCalled: boolean;
   adminComplete: boolean;
   idBraceletVerified: boolean;
