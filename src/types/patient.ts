@@ -38,7 +38,7 @@ export interface Patient {
 export interface PatientEvent {
   id: string;
   timestamp: Date;
-  type: 'arrival' | 'order' | 'order_done' | 'order_reported' | 'admission_started' | 'admission_completed' | 'discharged' | 'note';
+  type: 'arrival' | 'order' | 'order_done' | 'order_reported' | 'admission_started' | 'admission_completed' | 'discharged' | 'note' | 'location_change' | 'doctor_assigned';
   description: string;
 }
 
