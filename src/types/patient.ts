@@ -41,7 +41,7 @@ export const BED_STATUSES: BedStatusConfig[] = [
 
 export interface Order {
   id: string;
-  type: 'lab' | 'xray' | 'scanner' | 'medication';
+  type: 'lab' | 'xray' | 'scanner' | 'medication' | 'ecg' | 'echo';
   description: string;
   status: OrderStatus;
   orderedAt: Date;
