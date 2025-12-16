@@ -61,8 +61,9 @@ interface PatientStore {
   updateAdmission: (patientId: string, data: Partial<AdmissionData>) => void;
   completeAdmission: (patientId: string) => void;
   
-  // Discharge
+  // Discharge & Transfer
   dischargePatient: (patientId: string) => void;
+  transferPatient: (patientId: string, hospitalName: string) => void;
   
   // Events
   addEvent: (patientId: string, event: Omit<PatientEvent, 'id'>) => void;
@@ -488,6 +489,30 @@ export const usePatientStore = create<PatientStore>()(
                       timestamp: new Date(),
                       type: 'discharged',
                       description: 'Patient discharged',
+                    },
+                  ],
+                }
+              : p
+          ),
+        }));
+      },
+
+      transferPatient: (patientId, hospitalName) => {
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? {
+                  ...p,
+                  status: 'transferred',
+                  dischargedAt: new Date(),
+                  transferredTo: hospitalName,
+                  events: [
+                    ...p.events,
+                    {
+                      id: generateId(),
+                      timestamp: new Date(),
+                      type: 'discharged',
+                      description: `Patient transferred to ${hospitalName}`,
                     },
                   ],
                 }

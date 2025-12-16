@@ -1,6 +1,6 @@
 import { Patient, PATIENT_STATUSES } from '@/types/patient';
 import { cn } from '@/lib/utils';
-import { Clock, AlertTriangle, User, MapPin } from 'lucide-react';
+import { Clock, AlertTriangle, User, MapPin, Bed, Building2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface PatientCardProps {
@@ -45,7 +45,36 @@ export function PatientCard({ patient, isSelected, onClick }: PatientCardProps) 
   };
 
   const pendingOrdersCount = patient.orders.filter((o) => o.status !== 'reported').length;
-  const statusConfig = PATIENT_STATUSES.find(s => s.value === patient.status);
+  
+  // Determine badge and location for history view
+  const isAdmitted = patient.status === 'discharged' && patient.admission?.completedAt;
+  const isTransferred = patient.status === 'transferred';
+  
+  // Get badge config based on outcome
+  const getBadgeConfig = () => {
+    if (isAdmitted) {
+      return { label: 'Admitted', color: 'bg-green-500/20 text-green-400 border-green-500/30' };
+    }
+    if (isTransferred) {
+      return { label: 'Transferred', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' };
+    }
+    return PATIENT_STATUSES.find(s => s.value === patient.status);
+  };
+  
+  const badgeConfig = getBadgeConfig();
+  
+  // Determine location to display
+  const getDisplayLocation = () => {
+    if (isAdmitted && patient.admission?.bedNumber) {
+      return { icon: Bed, location: patient.admission.bedNumber };
+    }
+    if (isTransferred && patient.transferredTo) {
+      return { icon: Building2, location: patient.transferredTo };
+    }
+    return { icon: MapPin, location: patient.box };
+  };
+  
+  const { icon: LocationIcon, location: displayLocation } = getDisplayLocation();
 
   return (
     <button
@@ -64,20 +93,20 @@ export function PatientCard({ patient, isSelected, onClick }: PatientCardProps) 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-foreground truncate">{patient.name}</h3>
-            {statusConfig && (
+            {badgeConfig && (
               <span className={cn(
                 "px-2 py-0.5 text-xs rounded-full border",
-                statusConfig.color
+                badgeConfig.color
               )}>
-                {statusConfig.label}
+                {badgeConfig.label}
               </span>
             )}
           </div>
           
           <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">
-              <MapPin className="h-3 w-3" />
-              {patient.box}
+              <LocationIcon className="h-3 w-3" />
+              {displayLocation}
             </span>
             <span className="flex items-center gap-1">
               <User className="h-3 w-3" />

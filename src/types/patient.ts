@@ -74,6 +74,7 @@ export interface Patient {
   orders: Order[];
   admission?: AdmissionData;
   dischargedAt?: Date;
+  transferredTo?: string;
   events: PatientEvent[];
 }
 
