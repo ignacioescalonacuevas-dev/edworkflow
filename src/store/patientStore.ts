@@ -2,17 +2,31 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { Patient, Order, OrderStatus, AdmissionData, PatientEvent } from '@/types/patient';
 
+const DEFAULT_DOCTORS = [
+  'Dr. Smith',
+  'Dr. Johnson',
+  'Dr. Williams',
+  'Dr. Brown',
+  'Dr. Davis',
+];
+
 interface PatientStore {
   patients: Patient[];
   selectedPatientId: string | null;
   filterDoctor: string | null;
   viewMode: 'active' | 'history';
+  doctors: string[];
   
   // Actions
   addPatient: (patient: Omit<Patient, 'id' | 'events' | 'orders'>) => void;
   selectPatient: (id: string | null) => void;
   setFilterDoctor: (doctor: string | null) => void;
   setViewMode: (mode: 'active' | 'history') => void;
+  
+  // Doctor management
+  addDoctor: (name: string) => void;
+  updateDoctor: (oldName: string, newName: string) => void;
+  removeDoctor: (name: string) => void;
   
   // Patient updates
   updateArrivalTime: (patientId: string, time: Date) => void;
@@ -147,6 +161,7 @@ export const usePatientStore = create<PatientStore>()(
       selectedPatientId: null,
       filterDoctor: null,
       viewMode: 'active',
+      doctors: DEFAULT_DOCTORS,
 
       addPatient: (patientData) => {
         const newPatient: Patient = {
@@ -168,6 +183,29 @@ export const usePatientStore = create<PatientStore>()(
       selectPatient: (id) => set({ selectedPatientId: id }),
       setFilterDoctor: (doctor) => set({ filterDoctor: doctor }),
       setViewMode: (mode) => set({ viewMode: mode }),
+
+      addDoctor: (name) => {
+        set((state) => ({
+          doctors: [...state.doctors, name],
+        }));
+      },
+
+      updateDoctor: (oldName, newName) => {
+        set((state) => ({
+          doctors: state.doctors.map((d) => (d === oldName ? newName : d)),
+          patients: state.patients.map((p) =>
+            p.doctor === oldName ? { ...p, doctor: newName } : p
+          ),
+          filterDoctor: state.filterDoctor === oldName ? newName : state.filterDoctor,
+        }));
+      },
+
+      removeDoctor: (name) => {
+        set((state) => ({
+          doctors: state.doctors.filter((d) => d !== name),
+          filterDoctor: state.filterDoctor === name ? null : state.filterDoctor,
+        }));
+      },
 
       updateArrivalTime: (patientId, time) => {
         set((state) => ({
