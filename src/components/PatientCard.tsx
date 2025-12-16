@@ -1,4 +1,4 @@
-import { Patient } from '@/types/patient';
+import { Patient, PATIENT_STATUSES } from '@/types/patient';
 import { cn } from '@/lib/utils';
 import { Clock, AlertTriangle, User, MapPin } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -45,6 +45,7 @@ export function PatientCard({ patient, isSelected, onClick }: PatientCardProps) 
   };
 
   const pendingOrdersCount = patient.orders.filter((o) => o.status !== 'reported').length;
+  const statusConfig = PATIENT_STATUSES.find(s => s.value === patient.status);
 
   return (
     <button
@@ -63,9 +64,12 @@ export function PatientCard({ patient, isSelected, onClick }: PatientCardProps) 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="font-semibold text-foreground truncate">{patient.name}</h3>
-            {patient.status === 'admission' && (
-              <span className="px-2 py-0.5 text-xs rounded-full status-admission">
-                Admission
+            {statusConfig && (
+              <span className={cn(
+                "px-2 py-0.5 text-xs rounded-full border",
+                statusConfig.color
+              )}>
+                {statusConfig.label}
               </span>
             )}
           </div>

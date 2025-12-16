@@ -22,7 +22,7 @@ export function NewPatientForm() {
         box,
         doctor: doctor || '',
         arrivalTime: new Date(),
-        status: 'active',
+        status: 'registration',
       });
       setName('');
       setBox('');

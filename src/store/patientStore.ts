@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Patient, Order, OrderStatus, AdmissionData, PatientEvent } from '@/types/patient';
+import { Patient, Order, OrderStatus, AdmissionData, PatientEvent, PatientStatus, PATIENT_STATUSES } from '@/types/patient';
 
 const DEFAULT_DOCTORS = [
   'Dr. Smith',
@@ -50,6 +50,7 @@ interface PatientStore {
   // Patient updates
   updatePatientLocation: (patientId: string, location: string) => void;
   updatePatientDoctor: (patientId: string, doctor: string) => void;
+  updatePatientStatus: (patientId: string, status: PatientStatus) => void;
   updateArrivalTime: (patientId: string, time: Date) => void;
   addOrder: (patientId: string, order: Omit<Order, 'id' | 'orderedAt'>) => void;
   updateOrderStatus: (patientId: string, orderId: string, status: OrderStatus, timestamp?: Date) => void;
@@ -77,7 +78,7 @@ const samplePatients: Patient[] = [
     box: 'Box 3',
     doctor: 'Dr. Smith',
     arrivalTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    status: 'active',
+    status: 'evaluation',
     orders: [
       {
         id: 'o1',
@@ -162,7 +163,7 @@ const samplePatients: Patient[] = [
     box: 'Box 2',
     doctor: 'Dr. Williams',
     arrivalTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
-    status: 'active',
+    status: 'triage',
     orders: [],
     events: [
       {
@@ -286,6 +287,29 @@ export const usePatientStore = create<PatientStore>()(
                       timestamp: new Date(),
                       type: 'doctor_assigned',
                       description: doctor ? `Physician assigned: ${doctor}` : 'Physician unassigned',
+                    },
+                  ],
+                }
+              : p
+          ),
+        }));
+      },
+
+      updatePatientStatus: (patientId, status) => {
+        const statusLabel = PATIENT_STATUSES.find(s => s.value === status)?.label || status;
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? {
+                  ...p,
+                  status,
+                  events: [
+                    ...p.events,
+                    {
+                      id: generateId(),
+                      timestamp: new Date(),
+                      type: 'status_change',
+                      description: `Status changed to: ${statusLabel}`,
                     },
                   ],
                 }

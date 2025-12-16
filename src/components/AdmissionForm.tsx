@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { AdmissionData, SPECIALTIES } from '@/types/patient';
+import { AdmissionData, SPECIALTIES, PatientStatus } from '@/types/patient';
 import { cn } from '@/lib/utils';
 
 interface AdmissionFormProps {
@@ -14,7 +14,7 @@ interface AdmissionFormProps {
   onStartAdmission: () => void;
   onUpdateAdmission: (data: Partial<AdmissionData>) => void;
   onCompleteAdmission: () => void;
-  patientStatus: 'active' | 'admission' | 'discharged';
+  patientStatus: PatientStatus;
 }
 
 export function AdmissionForm({
@@ -61,11 +61,13 @@ export function AdmissionForm({
     },
   ];
 
-  if (patientStatus === 'discharged') {
+  // Hide admission form for discharged/transferred patients
+  if (patientStatus === 'discharged' || patientStatus === 'transferred') {
     return null;
   }
 
-  if (patientStatus === 'active' && !admission) {
+  // Show "Start Admission" button if no admission started yet
+  if (!admission) {
     return (
       <Button
         onClick={onStartAdmission}
