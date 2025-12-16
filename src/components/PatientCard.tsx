@@ -63,7 +63,7 @@ export function PatientCard({ patient, isSelected, onClick }: PatientCardProps) 
             <h3 className="font-semibold text-foreground truncate">{patient.name}</h3>
             {patient.status === 'admission' && (
               <span className="px-2 py-0.5 text-xs rounded-full status-admission">
-                Admisión
+                Admission
               </span>
             )}
           </div>
@@ -88,14 +88,14 @@ export function PatientCard({ patient, isSelected, onClick }: PatientCardProps) 
           
           {pendingOrdersCount > 0 && (
             <span className="px-2 py-0.5 text-xs rounded-full status-pending">
-              {pendingOrdersCount} pendiente{pendingOrdersCount > 1 ? 's' : ''}
+              {pendingOrdersCount} pending
             </span>
           )}
           
           {hasUrgentOrder && (
             <span className="flex items-center gap-1 text-xs text-status-urgent">
               <AlertTriangle className="h-3 w-3" />
-              Reporte pendiente
+              Report pending
             </span>
           )}
         </div>

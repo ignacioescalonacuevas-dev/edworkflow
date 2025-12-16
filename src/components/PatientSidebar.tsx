@@ -47,17 +47,17 @@ export function PatientSidebar() {
       <div className="p-4 space-y-3 border-b border-border">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Filter className="h-4 w-4" />
-          <span>Filtrar por médico</span>
+          <span>Filter by physician</span>
         </div>
         <Select
           value={filterDoctor || 'all'}
           onValueChange={(value) => setFilterDoctor(value === 'all' ? null : value)}
         >
           <SelectTrigger className="bg-input border-border">
-            <SelectValue placeholder="Todos los médicos" />
+            <SelectValue placeholder="All physicians" />
           </SelectTrigger>
           <SelectContent className="bg-popover border-border">
-            <SelectItem value="all">Todos los médicos</SelectItem>
+            <SelectItem value="all">All physicians</SelectItem>
             {DOCTORS.map((doctor) => (
               <SelectItem key={doctor} value={doctor}>
                 {doctor}
@@ -73,11 +73,11 @@ export function PatientSidebar() {
           <TabsList className="w-full bg-secondary">
             <TabsTrigger value="active" className="flex-1 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Users className="h-4 w-4" />
-              Activos ({activeCount})
+              Active ({activeCount})
             </TabsTrigger>
             <TabsTrigger value="history" className="flex-1 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <History className="h-4 w-4" />
-              Historial ({historyCount})
+              History ({historyCount})
             </TabsTrigger>
           </TabsList>
         </Tabs>
@@ -88,7 +88,7 @@ export function PatientSidebar() {
         <div className="p-4 space-y-2">
           {filteredPatients.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">
-              No hay pacientes {viewMode === 'active' ? 'activos' : 'en historial'}
+              No {viewMode === 'active' ? 'active' : 'discharged'} patients
             </p>
           ) : (
             filteredPatients.map((patient) => (

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Building2, Phone, ClipboardCheck, IdCard, Bug, AlertTriangle, FileText, Check, X } from 'lucide-react';
+import { useState } from 'react';
+import { Building2, Phone, ClipboardCheck, IdCard, Bug, AlertTriangle, FileText, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -37,26 +37,26 @@ export function AdmissionForm({
   const checklistItems = [
     {
       key: 'adminComplete' as const,
-      label: 'Admisión Administrativa',
-      description: 'Papeles y documentación listos',
+      label: 'Administrative Admission',
+      description: 'Paperwork and documentation ready',
       icon: ClipboardCheck,
     },
     {
       key: 'idBraceletVerified' as const,
-      label: 'Brazalete de Identificación',
-      description: 'Verificado y colocado',
+      label: 'ID Bracelet',
+      description: 'Verified and placed',
       icon: IdCard,
     },
     {
       key: 'mrsaSwabs' as const,
       label: 'MRSA Swabs',
-      description: 'Tomados y verificados',
+      description: 'Taken and verified',
       icon: Bug,
     },
     {
       key: 'fallsAssessment' as const,
       label: 'ED Falls Assessment',
-      description: 'Evaluación de riesgo de caídas completada',
+      description: 'Fall risk evaluation completed',
       icon: AlertTriangle,
     },
   ];
@@ -72,7 +72,7 @@ export function AdmissionForm({
         className="w-full h-14 text-lg gap-2 bg-status-admission hover:bg-status-admission/90"
       >
         <Building2 className="h-5 w-5" />
-        Cursar Ingreso / Admission
+        Start Admission
       </Button>
     );
   }
@@ -89,10 +89,10 @@ export function AdmissionForm({
           )}
         >
           <Building2 className="h-5 w-5" />
-          {admission?.completedAt ? 'Admisión Completada' : 'Continuar Admisión'}
+          {admission?.completedAt ? 'Admission Completed' : 'Continue Admission'}
           {!admission?.completedAt && (
             <span className="ml-2 px-2 py-0.5 text-xs bg-foreground/20 rounded-full">
-              En proceso
+              In progress
             </span>
           )}
         </Button>
@@ -101,7 +101,7 @@ export function AdmissionForm({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Building2 className="h-6 w-6 text-status-admission" />
-            Proceso de Admisión
+            Admission Process
           </DialogTitle>
         </DialogHeader>
 
@@ -110,18 +110,18 @@ export function AdmissionForm({
           <section className="space-y-4">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs">A</span>
-              Coordinación Médica
+              Medical Coordination
             </h3>
             <div className="space-y-4 pl-8">
               <div className="space-y-2">
-                <Label>Especialidad de Destino</Label>
+                <Label>Destination Specialty</Label>
                 <Select
                   value={admission?.specialty || ''}
                   onValueChange={(value) => onUpdateAdmission({ specialty: value })}
                   disabled={!!admission?.completedAt}
                 >
                   <SelectTrigger className="bg-input border-border">
-                    <SelectValue placeholder="Seleccionar especialidad..." />
+                    <SelectValue placeholder="Select specialty..." />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
                     {SPECIALTIES.map((specialty) => (
@@ -137,8 +137,8 @@ export function AdmissionForm({
                 <div className="flex items-center gap-3">
                   <Phone className="h-5 w-5 text-muted-foreground" />
                   <div>
-                    <p className="font-medium">Llamada al Registrar realizada</p>
-                    <p className="text-sm text-muted-foreground">Contacto con especialidad confirmado</p>
+                    <p className="font-medium">Registrar Call Made</p>
+                    <p className="text-sm text-muted-foreground">Contact with specialty confirmed</p>
                   </div>
                 </div>
                 <Switch
@@ -154,7 +154,7 @@ export function AdmissionForm({
           <section className="space-y-4">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs">B</span>
-              Checklist de Seguridad y Administrativo
+              Safety & Administrative Checklist
             </h3>
             <div className="space-y-2 pl-8">
               {checklistItems.map((item) => {
@@ -190,16 +190,16 @@ export function AdmissionForm({
           <section className="space-y-4">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs">C</span>
-              Plan de Enfermería (Handover)
+              Nursing Handover Plan
             </h3>
             <div className="pl-8">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  Instrucciones de Traspaso
+                  Handover Instructions
                 </Label>
                 <Textarea
-                  placeholder="Ej: Antibióticos pendientes, ayuno, monitoreo especial, alergias..."
+                  placeholder="E.g.: Pending antibiotics, fasting, special monitoring, allergies..."
                   value={admission?.handoverNotes || ''}
                   onChange={(e) => onUpdateAdmission({ handoverNotes: e.target.value })}
                   disabled={!!admission?.completedAt}
@@ -221,21 +221,21 @@ export function AdmissionForm({
                 className="flex-1 h-12 gap-2 bg-status-complete hover:bg-status-complete/90"
               >
                 <Check className="h-5 w-5" />
-                Completar Admisión
+                Complete Admission
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setIsOpen(false)}
                 className="h-12"
               >
-                Guardar y Cerrar
+                Save & Close
               </Button>
             </div>
           )}
 
           {!isReadyToComplete && !admission?.completedAt && (
             <p className="text-sm text-status-pending text-center">
-              Complete todos los campos obligatorios para finalizar la admisión
+              Complete all required fields to finalize admission
             </p>
           )}
         </div>

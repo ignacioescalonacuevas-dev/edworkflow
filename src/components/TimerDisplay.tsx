@@ -11,7 +11,7 @@ interface TimerDisplayProps {
   size?: 'sm' | 'lg';
 }
 
-export function TimerDisplay({ startTime, onEdit, label = 'Tiempo en urgencias', size = 'lg' }: TimerDisplayProps) {
+export function TimerDisplay({ startTime, onEdit, label = 'Time in ED', size = 'lg' }: TimerDisplayProps) {
   const [elapsed, setElapsed] = useState('00:00:00');
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
@@ -44,7 +44,7 @@ export function TimerDisplay({ startTime, onEdit, label = 'Tiempo en urgencias',
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
   return (
@@ -67,12 +67,12 @@ export function TimerDisplay({ startTime, onEdit, label = 'Tiempo en urgencias',
               className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
             >
               <Edit2 className="h-3 w-3" />
-              <span className="text-xs">Ingreso: {formatTime(startTime)}</span>
+              <span className="text-xs">Arrival: {formatTime(startTime)}</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-4 bg-card border-border">
             <div className="flex flex-col gap-3">
-              <span className="text-sm font-medium">Editar hora de ingreso</span>
+              <span className="text-sm font-medium">Edit arrival time</span>
               <Input
                 type="time"
                 value={editValue}
@@ -80,8 +80,8 @@ export function TimerDisplay({ startTime, onEdit, label = 'Tiempo en urgencias',
                 className="bg-input border-border"
               />
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleEdit}>Guardar</Button>
-                <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>Cancelar</Button>
+                <Button size="sm" onClick={handleEdit}>Save</Button>
+                <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>Cancel</Button>
               </div>
             </div>
           </PopoverContent>

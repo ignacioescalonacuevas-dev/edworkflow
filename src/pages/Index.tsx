@@ -21,9 +21,9 @@ const Index = () => {
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
             <Activity className="h-16 w-16 mb-4 opacity-50" />
-            <h2 className="text-xl font-medium">Seleccione un paciente</h2>
+            <h2 className="text-xl font-medium">Select a Patient</h2>
             <p className="text-sm mt-2">
-              Elija un paciente de la lista para ver sus detalles
+              Choose a patient from the list to view their details
             </p>
           </div>
         )}

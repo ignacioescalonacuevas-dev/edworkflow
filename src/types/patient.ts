@@ -52,9 +52,9 @@ export const SPECIALTIES = [
 ] as const;
 
 export const DOCTORS = [
-  'Dr. García',
-  'Dr. Martínez',
-  'Dr. López',
-  'Dr. Rodríguez',
-  'Dr. Fernández',
+  'Dr. Smith',
+  'Dr. Johnson',
+  'Dr. Williams',
+  'Dr. Brown',
+  'Dr. Davis',
 ] as const;

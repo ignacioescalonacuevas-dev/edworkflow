@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { Edit2, Check, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -66,7 +65,7 @@ export function EditableTimestamp({ timestamp, onEdit, label, className }: Edita
       )}
     >
       {label && <span>{label}:</span>}
-      <span className="font-mono">{format(timestamp, 'HH:mm', { locale: es })}</span>
+      <span className="font-mono">{format(timestamp, 'HH:mm')}</span>
       <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
     </button>
   );

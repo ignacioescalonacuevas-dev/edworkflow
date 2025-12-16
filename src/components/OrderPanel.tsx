@@ -15,10 +15,10 @@ interface OrderPanelProps {
 }
 
 const orderTypeConfig = {
-  lab: { icon: TestTube, label: 'Laboratorio', color: 'text-status-info' },
-  xray: { icon: Radio, label: 'Rayos X', color: 'text-status-pending' },
-  scanner: { icon: Scan, label: 'Scanner/TAC', color: 'text-status-admission' },
-  medication: { icon: Pill, label: 'Medicamento', color: 'text-status-complete' },
+  lab: { icon: TestTube, label: 'Laboratory', color: 'text-status-info' },
+  xray: { icon: Radio, label: 'X-Ray', color: 'text-status-pending' },
+  scanner: { icon: Scan, label: 'CT Scan', color: 'text-status-admission' },
+  medication: { icon: Pill, label: 'Medication', color: 'text-status-complete' },
 };
 
 export function OrderPanel({ orders, onAddOrder, onUpdateStatus, onUpdateTimestamp }: OrderPanelProps) {
@@ -36,11 +36,11 @@ export function OrderPanel({ orders, onAddOrder, onUpdateStatus, onUpdateTimesta
   const getStatusBadge = (status: OrderStatus) => {
     switch (status) {
       case 'ordered':
-        return <span className="px-2 py-0.5 text-xs rounded-full status-info">Ordenado</span>;
+        return <span className="px-2 py-0.5 text-xs rounded-full status-info">Ordered</span>;
       case 'done':
-        return <span className="px-2 py-0.5 text-xs rounded-full status-pending">Realizado</span>;
+        return <span className="px-2 py-0.5 text-xs rounded-full status-pending">Done</span>;
       case 'reported':
-        return <span className="px-2 py-0.5 text-xs rounded-full status-complete">Reportado</span>;
+        return <span className="px-2 py-0.5 text-xs rounded-full status-complete">Reported</span>;
     }
   };
 
@@ -55,7 +55,7 @@ export function OrderPanel({ orders, onAddOrder, onUpdateStatus, onUpdateTimesta
             onClick={() => onUpdateStatus(order.id, 'done')}
           >
             <Check className="h-3 w-3" />
-            Marcar Realizado
+            Mark Done
           </Button>
         );
       case 'done':
@@ -67,7 +67,7 @@ export function OrderPanel({ orders, onAddOrder, onUpdateStatus, onUpdateTimesta
             onClick={() => onUpdateStatus(order.id, 'reported')}
           >
             <FileCheck className="h-3 w-3" />
-            Marcar Reportado
+            Mark Reported
           </Button>
         );
       default:
@@ -78,7 +78,7 @@ export function OrderPanel({ orders, onAddOrder, onUpdateStatus, onUpdateTimesta
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Plan Médico</h3>
+        <h3 className="text-lg font-semibold">Medical Plan</h3>
       </div>
 
       {/* Quick Add Buttons */}
@@ -111,10 +111,10 @@ export function OrderPanel({ orders, onAddOrder, onUpdateStatus, onUpdateTimesta
                 <div className="space-y-3">
                   <h4 className="font-medium flex items-center gap-2">
                     <Icon className={cn('h-4 w-4', config.color)} />
-                    Nueva orden de {config.label}
+                    New {config.label} Order
                   </h4>
                   <Input
-                    placeholder="Descripción de la orden..."
+                    placeholder="Order description..."
                     value={newOrderDescription}
                     onChange={(e) => setNewOrderDescription(e.target.value)}
                     className="bg-input border-border"
@@ -123,10 +123,10 @@ export function OrderPanel({ orders, onAddOrder, onUpdateStatus, onUpdateTimesta
                   <div className="flex gap-2">
                     <Button onClick={handleAddOrder} disabled={!newOrderDescription.trim()}>
                       <Plus className="h-4 w-4 mr-1" />
-                      Agregar
+                      Add
                     </Button>
                     <Button variant="ghost" onClick={() => setNewOrderType(null)}>
-                      Cancelar
+                      Cancel
                     </Button>
                   </div>
                 </div>
@@ -140,7 +140,7 @@ export function OrderPanel({ orders, onAddOrder, onUpdateStatus, onUpdateTimesta
       <div className="space-y-2">
         {orders.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">
-            No hay órdenes registradas
+            No orders recorded
           </p>
         ) : (
           orders.map((order) => {
@@ -164,20 +164,20 @@ export function OrderPanel({ orders, onAddOrder, onUpdateStatus, onUpdateTimesta
                         <EditableTimestamp
                           timestamp={order.orderedAt}
                           onEdit={(time) => onUpdateTimestamp(order.id, 'orderedAt', time)}
-                          label="Orden"
+                          label="Ordered"
                         />
                         {order.doneAt && (
                           <EditableTimestamp
                             timestamp={order.doneAt}
                             onEdit={(time) => onUpdateTimestamp(order.id, 'doneAt', time)}
-                            label="Realizado"
+                            label="Done"
                           />
                         )}
                         {order.reportedAt && (
                           <EditableTimestamp
                             timestamp={order.reportedAt}
                             onEdit={(time) => onUpdateTimestamp(order.id, 'reportedAt', time)}
-                            label="Reporte"
+                            label="Reported"
                           />
                         )}
                       </div>
