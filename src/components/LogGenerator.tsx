@@ -3,7 +3,7 @@ import { Copy, Check, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Patient, PATIENT_STATUSES } from '@/types/patient';
+import { Patient, PATIENT_STATUSES, BED_STATUSES } from '@/types/patient';
 import { useState } from 'react';
 
 interface LogGeneratorProps {
@@ -62,6 +62,8 @@ export function LogGenerator({ patient }: LogGeneratorProps) {
       lines.push('--- ADMISSION ---');
       lines.push(`Specialty: ${patient.admission.specialty}`);
       lines.push(`Consultant: ${patient.admission.consultantName || 'Not specified'}`);
+      const bedStatusLabel = BED_STATUSES.find(s => s.value === patient.admission?.bedStatus)?.label || patient.admission.bedStatus;
+      lines.push(`Bed: ${patient.admission.bedNumber || 'Not assigned'} (${bedStatusLabel})`);
       lines.push(`Registrar contacted: ${patient.admission.registrarCalled ? 'Yes' : 'No'}`);
       lines.push('Safety Checklist:');
       lines.push(`  • Administrative admission: ${patient.admission.adminComplete ? '✓' : '✗'}`);
