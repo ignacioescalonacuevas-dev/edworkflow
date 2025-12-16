@@ -1,4 +1,4 @@
-import { Patient } from '@/types/patient';
+import { Patient, PATIENT_STATUSES, PatientStatus } from '@/types/patient';
 import { usePatientStore } from '@/store/patientStore';
 import { TimerDisplay } from './TimerDisplay';
 import { OrderPanel } from './OrderPanel';
@@ -6,7 +6,8 @@ import { AdmissionForm } from './AdmissionForm';
 import { LogGenerator } from './LogGenerator';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LogOut, MapPin, Stethoscope } from 'lucide-react';
+import { LogOut, MapPin, Stethoscope, Activity } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface PatientDetailProps {
   patient: Patient;
@@ -17,6 +18,7 @@ export function PatientDetail({ patient }: PatientDetailProps) {
     updateArrivalTime,
     updatePatientLocation,
     updatePatientDoctor,
+    updatePatientStatus,
     addOrder,
     updateOrderStatus,
     updateOrderTimestamp,
@@ -28,7 +30,8 @@ export function PatientDetail({ patient }: PatientDetailProps) {
     doctors,
   } = usePatientStore();
 
-  const isEditable = patient.status !== 'discharged';
+  const isEditable = patient.status !== 'discharged' && patient.status !== 'transferred';
+  const currentStatusConfig = PATIENT_STATUSES.find(s => s.value === patient.status);
 
   return (
     <div className="h-full overflow-y-auto p-6 space-y-6 animate-fade-in">
@@ -84,6 +87,34 @@ export function PatientDetail({ patient }: PatientDetailProps) {
                 {patient.doctor || 'Not assigned'}
               </span>
             )}
+
+            {/* Status Selector */}
+            {isEditable ? (
+              <Select 
+                value={patient.status} 
+                onValueChange={(value) => updatePatientStatus(patient.id, value as PatientStatus)}
+              >
+                <SelectTrigger className="w-[180px] bg-input border-border">
+                  <Activity className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  {PATIENT_STATUSES.filter(s => s.value !== 'discharged' && s.value !== 'transferred').map((status) => (
+                    <SelectItem key={status.value} value={status.value}>
+                      {status.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <span className={cn(
+                "flex items-center gap-1 px-3 py-1.5 rounded-md border",
+                currentStatusConfig?.color
+              )}>
+                <Activity className="h-4 w-4" />
+                {currentStatusConfig?.label}
+              </span>
+            )}
           </div>
         </div>
         <div className="flex gap-2">
@@ -129,10 +160,10 @@ export function PatientDetail({ patient }: PatientDetailProps) {
       </div>
 
       {/* Status Badge */}
-      {patient.status === 'discharged' && (
+      {(patient.status === 'discharged' || patient.status === 'transferred') && (
         <div className="p-4 rounded-xl bg-muted/50 border border-border text-center">
           <span className="text-lg font-medium text-muted-foreground">
-            Patient Discharged
+            Patient {patient.status === 'discharged' ? 'Discharged' : 'Transferred'}
           </span>
         </div>
       )}

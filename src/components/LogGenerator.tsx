@@ -3,7 +3,7 @@ import { Copy, Check, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Patient } from '@/types/patient';
+import { Patient, PATIENT_STATUSES } from '@/types/patient';
 import { useState } from 'react';
 
 interface LogGeneratorProps {
@@ -16,10 +16,13 @@ export function LogGenerator({ patient }: LogGeneratorProps) {
   const generateLog = () => {
     const lines: string[] = [];
     
+    const statusLabel = PATIENT_STATUSES.find(s => s.value === patient.status)?.label || patient.status;
+    
     lines.push(`=== PATIENT RECORD ===`);
     lines.push(`Patient: ${patient.name}`);
     lines.push(`Location: ${patient.box}`);
     lines.push(`Doctor: ${patient.doctor || 'Not assigned'}`);
+    lines.push(`Status: ${statusLabel}`);
     lines.push(`Date: ${format(new Date(), "MM/dd/yyyy")}`);
     lines.push('');
     lines.push('--- EVENT TIMELINE ---');
