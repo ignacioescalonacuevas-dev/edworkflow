@@ -36,11 +36,11 @@ export function PatientSidebar() {
   return (
     <div className="h-full flex flex-col gradient-sidebar border-r border-border">
       {/* Header */}
-      <div className="p-4 border-b border-border">
-        <div className="flex items-center justify-between mb-4">
+      <div className="px-3 py-2 border-b border-border">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Activity className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold text-foreground">ED Workflow</h1>
+            <Activity className="h-5 w-5 text-primary" />
+            <h1 className="text-lg font-bold text-foreground">ED Workflow</h1>
           </div>
           <ShiftSetup />
         </div>
@@ -48,16 +48,16 @@ export function PatientSidebar() {
       </div>
 
       {/* Filters */}
-      <div className="p-4 space-y-3 border-b border-border">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Filter className="h-4 w-4" />
+      <div className="px-3 py-2 space-y-2 border-b border-border">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Filter className="h-3 w-3" />
           <span>Filter by physician</span>
         </div>
         <Select
           value={filterDoctor || 'all'}
           onValueChange={(value) => setFilterDoctor(value === 'all' ? null : value)}
         >
-          <SelectTrigger className="bg-input border-border">
+          <SelectTrigger className="h-8 text-sm bg-input border-border">
             <SelectValue placeholder="All physicians" />
           </SelectTrigger>
           <SelectContent className="bg-popover border-border">
@@ -72,15 +72,15 @@ export function PatientSidebar() {
       </div>
 
       {/* Tabs */}
-      <div className="p-4 border-b border-border">
+      <div className="px-3 py-2 border-b border-border">
         <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as 'active' | 'history')}>
-          <TabsList className="w-full bg-secondary">
-            <TabsTrigger value="active" className="flex-1 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Users className="h-4 w-4" />
+          <TabsList className="w-full h-8 bg-secondary">
+            <TabsTrigger value="active" className="flex-1 gap-1.5 text-sm h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Users className="h-3.5 w-3.5" />
               Active ({activeCount})
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex-1 gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <History className="h-4 w-4" />
+            <TabsTrigger value="history" className="flex-1 gap-1.5 text-sm h-7 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <History className="h-3.5 w-3.5" />
               History ({historyCount})
             </TabsTrigger>
           </TabsList>
@@ -89,9 +89,9 @@ export function PatientSidebar() {
 
       {/* Patient List */}
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-2">
+        <div className="px-3 py-2 space-y-1.5">
           {filteredPatients.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">
+            <p className="text-sm text-muted-foreground text-center py-6">
               No {viewMode === 'active' ? 'active' : 'discharged'} patients
             </p>
           ) : (
