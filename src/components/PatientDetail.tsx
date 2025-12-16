@@ -58,7 +58,7 @@ export function PatientDetail({ patient }: PatientDetailProps) {
       {/* Timer */}
       <div className="rounded-xl gradient-card border border-border p-4">
         <TimerDisplay
-          startTime={new Date(patient.arrivalTime)}
+          startTime={patient.arrivalTime}
           onEdit={patient.status !== 'discharged' ? (time) => updateArrivalTime(patient.id, time) : undefined}
         />
       </div>

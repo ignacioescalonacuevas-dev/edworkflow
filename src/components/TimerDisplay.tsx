@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface TimerDisplayProps {
-  startTime: Date;
+  startTime: Date | string;
   onEdit?: (newTime: Date) => void;
   label?: string;
   size?: 'sm' | 'lg';
@@ -19,7 +19,8 @@ export function TimerDisplay({ startTime, onEdit, label = 'Time in ED', size = '
   useEffect(() => {
     const updateElapsed = () => {
       const now = new Date();
-      const diff = now.getTime() - startTime.getTime();
+      const start = new Date(startTime);
+      const diff = now.getTime() - start.getTime();
       const hours = Math.floor(diff / (1000 * 60 * 60));
       const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
       const seconds = Math.floor((diff % (1000 * 60)) / 1000);
@@ -36,15 +37,15 @@ export function TimerDisplay({ startTime, onEdit, label = 'Time in ED', size = '
   const handleEdit = () => {
     if (onEdit && editValue) {
       const [hours, minutes] = editValue.split(':').map(Number);
-      const newTime = new Date(startTime);
+      const newTime = new Date(new Date(startTime));
       newTime.setHours(hours, minutes, 0, 0);
       onEdit(newTime);
       setIsEditing(false);
     }
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const formatTime = (date: Date | string) => {
+    return new Date(date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
   return (

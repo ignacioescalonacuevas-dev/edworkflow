@@ -18,7 +18,8 @@ export function PatientCard({ patient, isSelected, onClick }: PatientCardProps) 
       const now = new Date();
       const urgent = patient.orders.some((order) => {
         if (order.status === 'done' && order.doneAt) {
-          const elapsed = now.getTime() - order.doneAt.getTime();
+          const doneTime = new Date(order.doneAt);
+          const elapsed = now.getTime() - doneTime.getTime();
           return elapsed > 60 * 60 * 1000; // 1 hour
         }
         return false;
@@ -33,7 +34,8 @@ export function PatientCard({ patient, isSelected, onClick }: PatientCardProps) 
 
   const getTimeSinceArrival = () => {
     const now = new Date();
-    const diff = now.getTime() - patient.arrivalTime.getTime();
+    const arrivalTime = new Date(patient.arrivalTime);
+    const diff = now.getTime() - arrivalTime.getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     if (hours > 0) {

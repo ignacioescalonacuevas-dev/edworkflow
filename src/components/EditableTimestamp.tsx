@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface EditableTimestampProps {
-  timestamp: Date;
+  timestamp: Date | string;
   onEdit: (newTime: Date) => void;
   label?: string;
   className?: string;
@@ -15,16 +15,19 @@ interface EditableTimestampProps {
 export function EditableTimestamp({ timestamp, onEdit, label, className }: EditableTimestampProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState('');
+  
+  // Ensure timestamp is a Date object
+  const dateTimestamp = new Date(timestamp);
 
   const handleStartEdit = () => {
-    setEditValue(format(timestamp, 'HH:mm'));
+    setEditValue(format(dateTimestamp, 'HH:mm'));
     setIsEditing(true);
   };
 
   const handleSave = () => {
     if (editValue) {
       const [hours, minutes] = editValue.split(':').map(Number);
-      const newTime = new Date(timestamp);
+      const newTime = new Date(dateTimestamp);
       newTime.setHours(hours, minutes, 0, 0);
       onEdit(newTime);
       setIsEditing(false);
@@ -65,7 +68,7 @@ export function EditableTimestamp({ timestamp, onEdit, label, className }: Edita
       )}
     >
       {label && <span>{label}:</span>}
-      <span className="font-mono">{format(timestamp, 'HH:mm')}</span>
+      <span className="font-mono">{format(dateTimestamp, 'HH:mm')}</span>
       <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
     </button>
   );

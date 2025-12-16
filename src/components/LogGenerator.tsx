@@ -26,7 +26,7 @@ export function LogGenerator({ patient }: LogGeneratorProps) {
     
     // Sort events by timestamp
     const sortedEvents = [...patient.events].sort(
-      (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
 
     sortedEvents.forEach((event) => {
