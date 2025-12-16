@@ -25,6 +25,20 @@ export const PATIENT_STATUSES: PatientStatusConfig[] = [
   { value: 'transferred', label: 'Transferred', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' },
 ];
 
+export type BedStatus = 'not_assigned' | 'assigned_not_ready' | 'ready_to_transfer';
+
+export interface BedStatusConfig {
+  value: BedStatus;
+  label: string;
+  color: string;
+}
+
+export const BED_STATUSES: BedStatusConfig[] = [
+  { value: 'not_assigned', label: 'Not Assigned Yet', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
+  { value: 'assigned_not_ready', label: 'Assigned - Not Ready', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+  { value: 'ready_to_transfer', label: 'Ready to Transfer', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
+];
+
 export interface Order {
   id: string;
   type: 'lab' | 'xray' | 'scanner' | 'medication';
@@ -38,6 +52,8 @@ export interface Order {
 export interface AdmissionData {
   specialty: string;
   consultantName: string;
+  bedNumber: string;
+  bedStatus: BedStatus;
   registrarCalled: boolean;
   adminComplete: boolean;
   idBraceletVerified: boolean;

@@ -135,6 +135,8 @@ const samplePatients: Patient[] = [
     admission: {
       specialty: 'Surgical Registrar',
       consultantName: 'Dr. O\'Brien',
+      bedNumber: 'Ward B-5',
+      bedStatus: 'assigned_not_ready',
       registrarCalled: true,
       adminComplete: true,
       idBraceletVerified: true,
@@ -411,6 +413,8 @@ export const usePatientStore = create<PatientStore>()(
                     admission: {
                       specialty: '',
                       consultantName: '',
+                      bedNumber: '',
+                      bedStatus: 'not_assigned',
                       registrarCalled: false,
                       adminComplete: false,
                       idBraceletVerified: false,

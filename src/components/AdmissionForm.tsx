@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Building2, Phone, ClipboardCheck, IdCard, Bug, AlertTriangle, FileText, Check, User } from 'lucide-react';
+import { Building2, Phone, ClipboardCheck, IdCard, Bug, AlertTriangle, FileText, Check, User, Bed } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AdmissionData, SPECIALTIES, PatientStatus } from '@/types/patient';
+import { AdmissionData, SPECIALTIES, PatientStatus, BED_STATUSES, BedStatus } from '@/types/patient';
 import { cn } from '@/lib/utils';
 
 interface AdmissionFormProps {
@@ -30,6 +30,8 @@ export function AdmissionForm({
   const isReadyToComplete = admission && 
     admission.specialty &&
     admission.consultantName &&
+    admission.bedNumber &&
+    admission.bedStatus === 'ready_to_transfer' &&
     admission.registrarCalled &&
     admission.adminComplete &&
     admission.idBraceletVerified &&
@@ -169,10 +171,56 @@ export function AdmissionForm({
             </div>
           </section>
 
-          {/* B. Safety Checklist */}
+          {/* B. Bed Assignment */}
           <section className="space-y-4">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs">B</span>
+              Bed Assignment
+            </h3>
+            <div className="space-y-4 pl-8">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Bed className="h-4 w-4" />
+                    Bed Number
+                  </Label>
+                  <Input
+                    placeholder="E.g.: Ward A-12, ICU-3"
+                    value={admission?.bedNumber || ''}
+                    onChange={(e) => onUpdateAdmission({ bedNumber: e.target.value })}
+                    disabled={!!admission?.completedAt}
+                    className="bg-input border-border"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Bed Status</Label>
+                  <Select
+                    value={admission?.bedStatus || 'not_assigned'}
+                    onValueChange={(value) => onUpdateAdmission({ bedStatus: value as BedStatus })}
+                    disabled={!!admission?.completedAt}
+                  >
+                    <SelectTrigger className="bg-input border-border">
+                      <SelectValue placeholder="Select status..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border">
+                      {BED_STATUSES.map((status) => (
+                        <SelectItem key={status.value} value={status.value}>
+                          <span className={cn('px-2 py-0.5 rounded text-xs', status.color)}>
+                            {status.label}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* C. Safety Checklist */}
+          <section className="space-y-4">
+            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+              <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs">C</span>
               Safety & Administrative Checklist
             </h3>
             <div className="space-y-2 pl-8">
@@ -208,7 +256,7 @@ export function AdmissionForm({
           {/* C. Nursing Handover */}
           <section className="space-y-4">
             <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs">C</span>
+              <span className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs">D</span>
               Nursing Handover Plan
             </h3>
             <div className="pl-8">
