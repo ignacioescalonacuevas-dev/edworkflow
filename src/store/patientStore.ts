@@ -10,12 +10,26 @@ const DEFAULT_DOCTORS = [
   'Dr. Davis',
 ];
 
+const DEFAULT_LOCATIONS = [
+  'Waiting Area',
+  'Treatment Area',
+  'Box 1',
+  'Box 2',
+  'Box 3',
+  'Box 4',
+  'Box 5',
+  'CT Room',
+  'MRI Room',
+  'Resus',
+];
+
 interface PatientStore {
   patients: Patient[];
   selectedPatientId: string | null;
   filterDoctor: string | null;
   viewMode: 'active' | 'history';
   doctors: string[];
+  locations: string[];
   
   // Actions
   addPatient: (patient: Omit<Patient, 'id' | 'events' | 'orders'>) => void;
@@ -27,6 +41,11 @@ interface PatientStore {
   addDoctor: (name: string) => void;
   updateDoctor: (oldName: string, newName: string) => void;
   removeDoctor: (name: string) => void;
+  
+  // Location management
+  addLocation: (name: string) => void;
+  updateLocation: (oldName: string, newName: string) => void;
+  removeLocation: (name: string) => void;
   
   // Patient updates
   updateArrivalTime: (patientId: string, time: Date) => void;
@@ -162,6 +181,7 @@ export const usePatientStore = create<PatientStore>()(
       filterDoctor: null,
       viewMode: 'active',
       doctors: DEFAULT_DOCTORS,
+      locations: DEFAULT_LOCATIONS,
 
       addPatient: (patientData) => {
         const newPatient: Patient = {
@@ -204,6 +224,27 @@ export const usePatientStore = create<PatientStore>()(
         set((state) => ({
           doctors: state.doctors.filter((d) => d !== name),
           filterDoctor: state.filterDoctor === name ? null : state.filterDoctor,
+        }));
+      },
+
+      addLocation: (name) => {
+        set((state) => ({
+          locations: [...state.locations, name],
+        }));
+      },
+
+      updateLocation: (oldName, newName) => {
+        set((state) => ({
+          locations: state.locations.map((l) => (l === oldName ? newName : l)),
+          patients: state.patients.map((p) =>
+            p.box === oldName ? { ...p, box: newName } : p
+          ),
+        }));
+      },
+
+      removeLocation: (name) => {
+        set((state) => ({
+          locations: state.locations.filter((l) => l !== name),
         }));
       },
 
