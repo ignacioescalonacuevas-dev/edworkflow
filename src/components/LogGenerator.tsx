@@ -84,11 +84,17 @@ export function LogGenerator({ patient }: LogGeneratorProps) {
       }
     }
     
-    // Add discharge event
+    // Add discharge/transfer event
     if (patient.dischargedAt) {
+      let description = 'Patient discharged';
+      if (patient.status === 'transferred' && patient.transferredTo) {
+        description = `Patient transferred to ${patient.transferredTo}`;
+      } else if (patient.admission?.completedAt) {
+        description = `Patient admitted to ${patient.admission.bedNumber || 'ward'}`;
+      }
       timeline.push({
         timestamp: new Date(patient.dischargedAt),
-        description: 'Patient discharged'
+        description
       });
     }
     

@@ -6,14 +6,23 @@ import { AdmissionForm } from './AdmissionForm';
 import { LogGenerator } from './LogGenerator';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { LogOut, MapPin, Stethoscope, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 interface PatientDetailProps {
   patient: Patient;
 }
 
 export function PatientDetail({ patient }: PatientDetailProps) {
+  const [finalizeOpen, setFinalizeOpen] = useState(false);
+  const [finalizeType, setFinalizeType] = useState<'discharge' | 'transfer'>('discharge');
+  const [transferHospital, setTransferHospital] = useState('');
+
   const {
     updateArrivalTime,
     updatePatientLocation,
@@ -26,12 +35,24 @@ export function PatientDetail({ patient }: PatientDetailProps) {
     updateAdmission,
     completeAdmission,
     dischargePatient,
+    transferPatient,
     locations,
     doctors,
   } = usePatientStore();
 
   const isEditable = patient.status !== 'discharged' && patient.status !== 'transferred';
   const currentStatusConfig = PATIENT_STATUSES.find(s => s.value === patient.status);
+
+  const handleFinalize = () => {
+    if (finalizeType === 'discharge') {
+      dischargePatient(patient.id);
+    } else if (finalizeType === 'transfer' && transferHospital.trim()) {
+      transferPatient(patient.id, transferHospital.trim());
+    }
+    setFinalizeOpen(false);
+    setTransferHospital('');
+    setFinalizeType('discharge');
+  };
 
   return (
     <div className="h-full overflow-y-auto p-6 space-y-6 animate-fade-in">
@@ -119,15 +140,61 @@ export function PatientDetail({ patient }: PatientDetailProps) {
         </div>
         <div className="flex gap-2">
           <LogGenerator patient={patient} />
-          {patient.status !== 'discharged' && (
-            <Button
-              variant="outline"
-              className="gap-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-              onClick={() => dischargePatient(patient.id)}
-            >
-              <LogOut className="h-4 w-4" />
-              Discharge
-            </Button>
+          {patient.status !== 'discharged' && patient.status !== 'transferred' && (
+            <Dialog open={finalizeOpen} onOpenChange={setFinalizeOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="gap-2 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                >
+                  <LogOut className="h-4 w-4" />
+                  Finalize Care
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-card border-border">
+                <DialogHeader>
+                  <DialogTitle>Finalize Patient Care</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <RadioGroup value={finalizeType} onValueChange={(v) => setFinalizeType(v as 'discharge' | 'transfer')}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="discharge" id="discharge" />
+                      <Label htmlFor="discharge" className="cursor-pointer">Discharged (sent home)</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="transfer" id="transfer" />
+                      <Label htmlFor="transfer" className="cursor-pointer">Transferred to another facility</Label>
+                    </div>
+                  </RadioGroup>
+                  
+                  {finalizeType === 'transfer' && (
+                    <div className="space-y-2">
+                      <Label htmlFor="hospital">Destination Hospital</Label>
+                      <Input
+                        id="hospital"
+                        placeholder="Enter hospital name..."
+                        value={transferHospital}
+                        onChange={(e) => setTransferHospital(e.target.value)}
+                        className="bg-input border-border"
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-2 pt-4">
+                    <Button variant="outline" className="flex-1" onClick={() => setFinalizeOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button 
+                      className="flex-1" 
+                      onClick={handleFinalize}
+                      disabled={finalizeType === 'transfer' && !transferHospital.trim()}
+                    >
+                      Confirm
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           )}
         </div>
       </div>
@@ -136,7 +203,7 @@ export function PatientDetail({ patient }: PatientDetailProps) {
       <div className="rounded-xl gradient-card border border-border p-4">
         <TimerDisplay
           startTime={patient.arrivalTime}
-          onEdit={patient.status !== 'discharged' ? (time) => updateArrivalTime(patient.id, time) : undefined}
+          onEdit={patient.status !== 'discharged' && patient.status !== 'transferred' ? (time) => updateArrivalTime(patient.id, time) : undefined}
         />
       </div>
 
@@ -163,7 +230,12 @@ export function PatientDetail({ patient }: PatientDetailProps) {
       {(patient.status === 'discharged' || patient.status === 'transferred') && (
         <div className="p-4 rounded-xl bg-muted/50 border border-border text-center">
           <span className="text-lg font-medium text-muted-foreground">
-            Patient {patient.status === 'discharged' ? 'Discharged' : 'Transferred'}
+            {patient.status === 'transferred' 
+              ? `Patient Transferred to ${patient.transferredTo}`
+              : patient.admission?.completedAt 
+                ? `Patient Admitted to ${patient.admission.bedNumber || 'Ward'}`
+                : 'Patient Discharged'
+            }
           </span>
         </div>
       )}
