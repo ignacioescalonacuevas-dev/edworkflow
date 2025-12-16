@@ -51,10 +51,3 @@ export const SPECIALTIES = [
   'Pediatrics Registrar',
 ] as const;
 
-export const DOCTORS = [
-  'Dr. Smith',
-  'Dr. Johnson',
-  'Dr. Williams',
-  'Dr. Brown',
-  'Dr. Davis',
-] as const;

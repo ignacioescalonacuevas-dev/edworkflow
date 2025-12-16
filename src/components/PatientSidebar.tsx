@@ -1,10 +1,10 @@
 import { usePatientStore } from '@/store/patientStore';
 import { PatientCard } from './PatientCard';
 import { NewPatientForm } from './NewPatientForm';
+import { ShiftSetup } from './ShiftSetup';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { DOCTORS } from '@/types/patient';
 import { Activity, History, Users, Filter } from 'lucide-react';
 
 export function PatientSidebar() {
@@ -13,6 +13,7 @@ export function PatientSidebar() {
     selectedPatientId,
     filterDoctor,
     viewMode,
+    doctors,
     selectPatient,
     setFilterDoctor,
     setViewMode,
@@ -36,9 +37,12 @@ export function PatientSidebar() {
     <div className="h-full flex flex-col gradient-sidebar border-r border-border">
       {/* Header */}
       <div className="p-4 border-b border-border">
-        <div className="flex items-center gap-2 mb-4">
-          <Activity className="h-6 w-6 text-primary" />
-          <h1 className="text-xl font-bold text-foreground">ED Workflow</h1>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Activity className="h-6 w-6 text-primary" />
+            <h1 className="text-xl font-bold text-foreground">ED Workflow</h1>
+          </div>
+          <ShiftSetup />
         </div>
         <NewPatientForm />
       </div>
@@ -58,7 +62,7 @@ export function PatientSidebar() {
           </SelectTrigger>
           <SelectContent className="bg-popover border-border">
             <SelectItem value="all">All physicians</SelectItem>
-            {DOCTORS.map((doctor) => (
+            {doctors.map((doctor) => (
               <SelectItem key={doctor} value={doctor}>
                 {doctor}
               </SelectItem>

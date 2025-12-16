@@ -6,14 +6,13 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePatientStore } from '@/store/patientStore';
-import { DOCTORS } from '@/types/patient';
 
 export function NewPatientForm() {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
   const [box, setBox] = useState('');
   const [doctor, setDoctor] = useState('');
-  const addPatient = usePatientStore((state) => state.addPatient);
+  const { addPatient, doctors } = usePatientStore();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,7 +79,7 @@ export function NewPatientForm() {
                 <SelectValue placeholder="Select physician..." />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border">
-                {DOCTORS.map((doc) => (
+                {doctors.map((doc) => (
                   <SelectItem key={doc} value={doc}>
                     {doc}
                   </SelectItem>
