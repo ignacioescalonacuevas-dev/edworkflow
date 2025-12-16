@@ -12,7 +12,7 @@ export function NewPatientForm() {
   const [name, setName] = useState('');
   const [box, setBox] = useState('');
   const [doctor, setDoctor] = useState('');
-  const { addPatient, doctors } = usePatientStore();
+  const { addPatient, doctors, locations } = usePatientStore();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,14 +62,18 @@ export function NewPatientForm() {
 
           <div className="space-y-2">
             <Label htmlFor="box">Box / Location</Label>
-            <Input
-              id="box"
-              placeholder="E.g.: Box 5"
-              value={box}
-              onChange={(e) => setBox(e.target.value)}
-              className="bg-input border-border"
-              required
-            />
+            <Select value={box} onValueChange={setBox} required>
+              <SelectTrigger className="bg-input border-border">
+                <SelectValue placeholder="Select location..." />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border">
+                {locations.map((loc) => (
+                  <SelectItem key={loc} value={loc}>
+                    {loc}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">
