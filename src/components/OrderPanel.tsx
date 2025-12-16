@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { TestTube, Scan, Pill, Radio, Plus, Check, FileCheck } from 'lucide-react';
+import { TestTube, Scan, Pill, Radio, Plus, Check, FileCheck, Activity, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Order, OrderStatus } from '@/types/patient';
 import { EditableTimestamp } from './EditableTimestamp';
 import { cn } from '@/lib/utils';
@@ -19,18 +20,48 @@ const orderTypeConfig = {
   xray: { icon: Radio, label: 'X-Ray', color: 'text-status-pending' },
   scanner: { icon: Scan, label: 'CT Scan', color: 'text-status-admission' },
   medication: { icon: Pill, label: 'Medication', color: 'text-status-complete' },
+  ecg: { icon: Activity, label: 'ECG', color: 'text-red-400' },
+  echo: { icon: Heart, label: 'ECHO', color: 'text-pink-400' },
 };
+
+const ECHO_TYPES = [
+  'Cardiac (TTE)',
+  'Abdominal',
+  'Limbs/Vascular',
+  'Carotid',
+  'Renal',
+  'Pelvic',
+  'FAST',
+] as const;
 
 export function OrderPanel({ orders, onAddOrder, onUpdateStatus, onUpdateTimestamp }: OrderPanelProps) {
   const [newOrderType, setNewOrderType] = useState<Order['type'] | null>(null);
   const [newOrderDescription, setNewOrderDescription] = useState('');
+  const [selectedEchoType, setSelectedEchoType] = useState<string>('');
 
   const handleAddOrder = () => {
-    if (newOrderType && newOrderDescription.trim()) {
-      onAddOrder(newOrderType, newOrderDescription.trim());
-      setNewOrderType(null);
-      setNewOrderDescription('');
+    if (newOrderType) {
+      let description = newOrderDescription.trim();
+      
+      // For ECHO, prepend the selected type
+      if (newOrderType === 'echo' && selectedEchoType) {
+        description = description ? `${selectedEchoType} - ${description}` : selectedEchoType;
+      }
+      
+      if (description) {
+        onAddOrder(newOrderType, description);
+        setNewOrderType(null);
+        setNewOrderDescription('');
+        setSelectedEchoType('');
+      }
     }
+  };
+
+  const canAddOrder = () => {
+    if (newOrderType === 'echo') {
+      return !!selectedEchoType;
+    }
+    return !!newOrderDescription.trim();
   };
 
   const getStatusBadge = (status: OrderStatus) => {
@@ -82,7 +113,7 @@ export function OrderPanel({ orders, onAddOrder, onUpdateStatus, onUpdateTimesta
       </div>
 
       {/* Quick Add Buttons */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
         {(Object.keys(orderTypeConfig) as Order['type'][]).map((type) => {
           const config = orderTypeConfig[type];
           const Icon = config.icon;
@@ -92,7 +123,10 @@ export function OrderPanel({ orders, onAddOrder, onUpdateStatus, onUpdateTimesta
               open={newOrderType === type}
               onOpenChange={(open) => {
                 setNewOrderType(open ? type : null);
-                if (!open) setNewOrderDescription('');
+                if (!open) {
+                  setNewOrderDescription('');
+                  setSelectedEchoType('');
+                }
               }}
             >
               <PopoverTrigger asChild>
@@ -113,15 +147,32 @@ export function OrderPanel({ orders, onAddOrder, onUpdateStatus, onUpdateTimesta
                     <Icon className={cn('h-4 w-4', config.color)} />
                     New {config.label} Order
                   </h4>
+                  
+                  {/* ECHO type selector */}
+                  {type === 'echo' && (
+                    <Select value={selectedEchoType} onValueChange={setSelectedEchoType}>
+                      <SelectTrigger className="bg-input border-border">
+                        <SelectValue placeholder="Select ECHO type..." />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border">
+                        {ECHO_TYPES.map((echoType) => (
+                          <SelectItem key={echoType} value={echoType}>
+                            {echoType}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  
                   <Input
-                    placeholder="Order description..."
+                    placeholder={type === 'echo' ? "Additional notes (optional)..." : "Order description..."}
                     value={newOrderDescription}
                     onChange={(e) => setNewOrderDescription(e.target.value)}
                     className="bg-input border-border"
-                    autoFocus
+                    autoFocus={type !== 'echo'}
                   />
                   <div className="flex gap-2">
-                    <Button onClick={handleAddOrder} disabled={!newOrderDescription.trim()}>
+                    <Button onClick={handleAddOrder} disabled={!canAddOrder()}>
                       <Plus className="h-4 w-4 mr-1" />
                       Add
                     </Button>
