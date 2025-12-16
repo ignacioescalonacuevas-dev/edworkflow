@@ -48,16 +48,13 @@ export function PatientSidebar() {
       </div>
 
       {/* Filters */}
-      <div className="px-3 py-2 space-y-2 border-b border-border">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Filter className="h-3 w-3" />
-          <span>Filter by physician</span>
-        </div>
+      <div className="px-3 py-1.5 border-b border-border flex items-center gap-2">
+        <Filter className="h-3 w-3 text-muted-foreground shrink-0" />
         <Select
           value={filterDoctor || 'all'}
           onValueChange={(value) => setFilterDoctor(value === 'all' ? null : value)}
         >
-          <SelectTrigger className="h-8 text-sm bg-input border-border">
+          <SelectTrigger className="h-7 text-xs bg-input border-border flex-1">
             <SelectValue placeholder="All physicians" />
           </SelectTrigger>
           <SelectContent className="bg-popover border-border">
