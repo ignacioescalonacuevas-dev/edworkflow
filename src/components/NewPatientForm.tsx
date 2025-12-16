@@ -37,23 +37,23 @@ export function NewPatientForm() {
       <DialogTrigger asChild>
         <Button className="w-full gap-2 bg-primary hover:bg-primary/90">
           <Plus className="h-4 w-4" />
-          Nuevo Paciente
+          New Patient
         </Button>
       </DialogTrigger>
       <DialogContent className="bg-card border-border">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="h-5 w-5 text-primary" />
-            Registrar Nuevo Paciente
+            Register New Patient
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nombre del Paciente</Label>
+            <Label htmlFor="name">Patient Name</Label>
             <Input
               id="name"
-              placeholder="Nombre completo"
+              placeholder="Full name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="bg-input border-border"
@@ -62,10 +62,10 @@ export function NewPatientForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="box">Box / Ubicación</Label>
+            <Label htmlFor="box">Box / Location</Label>
             <Input
               id="box"
-              placeholder="Ej: Box 5"
+              placeholder="E.g.: Box 5"
               value={box}
               onChange={(e) => setBox(e.target.value)}
               className="bg-input border-border"
@@ -74,10 +74,10 @@ export function NewPatientForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="doctor">Médico Tratante</Label>
+            <Label htmlFor="doctor">Attending Physician</Label>
             <Select value={doctor} onValueChange={setDoctor} required>
               <SelectTrigger className="bg-input border-border">
-                <SelectValue placeholder="Seleccionar médico..." />
+                <SelectValue placeholder="Select physician..." />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border">
                 {DOCTORS.map((doc) => (
@@ -91,10 +91,10 @@ export function NewPatientForm() {
 
           <div className="flex gap-2 pt-4">
             <Button type="submit" className="flex-1">
-              Registrar Paciente
+              Register Patient
             </Button>
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-              Cancelar
+              Cancel
             </Button>
           </div>
         </form>

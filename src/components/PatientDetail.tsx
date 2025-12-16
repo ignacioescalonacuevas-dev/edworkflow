@@ -5,7 +5,7 @@ import { OrderPanel } from './OrderPanel';
 import { AdmissionForm } from './AdmissionForm';
 import { LogGenerator } from './LogGenerator';
 import { Button } from '@/components/ui/button';
-import { LogOut, User, MapPin, Stethoscope } from 'lucide-react';
+import { LogOut, MapPin, Stethoscope } from 'lucide-react';
 
 interface PatientDetailProps {
   patient: Patient;
@@ -49,7 +49,7 @@ export function PatientDetail({ patient }: PatientDetailProps) {
               onClick={() => dischargePatient(patient.id)}
             >
               <LogOut className="h-4 w-4" />
-              Alta
+              Discharge
             </Button>
           )}
         </div>
@@ -86,7 +86,7 @@ export function PatientDetail({ patient }: PatientDetailProps) {
       {patient.status === 'discharged' && (
         <div className="p-4 rounded-xl bg-muted/50 border border-border text-center">
           <span className="text-lg font-medium text-muted-foreground">
-            Paciente dado de alta
+            Patient Discharged
           </span>
         </div>
       )}

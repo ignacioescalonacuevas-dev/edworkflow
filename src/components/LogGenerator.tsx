@@ -1,5 +1,4 @@
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { Copy, Check, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -17,13 +16,13 @@ export function LogGenerator({ patient }: LogGeneratorProps) {
   const generateLog = () => {
     const lines: string[] = [];
     
-    lines.push(`=== REGISTRO DE PACIENTE ===`);
-    lines.push(`Paciente: ${patient.name}`);
+    lines.push(`=== PATIENT RECORD ===`);
+    lines.push(`Patient: ${patient.name}`);
     lines.push(`Box: ${patient.box}`);
-    lines.push(`Médico: ${patient.doctor}`);
-    lines.push(`Fecha: ${format(new Date(), "dd/MM/yyyy", { locale: es })}`);
+    lines.push(`Doctor: ${patient.doctor}`);
+    lines.push(`Date: ${format(new Date(), "MM/dd/yyyy")}`);
     lines.push('');
-    lines.push('--- CRONOLOGÍA DE EVENTOS ---');
+    lines.push('--- EVENT TIMELINE ---');
     
     // Sort events by timestamp
     const sortedEvents = [...patient.events].sort(
@@ -31,24 +30,24 @@ export function LogGenerator({ patient }: LogGeneratorProps) {
     );
 
     sortedEvents.forEach((event) => {
-      const time = format(new Date(event.timestamp), 'HH:mm', { locale: es });
+      const time = format(new Date(event.timestamp), 'HH:mm');
       lines.push(`[${time}] ${event.description}`);
     });
 
     lines.push('');
-    lines.push('--- ÓRDENES ---');
+    lines.push('--- ORDERS ---');
     
     patient.orders.forEach((order) => {
-      const orderedTime = format(new Date(order.orderedAt), 'HH:mm', { locale: es });
-      let statusText = `Ordenado: ${orderedTime}`;
+      const orderedTime = format(new Date(order.orderedAt), 'HH:mm');
+      let statusText = `Ordered: ${orderedTime}`;
       
       if (order.doneAt) {
-        const doneTime = format(new Date(order.doneAt), 'HH:mm', { locale: es });
-        statusText += ` | Realizado: ${doneTime}`;
+        const doneTime = format(new Date(order.doneAt), 'HH:mm');
+        statusText += ` | Done: ${doneTime}`;
       }
       if (order.reportedAt) {
-        const reportedTime = format(new Date(order.reportedAt), 'HH:mm', { locale: es });
-        statusText += ` | Reportado: ${reportedTime}`;
+        const reportedTime = format(new Date(order.reportedAt), 'HH:mm');
+        statusText += ` | Reported: ${reportedTime}`;
       }
       
       lines.push(`• ${order.description} (${order.type.toUpperCase()})`);
@@ -57,33 +56,33 @@ export function LogGenerator({ patient }: LogGeneratorProps) {
 
     if (patient.admission) {
       lines.push('');
-      lines.push('--- ADMISIÓN ---');
-      lines.push(`Especialidad: ${patient.admission.specialty}`);
-      lines.push(`Registrar contactado: ${patient.admission.registrarCalled ? 'Sí' : 'No'}`);
-      lines.push('Checklist de seguridad:');
-      lines.push(`  • Admisión administrativa: ${patient.admission.adminComplete ? '✓' : '✗'}`);
-      lines.push(`  • Brazalete ID: ${patient.admission.idBraceletVerified ? '✓' : '✗'}`);
+      lines.push('--- ADMISSION ---');
+      lines.push(`Specialty: ${patient.admission.specialty}`);
+      lines.push(`Registrar contacted: ${patient.admission.registrarCalled ? 'Yes' : 'No'}`);
+      lines.push('Safety Checklist:');
+      lines.push(`  • Administrative admission: ${patient.admission.adminComplete ? '✓' : '✗'}`);
+      lines.push(`  • ID Bracelet: ${patient.admission.idBraceletVerified ? '✓' : '✗'}`);
       lines.push(`  • MRSA Swabs: ${patient.admission.mrsaSwabs ? '✓' : '✗'}`);
       lines.push(`  • Falls Assessment: ${patient.admission.fallsAssessment ? '✓' : '✗'}`);
       
       if (patient.admission.handoverNotes) {
-        lines.push(`Notas de traspaso: ${patient.admission.handoverNotes}`);
+        lines.push(`Handover notes: ${patient.admission.handoverNotes}`);
       }
       
       if (patient.admission.completedAt) {
-        const completedTime = format(new Date(patient.admission.completedAt), 'HH:mm', { locale: es });
-        lines.push(`Admisión completada: ${completedTime}`);
+        const completedTime = format(new Date(patient.admission.completedAt), 'HH:mm');
+        lines.push(`Admission completed: ${completedTime}`);
       }
     }
 
     if (patient.dischargedAt) {
       lines.push('');
-      lines.push('--- ALTA ---');
-      lines.push(`Hora de alta: ${format(new Date(patient.dischargedAt), 'HH:mm', { locale: es })}`);
+      lines.push('--- DISCHARGE ---');
+      lines.push(`Discharge time: ${format(new Date(patient.dischargedAt), 'HH:mm')}`);
     }
 
     lines.push('');
-    lines.push('=== FIN DEL REGISTRO ===');
+    lines.push('=== END OF RECORD ===');
 
     return lines.join('\n');
   };
@@ -99,14 +98,14 @@ export function LogGenerator({ patient }: LogGeneratorProps) {
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2 border-border">
           <FileText className="h-4 w-4" />
-          Generar Log
+          Generate Log
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] bg-card border-border">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5 text-primary" />
-            Registro del Paciente
+            Patient Record
           </DialogTitle>
         </DialogHeader>
 
@@ -121,12 +120,12 @@ export function LogGenerator({ patient }: LogGeneratorProps) {
             {copied ? (
               <>
                 <Check className="h-4 w-4" />
-                Copiado
+                Copied
               </>
             ) : (
               <>
                 <Copy className="h-4 w-4" />
-                Copiar al Portapapeles
+                Copy to Clipboard
               </>
             )}
           </Button>
