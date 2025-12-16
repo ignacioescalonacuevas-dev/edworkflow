@@ -16,11 +16,11 @@ export function NewPatientForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (name && box && doctor) {
+    if (name && box) {
       addPatient({
         name,
         box,
-        doctor,
+        doctor: doctor || '',
         arrivalTime: new Date(),
         status: 'active',
       });
@@ -77,12 +77,13 @@ export function NewPatientForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="doctor">Attending Physician</Label>
-            <Select value={doctor} onValueChange={setDoctor} required>
+            <Label htmlFor="doctor">Attending Physician (Optional)</Label>
+            <Select value={doctor} onValueChange={setDoctor}>
               <SelectTrigger className="bg-input border-border">
-                <SelectValue placeholder="Select physician..." />
+                <SelectValue placeholder="Not assigned yet" />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border">
+                <SelectItem value="">Not assigned yet</SelectItem>
                 {doctors.map((doc) => (
                   <SelectItem key={doc} value={doc}>
                     {doc}

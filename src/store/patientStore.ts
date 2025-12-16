@@ -48,6 +48,8 @@ interface PatientStore {
   removeLocation: (name: string) => void;
   
   // Patient updates
+  updatePatientLocation: (patientId: string, location: string) => void;
+  updatePatientDoctor: (patientId: string, doctor: string) => void;
   updateArrivalTime: (patientId: string, time: Date) => void;
   addOrder: (patientId: string, order: Omit<Order, 'id' | 'orderedAt'>) => void;
   updateOrderStatus: (patientId: string, orderId: string, status: OrderStatus, timestamp?: Date) => void;
@@ -245,6 +247,50 @@ export const usePatientStore = create<PatientStore>()(
       removeLocation: (name) => {
         set((state) => ({
           locations: state.locations.filter((l) => l !== name),
+        }));
+      },
+
+      updatePatientLocation: (patientId, location) => {
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? {
+                  ...p,
+                  box: location,
+                  events: [
+                    ...p.events,
+                    {
+                      id: generateId(),
+                      timestamp: new Date(),
+                      type: 'location_change',
+                      description: `Moved to ${location}`,
+                    },
+                  ],
+                }
+              : p
+          ),
+        }));
+      },
+
+      updatePatientDoctor: (patientId, doctor) => {
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? {
+                  ...p,
+                  doctor,
+                  events: [
+                    ...p.events,
+                    {
+                      id: generateId(),
+                      timestamp: new Date(),
+                      type: 'doctor_assigned',
+                      description: doctor ? `Physician assigned: ${doctor}` : 'Physician unassigned',
+                    },
+                  ],
+                }
+              : p
+          ),
         }));
       },
 

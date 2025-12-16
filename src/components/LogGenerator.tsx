@@ -18,8 +18,8 @@ export function LogGenerator({ patient }: LogGeneratorProps) {
     
     lines.push(`=== PATIENT RECORD ===`);
     lines.push(`Patient: ${patient.name}`);
-    lines.push(`Box: ${patient.box}`);
-    lines.push(`Doctor: ${patient.doctor}`);
+    lines.push(`Location: ${patient.box}`);
+    lines.push(`Doctor: ${patient.doctor || 'Not assigned'}`);
     lines.push(`Date: ${format(new Date(), "MM/dd/yyyy")}`);
     lines.push('');
     lines.push('--- EVENT TIMELINE ---');
