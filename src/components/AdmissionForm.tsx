@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Building2, Phone, ClipboardCheck, IdCard, Bug, AlertTriangle, FileText, Check } from 'lucide-react';
+import { Building2, Phone, ClipboardCheck, IdCard, Bug, AlertTriangle, FileText, Check, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AdmissionData, SPECIALTIES, PatientStatus } from '@/types/patient';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,7 @@ export function AdmissionForm({
 
   const isReadyToComplete = admission && 
     admission.specialty &&
+    admission.consultantName &&
     admission.registrarCalled &&
     admission.adminComplete &&
     admission.idBraceletVerified &&
@@ -115,24 +117,39 @@ export function AdmissionForm({
               Medical Coordination
             </h3>
             <div className="space-y-4 pl-8">
-              <div className="space-y-2">
-                <Label>Destination Specialty</Label>
-                <Select
-                  value={admission?.specialty || ''}
-                  onValueChange={(value) => onUpdateAdmission({ specialty: value })}
-                  disabled={!!admission?.completedAt}
-                >
-                  <SelectTrigger className="bg-input border-border">
-                    <SelectValue placeholder="Select specialty..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-popover border-border">
-                    {SPECIALTIES.map((specialty) => (
-                      <SelectItem key={specialty} value={specialty}>
-                        {specialty}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Destination Specialty</Label>
+                  <Select
+                    value={admission?.specialty || ''}
+                    onValueChange={(value) => onUpdateAdmission({ specialty: value })}
+                    disabled={!!admission?.completedAt}
+                  >
+                    <SelectTrigger className="bg-input border-border">
+                      <SelectValue placeholder="Select specialty..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover border-border">
+                      {SPECIALTIES.map((specialty) => (
+                        <SelectItem key={specialty} value={specialty}>
+                          {specialty}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <User className="h-4 w-4" />
+                    Consultant Name
+                  </Label>
+                  <Input
+                    placeholder="E.g.: Dr. Smith"
+                    value={admission?.consultantName || ''}
+                    onChange={(e) => onUpdateAdmission({ consultantName: e.target.value })}
+                    disabled={!!admission?.completedAt}
+                    className="bg-input border-border"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/50">

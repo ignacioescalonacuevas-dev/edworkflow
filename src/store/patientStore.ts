@@ -134,6 +134,7 @@ const samplePatients: Patient[] = [
     ],
     admission: {
       specialty: 'Surgical Registrar',
+      consultantName: 'Dr. O\'Brien',
       registrarCalled: true,
       adminComplete: true,
       idBraceletVerified: true,
@@ -407,16 +408,17 @@ export const usePatientStore = create<PatientStore>()(
               ? {
                   ...p,
                   status: 'admission',
-                  admission: {
-                    specialty: '',
-                    registrarCalled: false,
-                    adminComplete: false,
-                    idBraceletVerified: false,
-                    mrsaSwabs: false,
-                    fallsAssessment: false,
-                    handoverNotes: '',
-                    startedAt: new Date(),
-                  },
+                    admission: {
+                      specialty: '',
+                      consultantName: '',
+                      registrarCalled: false,
+                      adminComplete: false,
+                      idBraceletVerified: false,
+                      mrsaSwabs: false,
+                      fallsAssessment: false,
+                      handoverNotes: '',
+                      startedAt: new Date(),
+                    },
                   events: [
                     ...p.events,
                     {
