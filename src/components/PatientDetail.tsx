@@ -62,15 +62,15 @@ export function PatientDetail({ patient }: PatientDetailProps) {
             {/* Doctor Selector */}
             {isEditable ? (
               <Select 
-                value={patient.doctor || ''} 
-                onValueChange={(value) => updatePatientDoctor(patient.id, value)}
+                value={patient.doctor || '__unassigned__'} 
+                onValueChange={(value) => updatePatientDoctor(patient.id, value === '__unassigned__' ? '' : value)}
               >
                 <SelectTrigger className="w-[200px] bg-input border-border">
                   <Stethoscope className="h-4 w-4 mr-2 text-muted-foreground" />
                   <SelectValue placeholder="Not assigned" />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border">
-                  <SelectItem value="">Not assigned</SelectItem>
+                  <SelectItem value="__unassigned__">Not assigned</SelectItem>
                   {doctors.map((doc) => (
                     <SelectItem key={doc} value={doc}>
                       {doc}

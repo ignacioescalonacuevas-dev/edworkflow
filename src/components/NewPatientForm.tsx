@@ -78,12 +78,12 @@ export function NewPatientForm() {
 
           <div className="space-y-2">
             <Label htmlFor="doctor">Attending Physician (Optional)</Label>
-            <Select value={doctor} onValueChange={setDoctor}>
+            <Select value={doctor || '__unassigned__'} onValueChange={(value) => setDoctor(value === '__unassigned__' ? '' : value)}>
               <SelectTrigger className="bg-input border-border">
                 <SelectValue placeholder="Not assigned yet" />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border">
-                <SelectItem value="">Not assigned yet</SelectItem>
+                <SelectItem value="__unassigned__">Not assigned yet</SelectItem>
                 {doctors.map((doc) => (
                   <SelectItem key={doc} value={doc}>
                     {doc}
