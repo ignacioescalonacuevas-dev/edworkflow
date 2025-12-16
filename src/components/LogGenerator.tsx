@@ -18,6 +18,7 @@ export function LogGenerator({ patient }: LogGeneratorProps) {
     
     const statusLabel = PATIENT_STATUSES.find(s => s.value === patient.status)?.label || patient.status;
     
+    // Header
     lines.push(`=== PATIENT RECORD ===`);
     lines.push(`Patient: ${patient.name}`);
     lines.push(`Location: ${patient.box}`);
@@ -25,66 +26,101 @@ export function LogGenerator({ patient }: LogGeneratorProps) {
     lines.push(`Status: ${statusLabel}`);
     lines.push(`Date: ${format(new Date(), "MM/dd/yyyy")}`);
     lines.push('');
-    lines.push('--- EVENT TIMELINE ---');
+    lines.push('=== CHRONOLOGICAL TIMELINE ===');
     
-    // Sort events by timestamp
-    const sortedEvents = [...patient.events].sort(
-      (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
-
-    sortedEvents.forEach((event) => {
-      const time = format(new Date(event.timestamp), 'HH:mm');
-      lines.push(`[${time}] ${event.description}`);
+    // Build unified timeline with all events
+    interface TimelineEntry {
+      timestamp: Date;
+      description: string;
+    }
+    
+    const timeline: TimelineEntry[] = [];
+    
+    // Add patient events
+    patient.events.forEach((event) => {
+      timeline.push({
+        timestamp: new Date(event.timestamp),
+        description: event.description
+      });
     });
-
-    lines.push('');
-    lines.push('--- ORDERS ---');
     
+    // Add order events (ordered, done, reported)
     patient.orders.forEach((order) => {
-      const orderedTime = format(new Date(order.orderedAt), 'HH:mm');
-      let statusText = `Ordered: ${orderedTime}`;
+      const typeLabel = order.type.toUpperCase();
+      
+      timeline.push({
+        timestamp: new Date(order.orderedAt),
+        description: `ORDER: ${order.description} requested (${typeLabel})`
+      });
       
       if (order.doneAt) {
-        const doneTime = format(new Date(order.doneAt), 'HH:mm');
-        statusText += ` | Done: ${doneTime}`;
-      }
-      if (order.reportedAt) {
-        const reportedTime = format(new Date(order.reportedAt), 'HH:mm');
-        statusText += ` | Reported: ${reportedTime}`;
+        timeline.push({
+          timestamp: new Date(order.doneAt),
+          description: `ORDER DONE: ${order.description} (${typeLabel})`
+        });
       }
       
-      lines.push(`• ${order.description} (${order.type.toUpperCase()})`);
-      lines.push(`  ${statusText}`);
+      if (order.reportedAt) {
+        timeline.push({
+          timestamp: new Date(order.reportedAt),
+          description: `ORDER REPORTED: ${order.description} - Results available (${typeLabel})`
+        });
+      }
+    });
+    
+    // Add admission events
+    if (patient.admission) {
+      timeline.push({
+        timestamp: new Date(patient.admission.startedAt),
+        description: `ADMISSION STARTED - Specialty: ${patient.admission.specialty || 'Not specified'}`
+      });
+      
+      if (patient.admission.completedAt) {
+        const bedInfo = patient.admission.bedNumber ? ` - Bed: ${patient.admission.bedNumber}` : '';
+        timeline.push({
+          timestamp: new Date(patient.admission.completedAt),
+          description: `ADMISSION COMPLETED${bedInfo}`
+        });
+      }
+    }
+    
+    // Add discharge event
+    if (patient.dischargedAt) {
+      timeline.push({
+        timestamp: new Date(patient.dischargedAt),
+        description: 'Patient discharged'
+      });
+    }
+    
+    // Sort timeline chronologically
+    timeline.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    
+    // Format and add timeline entries
+    timeline.forEach((entry) => {
+      const time = format(entry.timestamp, 'HH:mm');
+      lines.push(`[${time}] ${entry.description}`);
     });
 
+    // Admission summary section (if applicable)
     if (patient.admission) {
       lines.push('');
-      lines.push('--- ADMISSION ---');
-      lines.push(`Specialty: ${patient.admission.specialty}`);
+      lines.push('=== ADMISSION SUMMARY ===');
+      lines.push(`Specialty: ${patient.admission.specialty || 'Not specified'}`);
       lines.push(`Consultant: ${patient.admission.consultantName || 'Not specified'}`);
       const bedStatusLabel = BED_STATUSES.find(s => s.value === patient.admission?.bedStatus)?.label || patient.admission.bedStatus;
       lines.push(`Bed: ${patient.admission.bedNumber || 'Not assigned'} (${bedStatusLabel})`);
-      lines.push(`Registrar contacted: ${patient.admission.registrarCalled ? 'Yes' : 'No'}`);
-      lines.push('Safety Checklist:');
-      lines.push(`  • Administrative admission: ${patient.admission.adminComplete ? '✓' : '✗'}`);
-      lines.push(`  • ID Bracelet: ${patient.admission.idBraceletVerified ? '✓' : '✗'}`);
-      lines.push(`  • MRSA Swabs: ${patient.admission.mrsaSwabs ? '✓' : '✗'}`);
-      lines.push(`  • Falls Assessment: ${patient.admission.fallsAssessment ? '✓' : '✗'}`);
+      
+      const checklist = [
+        patient.admission.adminComplete ? '✓ Admin' : '✗ Admin',
+        patient.admission.idBraceletVerified ? '✓ ID Band' : '✗ ID Band',
+        patient.admission.mrsaSwabs ? '✓ MRSA' : '✗ MRSA',
+        patient.admission.fallsAssessment ? '✓ Falls' : '✗ Falls'
+      ].join(' | ');
+      lines.push(`Safety Checklist: ${checklist}`);
       
       if (patient.admission.handoverNotes) {
-        lines.push(`Handover notes: ${patient.admission.handoverNotes}`);
+        lines.push(`Handover Notes: ${patient.admission.handoverNotes}`);
       }
-      
-      if (patient.admission.completedAt) {
-        const completedTime = format(new Date(patient.admission.completedAt), 'HH:mm');
-        lines.push(`Admission completed: ${completedTime}`);
-      }
-    }
-
-    if (patient.dischargedAt) {
-      lines.push('');
-      lines.push('--- DISCHARGE ---');
-      lines.push(`Discharge time: ${format(new Date(patient.dischargedAt), 'HH:mm')}`);
     }
 
     lines.push('');
