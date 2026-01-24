@@ -1,4 +1,4 @@
-import { X, Check, GripVertical } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 import { StickerNote, NOTE_TYPE_CONFIG } from '@/types/patient';
 import { cn } from '@/lib/utils';
 import { useSortable } from '@dnd-kit/sortable';
@@ -34,23 +34,21 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
     return (
       <div 
         ref={setNodeRef} 
-        style={style} 
-        className="flex items-center gap-0.5 group"
+        style={style}
+        {...attributes}
+        {...listeners}
+        className={cn(
+          "flex items-center gap-0.5 group touch-none",
+          isDragging ? "cursor-grabbing" : "cursor-grab"
+        )}
       >
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-grab opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity touch-none"
-        >
-          <GripVertical className="h-2.5 w-2.5" />
-        </div>
         <button
           onClick={() => onToggle(note.id)}
           className={cn(
             "flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-medium border transition-colors",
             note.completed 
-              ? "bg-green-500/30 text-green-300 border-green-500/40"
-              : "bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30"
+              ? "bg-green-500/30 text-green-700 border-green-500/40"
+              : "bg-blue-500/20 text-blue-700 border-blue-500/30 hover:bg-blue-500/30"
           )}
         >
           {note.completed && <Check className="h-2.5 w-2.5" />}
@@ -72,16 +70,14 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
   return (
     <div 
       ref={setNodeRef} 
-      style={style} 
-      className="flex items-center gap-0.5 group"
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        "flex items-center gap-0.5 group touch-none",
+        isDragging ? "cursor-grabbing" : "cursor-grab"
+      )}
     >
-      <div
-        {...attributes}
-        {...listeners}
-        className="cursor-grab opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity touch-none"
-      >
-        <GripVertical className="h-2.5 w-2.5" />
-      </div>
       <span className={cn(
         "px-1 py-0.5 rounded text-[10px] font-medium border",
         config.color
