@@ -1,10 +1,13 @@
 export type OrderStatus = 'ordered' | 'done' | 'reported';
 
 export type PatientStatus = 
-  | 'registration'
-  | 'triage'
-  | 'evaluation'
-  | 'awaiting_results'
+  | 'treatment_room'
+  | 'waiting_room'
+  | 'review'
+  | 'ct'
+  | 'mri'
+  | 'echo'
+  | 'vascular'
   | 'admission'
   | 'discharged'
   | 'transferred';
@@ -16,10 +19,13 @@ export interface PatientStatusConfig {
 }
 
 export const PATIENT_STATUSES: PatientStatusConfig[] = [
-  { value: 'registration', label: 'Registration', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
-  { value: 'triage', label: 'Triage', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-  { value: 'evaluation', label: 'Evaluation', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
-  { value: 'awaiting_results', label: 'Awaiting Results', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+  { value: 'treatment_room', label: 'Treatment Room', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30' },
+  { value: 'waiting_room', label: 'Waiting Room', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+  { value: 'review', label: 'Review', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+  { value: 'ct', label: 'CT', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
+  { value: 'mri', label: 'MRI', color: 'bg-pink-500/20 text-pink-400 border-pink-500/30' },
+  { value: 'echo', label: 'Echo', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' },
+  { value: 'vascular', label: 'Vascular', color: 'bg-rose-500/20 text-rose-400 border-rose-500/30' },
   { value: 'admission', label: 'Admission', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
   { value: 'discharged', label: 'Discharged', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
   { value: 'transferred', label: 'Transferred', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' },

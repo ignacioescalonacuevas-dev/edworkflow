@@ -1,10 +1,15 @@
 import { useMemo, useState } from 'react';
-import { Patient, PATIENT_STATUSES } from '@/types/patient';
+import { Patient, PatientStatus, PATIENT_STATUSES } from '@/types/patient';
 import { usePatientStore } from '@/store/patientStore';
 import { StickerNotesColumn } from './StickerNotesColumn';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface EditableBedNumberProps {
   patientId: string;
@@ -53,6 +58,54 @@ function EditableBedNumber({ patientId, bedNumber }: EditableBedNumberProps) {
     >
       {bedNumber || '+Cama'}
     </div>
+  );
+}
+
+interface StatusDropdownProps {
+  patientId: string;
+  currentStatus: PatientStatus;
+  statusConfig?: { label: string; color: string };
+}
+
+function StatusDropdown({ patientId, currentStatus, statusConfig }: StatusDropdownProps) {
+  const { updatePatientStatus } = usePatientStore();
+
+  const handleStatusChange = (newStatus: PatientStatus) => {
+    updatePatientStatus(patientId, newStatus);
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+        <button
+          className={cn(
+            "text-[10px] px-1.5 py-0.5 h-5 shrink-0 rounded-md border cursor-pointer hover:opacity-80 transition-opacity",
+            statusConfig?.color
+          )}
+        >
+          {statusConfig?.label}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent 
+        align="end" 
+        className="z-50 bg-background border shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {PATIENT_STATUSES.map((status) => (
+          <DropdownMenuItem
+            key={status.value}
+            onClick={() => handleStatusChange(status.value)}
+            className={cn(
+              "text-xs cursor-pointer",
+              currentStatus === status.value && "bg-accent"
+            )}
+          >
+            <span className={cn("w-2 h-2 rounded-full mr-2", status.color.split(' ')[0])} />
+            {status.label}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -137,12 +190,11 @@ export function PatientSticker({ patient }: PatientStickerProps) {
         <span className="text-xs text-muted-foreground truncate flex-1">
           {patient.chiefComplaint}
         </span>
-        <Badge 
-          variant="outline" 
-          className={cn("text-[10px] px-1.5 py-0 h-5 shrink-0", statusConfig?.color)}
-        >
-          {statusConfig?.label}
-        </Badge>
+        <StatusDropdown 
+          patientId={patient.id}
+          currentStatus={patient.status}
+          statusConfig={statusConfig}
+        />
       </div>
 
       {/* Bed number for admissions - editable */}
