@@ -4,12 +4,23 @@ import { usePatientStore } from '@/store/patientStore';
 import { StickerNotesColumn } from './StickerNotesColumn';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import { MoreVertical, Trash2 } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface EditableBedNumberProps {
   patientId: string;
@@ -58,6 +69,185 @@ function EditableBedNumber({ patientId, bedNumber }: EditableBedNumberProps) {
     >
       {bedNumber || '+Cama'}
     </div>
+  );
+}
+
+interface EditableChiefComplaintProps {
+  patientId: string;
+  complaint: string;
+}
+
+function EditableChiefComplaint({ patientId, complaint }: EditableChiefComplaintProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(complaint);
+  const { updatePatientChiefComplaint } = usePatientStore();
+
+  const handleSave = () => {
+    if (value.trim()) {
+      updatePatientChiefComplaint(patientId, value.trim());
+    } else {
+      setValue(complaint);
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSave();
+    if (e.key === 'Escape') {
+      setValue(complaint);
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <Input
+        autoFocus
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={handleKeyDown}
+        className="h-5 text-xs px-1.5 py-0 flex-1"
+        onClick={(e) => e.stopPropagation()}
+      />
+    );
+  }
+
+  return (
+    <span 
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsEditing(true);
+      }}
+      className="text-xs text-muted-foreground flex-1 cursor-pointer hover:text-foreground transition-colors"
+    >
+      {complaint}
+    </span>
+  );
+}
+
+interface StaffDropdownProps {
+  type: 'doctor' | 'nurse' | 'location';
+  patientId: string;
+  currentValue: string;
+  options: string[];
+  displayValue: string;
+}
+
+function StaffDropdown({ type, patientId, currentValue, options, displayValue }: StaffDropdownProps) {
+  const { updatePatientDoctor, updatePatientNurse, updatePatientLocation } = usePatientStore();
+
+  const handleSelect = (value: string) => {
+    if (type === 'doctor') {
+      updatePatientDoctor(patientId, value);
+    } else if (type === 'nurse') {
+      updatePatientNurse(patientId, value);
+    } else {
+      updatePatientLocation(patientId, value);
+    }
+  };
+
+  const getLabel = () => {
+    switch (type) {
+      case 'doctor': return 'Médico';
+      case 'nurse': return 'Enfermera';
+      case 'location': return 'Ubicación';
+    }
+  };
+
+  const getColorClass = () => {
+    switch (type) {
+      case 'doctor': return 'text-primary';
+      case 'nurse': return 'text-muted-foreground';
+      case 'location': return 'text-foreground';
+    }
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+        <button className={cn("text-xs font-medium cursor-pointer hover:opacity-70 transition-opacity", getColorClass())}>
+          {displayValue}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent 
+        align="end" 
+        className="z-50 bg-background border shadow-lg max-h-48 overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-2 py-1 text-xs text-muted-foreground font-medium">{getLabel()}</div>
+        {options.map((option) => (
+          <DropdownMenuItem
+            key={option}
+            onClick={() => handleSelect(option)}
+            className={cn(
+              "text-xs cursor-pointer",
+              currentValue === option && "bg-accent"
+            )}
+          >
+            {option}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+interface StickerActionsMenuProps {
+  patientId: string;
+  patientName: string;
+}
+
+function StickerActionsMenu({ patientId, patientName }: StickerActionsMenuProps) {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const { removePatient } = usePatientStore();
+
+  const handleDelete = () => {
+    removePatient(patientId);
+    setShowDeleteConfirm(false);
+  };
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+          <button className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-muted rounded transition-opacity">
+            <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent 
+          align="start" 
+          className="z-50 bg-background border shadow-lg"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <DropdownMenuItem
+            onClick={() => setShowDeleteConfirm(true)}
+            className="text-xs cursor-pointer text-destructive focus:text-destructive"
+          >
+            <Trash2 className="h-3.5 w-3.5 mr-2" />
+            Eliminar paciente
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar paciente?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción eliminará a <strong>{patientName}</strong> del sistema. 
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
@@ -129,7 +319,7 @@ function getElapsedTime(arrivalTime: Date): string {
 }
 
 export function PatientSticker({ patient }: PatientStickerProps) {
-  const { addStickerNote, toggleStudyCompleted, removeStickerNote } = usePatientStore();
+  const { addStickerNote, toggleStudyCompleted, removeStickerNote, doctors, nurses, locations } = usePatientStore();
   
   const elapsedTime = useMemo(() => getElapsedTime(patient.arrivalTime), [patient.arrivalTime]);
   const statusConfig = PATIENT_STATUSES.find(s => s.value === patient.status);
@@ -152,7 +342,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
   return (
     <div
       className={cn(
-        "sticker transition-all hover:border-primary/50",
+        "sticker transition-all hover:border-primary/50 group",
         isAdmission && "sticker-admission",
         isDischarged && "sticker-discharged"
       )}
@@ -162,6 +352,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
         {/* Left column - Patient info */}
         <div className="flex flex-col min-w-0">
           <div className="flex items-baseline gap-1 flex-wrap">
+            <StickerActionsMenu patientId={patient.id} patientName={patient.name} />
             <span className="font-semibold text-sm">{patient.name}</span>
             <span className="text-[10px] text-muted-foreground whitespace-nowrap">{elapsedTime}</span>
           </div>
@@ -177,19 +368,38 @@ export function PatientSticker({ patient }: PatientStickerProps) {
           onRemove={handleRemove}
         />
 
-        {/* Right column - Box, Doctor, Nurse */}
-        <div className="flex flex-col items-end text-xs font-medium min-w-[32px]">
-          <span className="text-foreground">{patient.box.replace('Box ', 'B')}</span>
-          <span className="text-primary">{getInitials(patient.doctor)}</span>
-          <span className="text-muted-foreground">{getInitials(patient.nurse)}</span>
+        {/* Right column - Box, Doctor, Nurse (clickable dropdowns) */}
+        <div className="flex flex-col items-end min-w-[32px]">
+          <StaffDropdown
+            type="location"
+            patientId={patient.id}
+            currentValue={patient.box}
+            options={locations}
+            displayValue={patient.box.replace('Box ', 'B')}
+          />
+          <StaffDropdown
+            type="doctor"
+            patientId={patient.id}
+            currentValue={patient.doctor}
+            options={doctors}
+            displayValue={getInitials(patient.doctor)}
+          />
+          <StaffDropdown
+            type="nurse"
+            patientId={patient.id}
+            currentValue={patient.nurse}
+            options={nurses}
+            displayValue={getInitials(patient.nurse)}
+          />
         </div>
       </div>
 
-      {/* Bottom row - Chief Complaint + Status */}
+      {/* Bottom row - Chief Complaint (editable) + Status */}
       <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-border/50">
-        <span className="text-xs text-muted-foreground truncate flex-1">
-          {patient.chiefComplaint}
-        </span>
+        <EditableChiefComplaint 
+          patientId={patient.id}
+          complaint={patient.chiefComplaint}
+        />
         <StatusDropdown 
           patientId={patient.id}
           currentStatus={patient.status}

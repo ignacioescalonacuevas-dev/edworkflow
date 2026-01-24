@@ -11,21 +11,32 @@ interface StickerNoteItemProps {
 export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemProps) {
   const config = NOTE_TYPE_CONFIG[note.type];
 
-  // Study type: show checkmark when completed, click to toggle
+  // Study type: show checkmark when completed, click to toggle, X to remove
   if (note.type === 'study') {
     return (
-      <button
-        onClick={() => onToggle(note.id)}
-        className={cn(
-          "flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-medium border transition-colors",
-          note.completed 
-            ? "bg-green-500/30 text-green-300 border-green-500/40"
-            : "bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30"
-        )}
-      >
-        {note.completed && <Check className="h-2.5 w-2.5" />}
-        <span>{note.text}</span>
-      </button>
+      <div className="flex items-center gap-0.5 group">
+        <button
+          onClick={() => onToggle(note.id)}
+          className={cn(
+            "flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-medium border transition-colors",
+            note.completed 
+              ? "bg-green-500/30 text-green-300 border-green-500/40"
+              : "bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30"
+          )}
+        >
+          {note.completed && <Check className="h-2.5 w-2.5" />}
+          <span>{note.text}</span>
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove(note.id);
+          }}
+          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+        >
+          <X className="h-2.5 w-2.5" />
+        </button>
+      </div>
     );
   }
 
