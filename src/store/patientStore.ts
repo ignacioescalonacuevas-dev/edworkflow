@@ -121,6 +121,12 @@ interface PatientStore {
   dischargePatient: (patientId: string) => void;
   transferPatient: (patientId: string, hospitalName: string) => void;
   
+  // Patient removal
+  removePatient: (patientId: string) => void;
+  
+  // Chief Complaint
+  updatePatientChiefComplaint: (patientId: string, complaint: string) => void;
+  
   // Events
   addEvent: (patientId: string, event: Omit<PatientEvent, 'id'>) => void;
 }
@@ -801,6 +807,23 @@ export const usePatientStore = create<PatientStore>()(
                   events: [...p.events, { ...event, id: generateId() }],
                 }
               : p
+          ),
+        }));
+      },
+
+      removePatient: (patientId) => {
+        set((state) => ({
+          patients: state.patients.filter((p) => p.id !== patientId),
+          selectedPatientId: state.selectedPatientId === patientId 
+            ? null 
+            : state.selectedPatientId,
+        }));
+      },
+
+      updatePatientChiefComplaint: (patientId, complaint) => {
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId ? { ...p, chiefComplaint: complaint } : p
           ),
         }));
       },
