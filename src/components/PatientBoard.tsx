@@ -5,7 +5,6 @@ import { Activity } from 'lucide-react';
 
 export function PatientBoard() {
   const store = usePatientStore();
-  const { selectedPatientId, selectPatient } = store;
   const filteredPatients = getFilteredPatients(store);
 
   // Sort by arrival time (most recent first)
@@ -24,8 +23,6 @@ export function PatientBoard() {
               <PatientSticker
                 key={patient.id}
                 patient={patient}
-                onClick={() => selectPatient(patient.id)}
-                isSelected={selectedPatientId === patient.id}
               />
             ))}
           </div>

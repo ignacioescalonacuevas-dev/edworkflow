@@ -7,8 +7,6 @@ import { cn } from '@/lib/utils';
 
 interface PatientStickerProps {
   patient: Patient;
-  onClick: () => void;
-  isSelected: boolean;
 }
 
 function getInitials(name: string): string {
@@ -26,7 +24,7 @@ function getElapsedTime(arrivalTime: Date): string {
   return `${hours}h${minutes.toString().padStart(2, '0')}`;
 }
 
-export function PatientSticker({ patient, onClick, isSelected }: PatientStickerProps) {
+export function PatientSticker({ patient }: PatientStickerProps) {
   const { addStickerNote, toggleStudyCompleted, removeStickerNote } = usePatientStore();
   
   const elapsedTime = useMemo(() => getElapsedTime(patient.arrivalTime), [patient.arrivalTime]);
@@ -49,10 +47,8 @@ export function PatientSticker({ patient, onClick, isSelected }: PatientStickerP
 
   return (
     <div
-      onClick={onClick}
       className={cn(
-        "sticker cursor-pointer transition-all hover:border-primary/50",
-        isSelected && "ring-2 ring-primary border-primary",
+        "sticker transition-all hover:border-primary/50",
         isAdmission && "sticker-admission",
         isDischarged && "sticker-discharged"
       )}
