@@ -12,17 +12,20 @@ interface AddNotePopoverProps {
 }
 
 export function AddNotePopover({ onAdd }: AddNotePopoverProps) {
-  const { studyOptions, followupOptions, precautionOptions, addStudyOption, addFollowupOption, addPrecautionOption } = usePatientStore();
+  const { 
+    studyOptions, followupOptions, precautionOptions, dischargeOptions,
+    addStudyOption, addFollowupOption, addPrecautionOption, addDischargeOption 
+  } = usePatientStore();
   const [noteType, setNoteType] = useState<StickerNoteType>('study');
   const [text, setText] = useState('');
   const [selectedOption, setSelectedOption] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customValue, setCustomValue] = useState('');
 
+  const hasSelectOptions = noteType === 'study' || noteType === 'followup' || noteType === 'precaution' || noteType === 'discharge';
+
   const handleAdd = () => {
-    const noteText = noteType === 'study' || noteType === 'followup' || noteType === 'precaution'
-      ? selectedOption
-      : text;
+    const noteText = hasSelectOptions ? selectedOption : text;
     
     if (!noteText) return;
 
@@ -49,6 +52,9 @@ export function AddNotePopover({ onAdd }: AddNotePopoverProps) {
         break;
       case 'precaution':
         addPrecautionOption(customValue.trim());
+        break;
+      case 'discharge':
+        addDischargeOption(customValue.trim());
         break;
     }
     
@@ -114,6 +120,8 @@ export function AddNotePopover({ onAdd }: AddNotePopoverProps) {
         return renderSelectWithAddOption(followupOptions, 'Select follow-up...');
       case 'precaution':
         return renderSelectWithAddOption(precautionOptions, 'Select precaution...');
+      case 'discharge':
+        return renderSelectWithAddOption(dischargeOptions, 'Select discharge...');
       case 'critical':
         return (
           <Input
@@ -144,9 +152,7 @@ export function AddNotePopover({ onAdd }: AddNotePopoverProps) {
     }
   };
 
-  const isDisabled = (noteType === 'study' || noteType === 'followup' || noteType === 'precaution')
-    ? !selectedOption
-    : !text.trim();
+  const isDisabled = hasSelectOptions ? !selectedOption : !text.trim();
 
   return (
     <div className="space-y-3">

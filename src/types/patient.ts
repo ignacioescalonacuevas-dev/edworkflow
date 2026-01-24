@@ -71,6 +71,7 @@ export type StickerNoteType =
   | 'critical'     // Critical values: Trop 85, K+ 6.2
   | 'precaution'   // Flu A +, COVID +, MRSA
   | 'admitting'    // Admitting physician
+  | 'discharge'    // Discharge destination
   | 'note';        // Free note
 
 export interface StickerNote {
@@ -87,12 +88,15 @@ export const FOLLOWUP_OPTIONS = ['GP', "Women's Clinic", 'RACC', 'Fracture Clini
 
 export const PRECAUTION_OPTIONS = ['Flu A +', 'Flu B +', 'COVID +', 'MRSA', 'Isolation'] as const;
 
+export const DISCHARGE_OPTIONS = ['Home', 'GP F/U', 'Clinic', 'RACC', 'AMA'] as const;
+
 export const NOTE_TYPE_CONFIG: Record<StickerNoteType, { label: string; color: string }> = {
   study: { label: 'Study', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
   followup: { label: 'Follow-up', color: 'bg-green-500/20 text-green-300 border-green-500/30' },
   critical: { label: 'Critical Value', color: 'bg-red-500/20 text-red-300 border-red-500/30' },
   precaution: { label: 'Precaution', color: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
   admitting: { label: 'Admitting MD', color: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
+  discharge: { label: 'Discharge', color: 'bg-teal-500/20 text-teal-300 border-teal-500/30' },
   note: { label: 'Note', color: 'bg-gray-500/20 text-gray-300 border-gray-500/30' },
 };
 

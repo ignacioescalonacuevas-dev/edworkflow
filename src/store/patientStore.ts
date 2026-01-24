@@ -43,6 +43,11 @@ interface PatientStore {
   studyOptions: string[];
   followupOptions: string[];
   precautionOptions: string[];
+  dischargeOptions: string[];
+  
+  // Shift management
+  shiftDate: Date | null;
+  shiftConfigured: boolean;
   
   // Board filters
   searchQuery: string;
@@ -75,6 +80,7 @@ interface PatientStore {
   addStudyOption: (option: string) => void;
   addFollowupOption: (option: string) => void;
   addPrecautionOption: (option: string) => void;
+  addDischargeOption: (option: string) => void;
   
   // Patient updates
   updatePatientLocation: (patientId: string, location: string) => void;
@@ -99,6 +105,12 @@ interface PatientStore {
   setHideDischargedFromBoard: (hide: boolean) => void;
   clearFilters: () => void;
   clearShift: () => void;
+  
+  // Shift management
+  setShiftDate: (date: Date) => void;
+  setShiftStaff: (physicians: string[], nurses: string[]) => void;
+  loadPreviousShift: () => void;
+  endShift: () => void;
   
   // Admission
   startAdmission: (patientId: string) => void;
@@ -262,6 +274,11 @@ export const usePatientStore = create<PatientStore>()(
       studyOptions: ['CT', 'ECHO', 'ECG', 'US', 'X-Ray', 'Vascular'],
       followupOptions: ['GP', "Women's Clinic", 'RACC', 'Fracture Clinic', 'Surgical Clinic'],
       precautionOptions: ['Flu A +', 'Flu B +', 'COVID +', 'MRSA', 'Isolation'],
+      dischargeOptions: ['Home', 'GP F/U', 'Clinic', 'RACC', 'AMA'],
+      
+      // Shift state
+      shiftDate: null,
+      shiftConfigured: false,
       
       // Board filters
       searchQuery: '',
@@ -381,6 +398,14 @@ export const usePatientStore = create<PatientStore>()(
           precautionOptions: state.precautionOptions.includes(option) 
             ? state.precautionOptions 
             : [...state.precautionOptions, option],
+        }));
+      },
+
+      addDischargeOption: (option) => {
+        set((state) => ({
+          dischargeOptions: state.dischargeOptions.includes(option) 
+            ? state.dischargeOptions 
+            : [...state.dischargeOptions, option],
         }));
       },
 
@@ -631,6 +656,23 @@ export const usePatientStore = create<PatientStore>()(
         searchQuery: '',
         filterByDoctor: null,
         filterByNurse: null,
+      }),
+
+      // Shift management
+      setShiftDate: (date) => set({ shiftDate: date, shiftConfigured: true }),
+      
+      setShiftStaff: (physicians, nurses) => set({
+        doctors: physicians.length > 0 ? physicians : ['Dr. Smith'],
+        nurses: nurses.length > 0 ? nurses : ['N. Garcia'],
+        patients: [],
+        shiftConfigured: true,
+      }),
+      
+      loadPreviousShift: () => set({ shiftConfigured: true }),
+      
+      endShift: () => set({
+        shiftConfigured: false,
+        shiftDate: null,
       }),
 
       startAdmission: (patientId) => {
