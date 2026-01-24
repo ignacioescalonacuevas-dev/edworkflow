@@ -11,11 +11,13 @@ interface StickerNotesColumnProps {
   onRemove: (noteId: string) => void;
 }
 
-export function StickerNotesColumn({ notes, onAddNote, onToggle, onRemove }: StickerNotesColumnProps) {
+export function StickerNotesColumn({ notes = [], onAddNote, onToggle, onRemove }: StickerNotesColumnProps) {
+  const safeNotes = notes || [];
+  
   return (
     <div className="flex flex-col gap-0.5 min-w-[70px] max-w-[100px]" onClick={(e) => e.stopPropagation()}>
       {/* Existing notes */}
-      {notes.map((note) => (
+      {safeNotes.map((note) => (
         <StickerNoteItem
           key={note.id}
           note={note}
