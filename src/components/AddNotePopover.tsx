@@ -3,16 +3,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { StickerNote, StickerNoteType, STUDY_OPTIONS, FOLLOWUP_OPTIONS, PRECAUTION_OPTIONS, NOTE_TYPE_CONFIG } from '@/types/patient';
+import { StickerNote, StickerNoteType, NOTE_TYPE_CONFIG } from '@/types/patient';
+import { usePatientStore } from '@/store/patientStore';
+import { Plus } from 'lucide-react';
 
 interface AddNotePopoverProps {
   onAdd: (note: Omit<StickerNote, 'id' | 'createdAt'>) => void;
 }
 
 export function AddNotePopover({ onAdd }: AddNotePopoverProps) {
+  const { studyOptions, followupOptions, precautionOptions, addStudyOption, addFollowupOption, addPrecautionOption } = usePatientStore();
   const [noteType, setNoteType] = useState<StickerNoteType>('study');
   const [text, setText] = useState('');
   const [selectedOption, setSelectedOption] = useState('');
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customValue, setCustomValue] = useState('');
 
   const handleAdd = () => {
     const noteText = noteType === 'study' || noteType === 'followup' || noteType === 'precaution'
@@ -32,47 +37,83 @@ export function AddNotePopover({ onAdd }: AddNotePopoverProps) {
     setSelectedOption('');
   };
 
+  const handleAddCustomOption = () => {
+    if (!customValue.trim()) return;
+    
+    switch (noteType) {
+      case 'study':
+        addStudyOption(customValue.trim());
+        break;
+      case 'followup':
+        addFollowupOption(customValue.trim());
+        break;
+      case 'precaution':
+        addPrecautionOption(customValue.trim());
+        break;
+    }
+    
+    setSelectedOption(customValue.trim());
+    setCustomValue('');
+    setShowCustomInput(false);
+  };
+
+  const renderSelectWithAddOption = (options: string[], placeholder: string) => {
+    if (showCustomInput) {
+      return (
+        <div className="flex gap-2">
+          <Input
+            autoFocus
+            placeholder="New option..."
+            value={customValue}
+            onChange={(e) => setCustomValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleAddCustomOption();
+              if (e.key === 'Escape') {
+                setShowCustomInput(false);
+                setCustomValue('');
+              }
+            }}
+            className="bg-input border-border flex-1"
+          />
+          <Button size="sm" onClick={handleAddCustomOption} className="shrink-0">
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        <Select value={selectedOption} onValueChange={setSelectedOption}>
+          <SelectTrigger className="bg-input border-border">
+            <SelectValue placeholder={placeholder} />
+          </SelectTrigger>
+          <SelectContent className="bg-popover border-border">
+            {options.map((opt) => (
+              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => setShowCustomInput(true)}
+          className="w-full text-xs text-muted-foreground"
+        >
+          <Plus className="h-3 w-3 mr-1" /> Add new option
+        </Button>
+      </div>
+    );
+  };
+
   const renderInput = () => {
     switch (noteType) {
       case 'study':
-        return (
-          <Select value={selectedOption} onValueChange={setSelectedOption}>
-            <SelectTrigger className="bg-input border-border">
-              <SelectValue placeholder="Select study..." />
-            </SelectTrigger>
-            <SelectContent className="bg-popover border-border">
-              {STUDY_OPTIONS.map((opt) => (
-                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
+        return renderSelectWithAddOption(studyOptions, 'Select study...');
       case 'followup':
-        return (
-          <Select value={selectedOption} onValueChange={setSelectedOption}>
-            <SelectTrigger className="bg-input border-border">
-              <SelectValue placeholder="Select follow-up..." />
-            </SelectTrigger>
-            <SelectContent className="bg-popover border-border">
-              {FOLLOWUP_OPTIONS.map((opt) => (
-                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
+        return renderSelectWithAddOption(followupOptions, 'Select follow-up...');
       case 'precaution':
-        return (
-          <Select value={selectedOption} onValueChange={setSelectedOption}>
-            <SelectTrigger className="bg-input border-border">
-              <SelectValue placeholder="Select precaution..." />
-            </SelectTrigger>
-            <SelectContent className="bg-popover border-border">
-              {PRECAUTION_OPTIONS.map((opt) => (
-                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        );
+        return renderSelectWithAddOption(precautionOptions, 'Select precaution...');
       case 'critical':
         return (
           <Input
@@ -115,6 +156,8 @@ export function AddNotePopover({ onAdd }: AddNotePopoverProps) {
           setNoteType(v as StickerNoteType);
           setText('');
           setSelectedOption('');
+          setShowCustomInput(false);
+          setCustomValue('');
         }}>
           <SelectTrigger className="bg-input border-border">
             <SelectValue />
