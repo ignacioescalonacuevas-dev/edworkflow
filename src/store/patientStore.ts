@@ -97,6 +97,7 @@ interface PatientStore {
   updateStickerNote: (patientId: string, noteId: string, updates: Partial<StickerNote>) => void;
   removeStickerNote: (patientId: string, noteId: string) => void;
   toggleStudyCompleted: (patientId: string, noteId: string) => void;
+  reorderStickerNotes: (patientId: string, noteIds: string[]) => void;
   
   // Board filters
   setSearchQuery: (query: string) => void;
@@ -641,6 +642,19 @@ export const usePatientStore = create<PatientStore>()(
                 }
               : p
           ),
+        }));
+      },
+
+      reorderStickerNotes: (patientId, noteIds) => {
+        set((state) => ({
+          patients: state.patients.map((p) => {
+            if (p.id !== patientId) return p;
+            const noteMap = new Map(p.stickerNotes.map((n) => [n.id, n]));
+            const reorderedNotes = noteIds
+              .map((id) => noteMap.get(id))
+              .filter((n): n is StickerNote => n !== undefined);
+            return { ...p, stickerNotes: reorderedNotes };
+          }),
         }));
       },
 
