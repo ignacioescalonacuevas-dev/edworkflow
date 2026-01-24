@@ -1,9 +1,60 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Patient, PATIENT_STATUSES } from '@/types/patient';
 import { usePatientStore } from '@/store/patientStore';
 import { StickerNotesColumn } from './StickerNotesColumn';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+
+interface EditableBedNumberProps {
+  patientId: string;
+  bedNumber: string;
+}
+
+function EditableBedNumber({ patientId, bedNumber }: EditableBedNumberProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(bedNumber);
+  const { updateAdmission } = usePatientStore();
+
+  const handleSave = () => {
+    updateAdmission(patientId, { bedNumber: value });
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSave();
+    if (e.key === 'Escape') {
+      setValue(bedNumber);
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <Input
+        autoFocus
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={handleKeyDown}
+        className="absolute top-1 right-1 w-16 h-5 text-[10px] px-1.5 py-0 bg-blue-500 text-white border-blue-400 font-medium"
+        onClick={(e) => e.stopPropagation()}
+      />
+    );
+  }
+
+  return (
+    <div 
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsEditing(true);
+      }}
+      className="absolute top-1 right-1 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-blue-600"
+    >
+      {bedNumber || '+Cama'}
+    </div>
+  );
+}
 
 interface PatientStickerProps {
   patient: Patient;
@@ -94,11 +145,12 @@ export function PatientSticker({ patient }: PatientStickerProps) {
         </Badge>
       </div>
 
-      {/* Bed number overlay for admissions */}
-      {isAdmission && patient.admission?.bedNumber && (
-        <div className="absolute top-1 right-1 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">
-          {patient.admission.bedNumber}
-        </div>
+      {/* Bed number for admissions - editable */}
+      {isAdmission && (
+        <EditableBedNumber 
+          patientId={patient.id}
+          bedNumber={patient.admission?.bedNumber || ''}
+        />
       )}
     </div>
   );

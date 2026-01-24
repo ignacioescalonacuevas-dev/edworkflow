@@ -39,6 +39,11 @@ interface PatientStore {
   nurses: string[];
   locations: string[];
   
+  // Dynamic options for notes
+  studyOptions: string[];
+  followupOptions: string[];
+  precautionOptions: string[];
+  
   // Board filters
   searchQuery: string;
   filterByDoctor: string | null;
@@ -65,6 +70,11 @@ interface PatientStore {
   addLocation: (name: string) => void;
   updateLocation: (oldName: string, newName: string) => void;
   removeLocation: (name: string) => void;
+  
+  // Note options management
+  addStudyOption: (option: string) => void;
+  addFollowupOption: (option: string) => void;
+  addPrecautionOption: (option: string) => void;
   
   // Patient updates
   updatePatientLocation: (patientId: string, location: string) => void;
@@ -248,6 +258,11 @@ export const usePatientStore = create<PatientStore>()(
       nurses: DEFAULT_NURSES,
       locations: DEFAULT_LOCATIONS,
       
+      // Dynamic note options
+      studyOptions: ['CT', 'ECHO', 'ECG', 'US', 'X-Ray', 'Vascular'],
+      followupOptions: ['GP', "Women's Clinic", 'RACC', 'Fracture Clinic', 'Surgical Clinic'],
+      precautionOptions: ['Flu A +', 'Flu B +', 'COVID +', 'MRSA', 'Isolation'],
+      
       // Board filters
       searchQuery: '',
       filterByDoctor: null,
@@ -342,6 +357,30 @@ export const usePatientStore = create<PatientStore>()(
       removeLocation: (name) => {
         set((state) => ({
           locations: state.locations.filter((l) => l !== name),
+        }));
+      },
+
+      addStudyOption: (option) => {
+        set((state) => ({
+          studyOptions: state.studyOptions.includes(option) 
+            ? state.studyOptions 
+            : [...state.studyOptions, option],
+        }));
+      },
+
+      addFollowupOption: (option) => {
+        set((state) => ({
+          followupOptions: state.followupOptions.includes(option) 
+            ? state.followupOptions 
+            : [...state.followupOptions, option],
+        }));
+      },
+
+      addPrecautionOption: (option) => {
+        set((state) => ({
+          precautionOptions: state.precautionOptions.includes(option) 
+            ? state.precautionOptions 
+            : [...state.precautionOptions, option],
         }));
       },
 

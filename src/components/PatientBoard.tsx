@@ -18,12 +18,11 @@ export function PatientBoard() {
       
       <div className="flex-1 overflow-auto p-4">
         {sortedPatients.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+          <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-3 [column-fill:auto]">
             {sortedPatients.map((patient) => (
-              <PatientSticker
-                key={patient.id}
-                patient={patient}
-              />
+              <div key={patient.id} className="break-inside-avoid mb-3">
+                <PatientSticker patient={patient} />
+              </div>
             ))}
           </div>
         ) : (
