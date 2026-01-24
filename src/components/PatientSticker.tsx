@@ -108,8 +108,8 @@ export function PatientSticker({ patient }: PatientStickerProps) {
       <div className="grid grid-cols-[1fr_auto_auto] gap-2">
         {/* Left column - Patient info */}
         <div className="flex flex-col min-w-0">
-          <div className="flex items-baseline gap-1">
-            <span className="font-semibold text-sm truncate">{patient.name}</span>
+          <div className="flex items-baseline gap-1 flex-wrap">
+            <span className="font-semibold text-sm">{patient.name}</span>
             <span className="text-[10px] text-muted-foreground whitespace-nowrap">{elapsedTime}</span>
           </div>
           <span className="text-xs text-muted-foreground">{patient.dateOfBirth}</span>
