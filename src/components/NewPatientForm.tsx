@@ -41,7 +41,7 @@ export function NewPatientForm() {
         doctor: doctor || '',
         nurse: nurse || '',
         arrivalTime: new Date(),
-        status: 'registration',
+        status: 'treatment_room',
       });
       // Reset form
       setName('');

@@ -139,7 +139,7 @@ const samplePatients: Patient[] = [
     doctor: 'Dr. Smith',
     nurse: 'N. Garcia',
     arrivalTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    status: 'evaluation',
+    status: 'treatment_room',
     orders: [
       {
         id: 'o1',
@@ -245,7 +245,7 @@ const samplePatients: Patient[] = [
     doctor: 'Dr. Williams',
     nurse: 'N. Wilson',
     arrivalTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
-    status: 'triage',
+    status: 'waiting_room',
     orders: [],
     stickerNotes: [],
     events: [
