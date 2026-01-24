@@ -1,6 +1,8 @@
-import { X, Check } from 'lucide-react';
+import { X, Check, GripVertical } from 'lucide-react';
 import { StickerNote, NOTE_TYPE_CONFIG } from '@/types/patient';
 import { cn } from '@/lib/utils';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface StickerNoteItemProps {
   note: StickerNote;
@@ -10,11 +12,38 @@ interface StickerNoteItemProps {
 
 export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemProps) {
   const config = NOTE_TYPE_CONFIG[note.type];
+  
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: note.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : undefined,
+  };
 
   // Study type: show checkmark when completed, click to toggle, X to remove
   if (note.type === 'study') {
     return (
-      <div className="flex items-center gap-0.5 group">
+      <div 
+        ref={setNodeRef} 
+        style={style} 
+        className="flex items-center gap-0.5 group"
+      >
+        <div
+          {...attributes}
+          {...listeners}
+          className="cursor-grab opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity touch-none"
+        >
+          <GripVertical className="h-2.5 w-2.5" />
+        </div>
         <button
           onClick={() => onToggle(note.id)}
           className={cn(
@@ -41,7 +70,18 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
   }
 
   return (
-    <div className="flex items-center gap-0.5 group">
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className="flex items-center gap-0.5 group"
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity touch-none"
+      >
+        <GripVertical className="h-2.5 w-2.5" />
+      </div>
       <span className={cn(
         "px-1 py-0.5 rounded text-[10px] font-medium border",
         config.color
