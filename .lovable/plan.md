@@ -1,92 +1,183 @@
 
-
-# Plan: Board Autónomo sin Panel Lateral
+# Plan: Sistema de Edicion y Eliminacion Completo en el Sticker
 
 ## Resumen
 
-Simplificar la interacción del board para que todo se maneje directamente en los stickers, sin abrir el panel de detalle. El código del panel se mantiene comentado/desactivado para uso futuro.
+Implementar funcionalidades de edicion y eliminacion directamente en el sticker para permitir corregir errores sin necesidad de panel lateral. Incluye: eliminar pacientes, desmarcar/eliminar estudios, editar motivo de consulta, y cambiar medico/enfermera/ubicacion.
 
 ---
 
 ## Cambios Necesarios
 
-### 1. Modificar `src/pages/Index.tsx`
+### 1. Store - Agregar funcion para eliminar pacientes
+
+**Archivo:** `src/store/patientStore.ts`
 
 **Cambios:**
-- Comentar (no eliminar) todo el bloque del panel lateral `<aside>...</aside>`
-- Remover la lógica de `selectedPatientId` ya que no se usará por ahora
-- El board ocupa el 100% del espacio
+- Agregar accion `removePatient: (patientId: string) => void` a la interfaz
+- Implementar la logica para filtrar el paciente del array
 
-**Código resultante:**
-```typescript
-const Index = () => {
-  return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
-      {/* Main Content - Patient Board */}
-      <main className="flex-1 overflow-hidden">
-        <PatientBoard />
-      </main>
+```text
+Interfaz:
+removePatient: (patientId: string) => void;
 
-      {/* 
-        Side Panel - Patient Detail
-        DISABLED: Reserved for future multi-tablet integration
-        {selectedPatient && (
-          <aside className="w-[480px] border-l ...">
-            <PatientDetail patient={selectedPatient} />
-          </aside>
-        )}
-      */}
-    </div>
-  );
-};
+Implementacion:
+removePatient: (patientId) => {
+  set((state) => ({
+    patients: state.patients.filter((p) => p.id !== patientId),
+    selectedPatientId: state.selectedPatientId === patientId ? null : state.selectedPatientId,
+  }));
+},
 ```
 
 ---
 
-### 2. Modificar `src/components/PatientSticker.tsx`
+### 2. Sticker - Menu contextual para eliminar paciente
+
+**Archivo:** `src/components/PatientSticker.tsx`
 
 **Cambios:**
-- Remover prop `onClick` ya que no se necesita seleccionar
-- Remover prop `isSelected` ya que no hay estado de selección
-- Remover el estilo de `ring-2 ring-primary` de selección
-- Mantener el cursor normal (no pointer) o dejarlo como pointer para indicar que es interactivo (las notas)
+- Agregar boton de menu (tres puntos) en esquina superior derecha del sticker
+- Usar `DropdownMenu` con opcion "Eliminar paciente"
+- Incluir dialogo de confirmacion usando `AlertDialog`
 
-**Props actualizadas:**
-```typescript
-interface PatientStickerProps {
-  patient: Patient;
-  // onClick y isSelected removidos
-}
+```text
+Componente StickerMenu:
+- Icono MoreVertical
+- DropdownMenu con opciones:
+  - "Eliminar paciente" (con confirmacion)
 ```
 
 ---
 
-### 3. Modificar `src/components/PatientBoard.tsx`
+### 3. Sticker - Hacer editable el Chief Complaint
+
+**Archivo:** `src/components/PatientSticker.tsx`
 
 **Cambios:**
-- Remover referencia a `selectPatient` del store
-- Remover referencia a `selectedPatientId` del store
-- No pasar `onClick` ni `isSelected` a PatientSticker
+- Crear componente `EditableChiefComplaint` similar a `EditableBedNumber`
+- Al hacer click en el motivo de consulta, se convierte en input editable
+- Guardar con Enter o al perder foco, cancelar con Escape
+
+**Requiere agregar al store:**
+- `updatePatientChiefComplaint: (patientId: string, complaint: string) => void`
+
+---
+
+### 4. Sticker - Hacer editables Doctor, Nurse y Box
+
+**Archivo:** `src/components/PatientSticker.tsx`
+
+**Cambios:**
+- Convertir las iniciales de Doctor/Nurse/Box en dropdowns clickeables
+- Usar `DropdownMenu` compacto que muestra la lista del store
+- Mostrar iniciales pero al clickear abre selector completo
+
+```text
+Componente RightColumnDropdown:
+- Click en iniciales de medico -> Dropdown con lista de doctores
+- Click en iniciales de enfermera -> Dropdown con lista de nurses
+- Click en ubicacion -> Dropdown con lista de locations
+```
+
+---
+
+### 5. Studies - Agregar opcion de eliminar
+
+**Archivo:** `src/components/StickerNoteItem.tsx`
+
+**Cambios:**
+- Agregar icono X visible al hover en estudios (igual que otras notas)
+- Permitir tanto toggle (click normal) como eliminar (click en X)
+
+```text
+Antes: Solo se puede marcar completado
+Despues: Se puede marcar completado O eliminar con X
+```
+
+---
+
+## Flujo de Interaccion Final
+
+| Elemento | Accion | Resultado |
+|----------|--------|-----------|
+| Nombre paciente | Click en menu (3 puntos) | Abre menu con "Eliminar" |
+| Chief Complaint | Click | Se convierte en input editable |
+| Box (ej: B3) | Click | Dropdown para cambiar ubicacion |
+| Iniciales medico | Click | Dropdown para cambiar medico |
+| Iniciales enfermera | Click | Dropdown para cambiar enfermera |
+| Estudio (CT, ECHO) | Click | Marca/desmarca completado |
+| Estudio (CT, ECHO) | Hover + Click X | Elimina el estudio |
+| Otras notas | Hover + Click X | Elimina la nota |
 
 ---
 
 ## Archivos a Modificar
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/pages/Index.tsx` | Comentar panel lateral, limpiar imports |
-| `src/components/PatientSticker.tsx` | Remover onClick/isSelected, simplificar |
-| `src/components/PatientBoard.tsx` | Remover lógica de selección |
+| Archivo | Cambios |
+|---------|---------|
+| `src/store/patientStore.ts` | Agregar `removePatient` y `updatePatientChiefComplaint` |
+| `src/components/PatientSticker.tsx` | Menu de sticker, Chief Complaint editable, dropdowns para doctor/nurse/box |
+| `src/components/StickerNoteItem.tsx` | Agregar X para eliminar estudios |
 
 ---
 
-## Resultado Final
+## Detalles Tecnicos
 
-- Click en sticker: No hace nada (el sticker no se "selecciona")
-- Click en columna central del sticker: Abre popover para agregar notas
-- Click en checkbox de estudio: Marca/desmarca el estudio
-- Click en nota existente: Permite eliminar
-- Panel lateral: Desactivado pero listo para futuro uso
+### Nuevas acciones en el Store
 
-El coordinador puede trabajar exclusivamente desde el board, agregando pacientes y gestionando notas/estudios sin distracciones.
+```typescript
+// En PatientStore interface
+removePatient: (patientId: string) => void;
+updatePatientChiefComplaint: (patientId: string, complaint: string) => void;
 
+// Implementacion
+removePatient: (patientId) => {
+  set((state) => ({
+    patients: state.patients.filter((p) => p.id !== patientId),
+    selectedPatientId: state.selectedPatientId === patientId 
+      ? null 
+      : state.selectedPatientId,
+  }));
+},
+
+updatePatientChiefComplaint: (patientId, complaint) => {
+  set((state) => ({
+    patients: state.patients.map((p) =>
+      p.id === patientId ? { ...p, chiefComplaint: complaint } : p
+    ),
+  }));
+},
+```
+
+### Componentes nuevos en PatientSticker
+
+```typescript
+// Menu de acciones del sticker
+function StickerActionsMenu({ patientId, patientName }) {
+  // MoreVertical icon + DropdownMenu
+  // AlertDialog para confirmacion de eliminacion
+}
+
+// Chief Complaint editable
+function EditableChiefComplaint({ patientId, complaint }) {
+  // Similar a EditableBedNumber
+  // Click -> Input -> Enter/Blur guarda
+}
+
+// Dropdown para Doctor/Nurse/Box
+function StaffDropdown({ type, patientId, currentValue, options }) {
+  // Muestra iniciales
+  // Click abre dropdown con opciones completas
+}
+```
+
+---
+
+## Resultado Esperado
+
+El coordinador puede corregir cualquier error directamente desde el sticker:
+- Error en nombre del paciente -> Elimina y vuelve a crear (por seguridad no se edita el nombre)
+- Error en CT marcado -> Hover y click en X para eliminar
+- Error en motivo de consulta -> Click para editar inline
+- Cambiar medico/enfermera/ubicacion -> Click en iniciales para abrir dropdown
