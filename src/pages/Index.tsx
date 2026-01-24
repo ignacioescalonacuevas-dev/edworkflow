@@ -1,6 +1,15 @@
 import { PatientBoard } from '@/components/PatientBoard';
+import { DaySetup } from '@/components/DaySetup';
+import { usePatientStore } from '@/store/patientStore';
 
 const Index = () => {
+  const { shiftConfigured } = usePatientStore();
+
+  // Show setup screen if shift not configured
+  if (!shiftConfigured) {
+    return <DaySetup onComplete={() => {}} />;
+  }
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
       {/* Main Content - Patient Board */}
