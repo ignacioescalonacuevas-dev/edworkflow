@@ -126,6 +126,47 @@
   }
 }
 
+/* Sticker styles */
+.sticker {
+  @apply p-2 rounded-lg border bg-card text-sm relative;
+}
+
+.sticker-admission {
+  @apply bg-blue-500/20 border-blue-400/50;
+}
+
+.sticker-discharged {
+  position: relative;
+  opacity: 0.6;
+}
+
+.sticker-discharged::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    to top right,
+    transparent calc(50% - 1px),
+    hsl(var(--muted-foreground) / 0.5) calc(50% - 1px),
+    hsl(var(--muted-foreground) / 0.5) calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* Staff counter styles */
+.staff-counter {
+  @apply px-2 py-1 rounded cursor-pointer hover:bg-accent transition-colors;
+}
+
+.staff-counter-active {
+  @apply bg-primary text-primary-foreground hover:bg-primary/90;
+}
+
 /* Custom scrollbar for dark theme */
 ::-webkit-scrollbar {
   width: 8px;

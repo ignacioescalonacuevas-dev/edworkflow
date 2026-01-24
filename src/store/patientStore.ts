@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Patient, Order, OrderStatus, AdmissionData, PatientEvent, PatientStatus, PATIENT_STATUSES } from '@/types/patient';
+import { Patient, Order, OrderStatus, AdmissionData, PatientEvent, PatientStatus, PATIENT_STATUSES, StickerNote, StickerNoteType } from '@/types/patient';
 
 const DEFAULT_DOCTORS = [
   'Dr. Smith',
@@ -8,6 +8,13 @@ const DEFAULT_DOCTORS = [
   'Dr. Williams',
   'Dr. Brown',
   'Dr. Davis',
+];
+
+const DEFAULT_NURSES = [
+  'N. Garcia',
+  'N. Brown',
+  'N. Wilson',
+  'N. Taylor',
 ];
 
 const DEFAULT_LOCATIONS = [
@@ -29,10 +36,17 @@ interface PatientStore {
   filterDoctor: string | null;
   viewMode: 'active' | 'history';
   doctors: string[];
+  nurses: string[];
   locations: string[];
   
+  // Board filters
+  searchQuery: string;
+  filterByDoctor: string | null;
+  filterByNurse: string | null;
+  hideDischargedFromBoard: boolean;
+  
   // Actions
-  addPatient: (patient: Omit<Patient, 'id' | 'events' | 'orders'>) => void;
+  addPatient: (patient: Omit<Patient, 'id' | 'events' | 'orders' | 'stickerNotes'>) => void;
   selectPatient: (id: string | null) => void;
   setFilterDoctor: (doctor: string | null) => void;
   setViewMode: (mode: 'active' | 'history') => void;
@@ -42,6 +56,11 @@ interface PatientStore {
   updateDoctor: (oldName: string, newName: string) => void;
   removeDoctor: (name: string) => void;
   
+  // Nurse management
+  addNurse: (name: string) => void;
+  updateNurse: (oldName: string, newName: string) => void;
+  removeNurse: (name: string) => void;
+  
   // Location management
   addLocation: (name: string) => void;
   updateLocation: (oldName: string, newName: string) => void;
@@ -50,11 +69,26 @@ interface PatientStore {
   // Patient updates
   updatePatientLocation: (patientId: string, location: string) => void;
   updatePatientDoctor: (patientId: string, doctor: string) => void;
+  updatePatientNurse: (patientId: string, nurse: string) => void;
   updatePatientStatus: (patientId: string, status: PatientStatus) => void;
   updateArrivalTime: (patientId: string, time: Date) => void;
   addOrder: (patientId: string, order: Omit<Order, 'id' | 'orderedAt'>) => void;
   updateOrderStatus: (patientId: string, orderId: string, status: OrderStatus, timestamp?: Date) => void;
   updateOrderTimestamp: (patientId: string, orderId: string, field: 'orderedAt' | 'doneAt' | 'reportedAt', time: Date) => void;
+  
+  // Sticker Notes
+  addStickerNote: (patientId: string, note: Omit<StickerNote, 'id' | 'createdAt'>) => void;
+  updateStickerNote: (patientId: string, noteId: string, updates: Partial<StickerNote>) => void;
+  removeStickerNote: (patientId: string, noteId: string) => void;
+  toggleStudyCompleted: (patientId: string, noteId: string) => void;
+  
+  // Board filters
+  setSearchQuery: (query: string) => void;
+  setFilterByDoctor: (doctor: string | null) => void;
+  setFilterByNurse: (nurse: string | null) => void;
+  setHideDischargedFromBoard: (hide: boolean) => void;
+  clearFilters: () => void;
+  clearShift: () => void;
   
   // Admission
   startAdmission: (patientId: string) => void;
@@ -76,8 +110,12 @@ const samplePatients: Patient[] = [
   {
     id: '1',
     name: 'Mary Johnson',
+    dateOfBirth: '15/03/1985',
+    mNumber: 'M00012345',
+    chiefComplaint: 'Chest pain, shortness of breath',
     box: 'Box 3',
     doctor: 'Dr. Smith',
+    nurse: 'N. Garcia',
     arrivalTime: new Date(Date.now() - 2 * 60 * 60 * 1000),
     status: 'evaluation',
     orders: [
@@ -97,6 +135,11 @@ const samplePatients: Patient[] = [
         orderedAt: new Date(Date.now() - 30 * 60 * 1000),
       },
     ],
+    stickerNotes: [
+      { id: 'sn1', type: 'study', text: 'CT', completed: true, createdAt: new Date(Date.now() - 1 * 60 * 60 * 1000) },
+      { id: 'sn2', type: 'study', text: 'ECHO', completed: false, createdAt: new Date(Date.now() - 30 * 60 * 1000) },
+      { id: 'sn3', type: 'critical', text: 'Trop 85', createdAt: new Date(Date.now() - 20 * 60 * 1000) },
+    ],
     events: [
       {
         id: 'e1',
@@ -109,8 +152,12 @@ const samplePatients: Patient[] = [
   {
     id: '2',
     name: 'James Wilson',
+    dateOfBirth: '22/07/1970',
+    mNumber: 'M00067890',
+    chiefComplaint: 'Abdominal pain',
     box: 'Box 7',
     doctor: 'Dr. Johnson',
+    nurse: 'N. Brown',
     arrivalTime: new Date(Date.now() - 4 * 60 * 60 * 1000),
     status: 'admission',
     orders: [
@@ -133,9 +180,14 @@ const samplePatients: Patient[] = [
         reportedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
       },
     ],
+    stickerNotes: [
+      { id: 'sn4', type: 'study', text: 'CT', completed: true, createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000) },
+      { id: 'sn5', type: 'admitting', text: 'Dr. Adams', createdAt: new Date(Date.now() - 30 * 60 * 1000) },
+      { id: 'sn6', type: 'precaution', text: 'Flu A +', createdAt: new Date(Date.now() - 25 * 60 * 1000) },
+    ],
     admission: {
       specialty: 'Surgical Registrar',
-      consultantName: 'Dr. O\'Brien',
+      consultantName: "Dr. O'Brien",
       bedNumber: 'Ward B-5',
       bedStatus: 'assigned_not_ready',
       registrarCalled: true,
@@ -164,11 +216,16 @@ const samplePatients: Patient[] = [
   {
     id: '3',
     name: 'Anna Martinez',
+    dateOfBirth: '10/11/1992',
+    mNumber: 'M00024680',
+    chiefComplaint: 'Headache, dizziness',
     box: 'Box 2',
     doctor: 'Dr. Williams',
+    nurse: 'N. Wilson',
     arrivalTime: new Date(Date.now() - 1 * 60 * 60 * 1000),
     status: 'triage',
     orders: [],
+    stickerNotes: [],
     events: [
       {
         id: 'e4',
@@ -188,13 +245,21 @@ export const usePatientStore = create<PatientStore>()(
       filterDoctor: null,
       viewMode: 'active',
       doctors: DEFAULT_DOCTORS,
+      nurses: DEFAULT_NURSES,
       locations: DEFAULT_LOCATIONS,
+      
+      // Board filters
+      searchQuery: '',
+      filterByDoctor: null,
+      filterByNurse: null,
+      hideDischargedFromBoard: true,
 
       addPatient: (patientData) => {
         const newPatient: Patient = {
           ...patientData,
           id: generateId(),
           orders: [],
+          stickerNotes: [],
           events: [
             {
               id: generateId(),
@@ -224,6 +289,7 @@ export const usePatientStore = create<PatientStore>()(
             p.doctor === oldName ? { ...p, doctor: newName } : p
           ),
           filterDoctor: state.filterDoctor === oldName ? newName : state.filterDoctor,
+          filterByDoctor: state.filterByDoctor === oldName ? newName : state.filterByDoctor,
         }));
       },
 
@@ -231,6 +297,30 @@ export const usePatientStore = create<PatientStore>()(
         set((state) => ({
           doctors: state.doctors.filter((d) => d !== name),
           filterDoctor: state.filterDoctor === name ? null : state.filterDoctor,
+          filterByDoctor: state.filterByDoctor === name ? null : state.filterByDoctor,
+        }));
+      },
+
+      addNurse: (name) => {
+        set((state) => ({
+          nurses: [...state.nurses, name],
+        }));
+      },
+
+      updateNurse: (oldName, newName) => {
+        set((state) => ({
+          nurses: state.nurses.map((n) => (n === oldName ? newName : n)),
+          patients: state.patients.map((p) =>
+            p.nurse === oldName ? { ...p, nurse: newName } : p
+          ),
+          filterByNurse: state.filterByNurse === oldName ? newName : state.filterByNurse,
+        }));
+      },
+
+      removeNurse: (name) => {
+        set((state) => ({
+          nurses: state.nurses.filter((n) => n !== name),
+          filterByNurse: state.filterByNurse === name ? null : state.filterByNurse,
         }));
       },
 
@@ -291,6 +381,28 @@ export const usePatientStore = create<PatientStore>()(
                       timestamp: new Date(),
                       type: 'doctor_assigned',
                       description: doctor ? `Physician assigned: ${doctor}` : 'Physician unassigned',
+                    },
+                  ],
+                }
+              : p
+          ),
+        }));
+      },
+
+      updatePatientNurse: (patientId, nurse) => {
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? {
+                  ...p,
+                  nurse,
+                  events: [
+                    ...p.events,
+                    {
+                      id: generateId(),
+                      timestamp: new Date(),
+                      type: 'nurse_assigned',
+                      description: nurse ? `Nurse assigned: ${nurse}` : 'Nurse unassigned',
                     },
                   ],
                 }
@@ -403,6 +515,84 @@ export const usePatientStore = create<PatientStore>()(
           ),
         }));
       },
+
+      // Sticker Notes
+      addStickerNote: (patientId, noteData) => {
+        const newNote: StickerNote = {
+          ...noteData,
+          id: generateId(),
+          createdAt: new Date(),
+        };
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? { ...p, stickerNotes: [...p.stickerNotes, newNote] }
+              : p
+          ),
+        }));
+      },
+
+      updateStickerNote: (patientId, noteId, updates) => {
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? {
+                  ...p,
+                  stickerNotes: p.stickerNotes.map((n) =>
+                    n.id === noteId ? { ...n, ...updates } : n
+                  ),
+                }
+              : p
+          ),
+        }));
+      },
+
+      removeStickerNote: (patientId, noteId) => {
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? { ...p, stickerNotes: p.stickerNotes.filter((n) => n.id !== noteId) }
+              : p
+          ),
+        }));
+      },
+
+      toggleStudyCompleted: (patientId, noteId) => {
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? {
+                  ...p,
+                  stickerNotes: p.stickerNotes.map((n) =>
+                    n.id === noteId && n.type === 'study'
+                      ? { ...n, completed: !n.completed }
+                      : n
+                  ),
+                }
+              : p
+          ),
+        }));
+      },
+
+      // Board filters
+      setSearchQuery: (query) => set({ searchQuery: query }),
+      setFilterByDoctor: (doctor) => set({ filterByDoctor: doctor }),
+      setFilterByNurse: (nurse) => set({ filterByNurse: nurse }),
+      setHideDischargedFromBoard: (hide) => set({ hideDischargedFromBoard: hide }),
+      
+      clearFilters: () => set({
+        searchQuery: '',
+        filterByDoctor: null,
+        filterByNurse: null,
+      }),
+
+      clearShift: () => set({
+        patients: [],
+        selectedPatientId: null,
+        searchQuery: '',
+        filterByDoctor: null,
+        filterByNurse: null,
+      }),
 
       startAdmission: (patientId) => {
         set((state) => ({
@@ -539,3 +729,38 @@ export const usePatientStore = create<PatientStore>()(
     }
   )
 );
+
+// Selector for filtered patients
+export const getFilteredPatients = (state: PatientStore): Patient[] => {
+  let result = state.patients;
+  
+  // Filter by search query
+  if (state.searchQuery) {
+    const query = state.searchQuery.toLowerCase();
+    result = result.filter(p => 
+      p.name.toLowerCase().includes(query) ||
+      p.mNumber.toLowerCase().includes(query) ||
+      p.doctor.toLowerCase().includes(query) ||
+      p.nurse?.toLowerCase().includes(query) ||
+      p.chiefComplaint.toLowerCase().includes(query) ||
+      p.box.toLowerCase().includes(query)
+    );
+  }
+  
+  // Filter by doctor
+  if (state.filterByDoctor) {
+    result = result.filter(p => p.doctor === state.filterByDoctor);
+  }
+  
+  // Filter by nurse
+  if (state.filterByNurse) {
+    result = result.filter(p => p.nurse === state.filterByNurse);
+  }
+  
+  // Hide discharged
+  if (state.hideDischargedFromBoard) {
+    result = result.filter(p => p.status !== 'discharged' && p.status !== 'transferred');
+  }
+  
+  return result;
+};
