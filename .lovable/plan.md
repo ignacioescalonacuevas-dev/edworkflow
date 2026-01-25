@@ -1,73 +1,100 @@
 
 
-# Plan: Aumentar Slots Disponibles para Notas
+# Plan: Centrar y Expandir el Área de Notas en el Sticker
 
-## Situación Actual
-
-```text
-Cuadrícula actual: 3x3 = 9 slots
-┌─────┬─────┬─────┐
-│  0  │  1  │  2  │
-├─────┼─────┼─────┤
-│  3  │  4  │  5  │
-├─────┼─────┼─────┤
-│  6  │  7  │  8  │
-└─────┴─────┴─────┘
-```
-
----
-
-## Propuesta: Expandir a 4x4 = 16 slots
+## Problema Actual
 
 ```text
-Nueva cuadrícula: 4x4 = 16 slots
-┌─────┬─────┬─────┬─────┐
-│  0  │  1  │  2  │  3  │
-├─────┼─────┼─────┼─────┤
-│  4  │  5  │  6  │  7  │
-├─────┼─────┼─────┼─────┤
-│  8  │  9  │ 10  │ 11  │
-├─────┼─────┼─────┼─────┤
-│ 12  │ 13  │ 14  │ 15  │
-└─────┴─────┴─────┴─────┘
+┌────────────────────────────────────────────────────────┐
+│ Nombre    [notas muy   │ B1  │ ← Notas muy arriba,    │
+│ DOB · M#   angostas]   │ MD  │   no ocupan el espacio │
+│                        │ RN  │   disponible al centro │
+├────────────────────────────────────────────────────────┤
+│ Chief Complaint                              Status    │
+└────────────────────────────────────────────────────────┘
 ```
 
-Esto proporciona casi el doble de posiciones para organizar notas según las preferencias del coordinador.
+## Solución Propuesta
+
+Centrar verticalmente la cuadrícula de notas y expandir su ancho para ocupar mejor el espacio disponible.
+
+```text
+┌────────────────────────────────────────────────────────┐
+│ Nombre              [    notas centradas    ] │ B1    │
+│ DOB · M#            [    y más anchas       ] │ MD    │
+│                     [                       ] │ RN    │
+├────────────────────────────────────────────────────────┤
+│ Chief Complaint                              Status    │
+└────────────────────────────────────────────────────────┘
+```
 
 ---
 
 ## Cambios Necesarios
 
-### Archivo: `src/components/StickerNotesColumn.tsx`
+### 1. PatientSticker.tsx - Centrar verticalmente la columna de notas
 
-| Línea | Cambio |
-|-------|--------|
-| 16 | Cambiar `TOTAL_SLOTS = 9` a `TOTAL_SLOTS = 16` |
-| 148 | Cambiar `grid-cols-3` a `grid-cols-4` |
-| 141 | Ajustar `max-w-[140px]` a `max-w-[180px]` para acomodar la columna extra |
+**Línea 355**: Agregar `items-center` al contenedor principal para alinear verticalmente todas las columnas.
+
+**Línea 368-375**: Agregar `flex items-center` al contenedor de notas para centrarlo.
+
+### 2. StickerNotesColumn.tsx - Expandir el ancho
+
+**Línea 141**: Cambiar las restricciones de ancho:
+- De: `min-w-[100px] max-w-[140px]`  
+- A: `min-w-[140px] max-w-[200px] flex-1`
+
+Esto permite que la columna de notas crezca para ocupar el espacio disponible.
 
 ---
 
-## Código Modificado
+## Archivos a Modificar
+
+| Archivo | Cambios |
+|---------|---------|
+| `src/components/PatientSticker.tsx` | Agregar alineación vertical centrada |
+| `src/components/StickerNotesColumn.tsx` | Expandir restricciones de ancho |
+
+---
+
+## Sección Técnica
+
+### PatientSticker.tsx
 
 ```typescript
-const TOTAL_SLOTS = 16; // 4x4 grid
+// Línea 355 - Agregar items-center al grid principal
+<div className="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
 
-// En el contenedor:
+// Líneas 368-375 - Envolver en contenedor centrado  
+{/* Middle column - Notes (centered) */}
+<div className="flex items-center justify-center">
+  <StickerNotesColumn
+    notes={patient.stickerNotes}
+    onAddNote={handleAddNote}
+    onToggle={handleToggle}
+    onRemove={handleRemove}
+    onMoveToSlot={handleMoveToSlot}
+  />
+</div>
+```
+
+### StickerNotesColumn.tsx
+
+```typescript
+// Línea 141 - Expandir ancho y permitir crecimiento
 <div 
-  className="min-w-[120px] max-w-[180px]" 
+  className="min-w-[140px] max-w-[200px] flex-1"
   onClick={(e) => e.stopPropagation()}
 >
-  ...
-  <div className="grid grid-cols-4 gap-0.5">
 ```
 
 ---
 
-## Resultado Esperado
+## Resultado Visual Esperado
 
-- 16 posiciones disponibles en lugar de 9
-- Más flexibilidad para organizar notas según preferencia del coordinador
-- Las notas existentes mantienen sus posiciones (slots 0-8)
-- Nuevos slots disponibles (9-15) para expansión
+| Antes | Después |
+|-------|---------|
+| Notas pegadas arriba | Notas centradas verticalmente |
+| Ancho fijo 100-140px | Ancho flexible 140-200px |
+| Espacio blanco desperdiciado | Mejor uso del espacio central |
 
