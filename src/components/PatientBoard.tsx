@@ -1,10 +1,17 @@
+import { useState } from 'react';
 import { usePatientStore, getFilteredPatients } from '@/store/patientStore';
 import { useShiftHistoryStore } from '@/store/shiftHistoryStore';
 import { PatientSticker } from './PatientSticker';
 import { BoardHeader } from './BoardHeader';
-import { Activity } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+const COLS = 4;
+const ROWS = 8;
+const PATIENTS_PER_PAGE = COLS * ROWS; // 32
 
 export function PatientBoard() {
+  const [currentPage, setCurrentPage] = useState(0);
   const store = usePatientStore();
   const { viewingDate, loadShift } = useShiftHistoryStore();
   
@@ -21,26 +28,65 @@ export function PatientBoard() {
     (a, b) => new Date(b.arrivalTime).getTime() - new Date(a.arrivalTime).getTime()
   );
 
+  const totalPages = Math.max(1, Math.ceil(sortedPatients.length / PATIENTS_PER_PAGE));
+  const pagePatients = sortedPatients.slice(
+    currentPage * PATIENTS_PER_PAGE,
+    (currentPage + 1) * PATIENTS_PER_PAGE
+  );
+
+  // Reset to first page if current page is out of bounds
+  if (currentPage >= totalPages && currentPage > 0) {
+    setCurrentPage(0);
+  }
+
   return (
     <div className="h-full flex flex-col">
       <BoardHeader />
       
-      <div className="flex-1 overflow-auto p-4">
-        {sortedPatients.length > 0 ? (
-          <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 2xl:columns-6 gap-3 [column-fill:auto]">
-            {sortedPatients.map((patient) => (
-              <div key={patient.id} className="break-inside-avoid mb-3">
-                <PatientSticker patient={patient} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="h-full flex flex-col items-center justify-center text-muted-foreground">
-            <Activity className="h-16 w-16 mb-4 opacity-50" />
-            <h2 className="text-xl font-medium">No Patients Found</h2>
-            <p className="text-sm mt-2">
-              Add a new patient or adjust your filters
-            </p>
+      <div className="flex-1 flex flex-col min-h-0 p-3">
+        {/* Grid 4×8 con flujo por columnas */}
+        <div 
+          className="flex-1 grid grid-cols-4 gap-2"
+          style={{ 
+            gridTemplateRows: 'repeat(8, 1fr)',
+            gridAutoFlow: 'column' 
+          }}
+        >
+          {Array.from({ length: PATIENTS_PER_PAGE }).map((_, index) => {
+            const patient = pagePatients[index];
+            return patient ? (
+              <PatientSticker key={patient.id} patient={patient} />
+            ) : (
+              <div 
+                key={`empty-${index}`} 
+                className="border border-dashed border-border/30 rounded-lg bg-muted/5" 
+              />
+            );
+          })}
+        </div>
+        
+        {/* Paginación - solo si hay más de 1 página */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 pt-2 shrink-0">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setCurrentPage(p => p - 1)} 
+              disabled={currentPage === 0}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Página {currentPage + 1} de {totalPages}
+            </span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setCurrentPage(p => p + 1)} 
+              disabled={currentPage >= totalPages - 1}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
         )}
       </div>
