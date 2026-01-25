@@ -319,7 +319,7 @@ function getElapsedTime(arrivalTime: Date): string {
 }
 
 export function PatientSticker({ patient }: PatientStickerProps) {
-  const { addStickerNote, toggleStudyCompleted, removeStickerNote, reorderStickerNotes, doctors, nurses, locations } = usePatientStore();
+  const { addStickerNote, toggleStudyCompleted, removeStickerNote, moveNoteToSlot, doctors, nurses, locations } = usePatientStore();
   
   const elapsedTime = useMemo(() => getElapsedTime(patient.arrivalTime), [patient.arrivalTime]);
   const statusConfig = PATIENT_STATUSES.find(s => s.value === patient.status);
@@ -339,8 +339,8 @@ export function PatientSticker({ patient }: PatientStickerProps) {
     removeStickerNote(patient.id, noteId);
   };
 
-  const handleReorder = (fromIndex: number, toIndex: number) => {
-    reorderStickerNotes(patient.id, fromIndex, toIndex);
+  const handleMoveToSlot = (noteId: string, slotIndex: number) => {
+    moveNoteToSlot(patient.id, noteId, slotIndex);
   };
 
   return (
@@ -371,7 +371,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
           onAddNote={handleAddNote}
           onToggle={handleToggle}
           onRemove={handleRemove}
-          onReorder={handleReorder}
+          onMoveToSlot={handleMoveToSlot}
         />
 
         {/* Right column - Box, Doctor, Nurse (clickable dropdowns) */}

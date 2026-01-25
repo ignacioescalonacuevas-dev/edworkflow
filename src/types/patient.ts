@@ -86,6 +86,7 @@ export interface StickerNote {
   text: string;
   completed?: boolean;  // Only for type 'study'
   createdAt: Date;
+  slotIndex?: number;   // Position in the grid (0-8 for 3x3)
 }
 
 export const STUDY_OPTIONS = ['CT', 'ECHO', 'ECG', 'US', 'X-Ray', 'Vascular'] as const;
