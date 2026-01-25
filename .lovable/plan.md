@@ -1,108 +1,93 @@
 
-# Plan: Sistema de Cuadrícula para Notas (Estilo Escritorio)
+# Plan: Memoria de Preferencias de Posición por Tipo de Nota
 
 ## Resumen
 
-Cambiar el sistema de posicionamiento libre a un sistema de cuadrícula donde las notas se "acomodan" automáticamente en celdas predefinidas, evitando que se sobrepongan. Como los íconos del escritorio de Windows/Mac.
+Agregar un sistema que recuerde dónde coloca el usuario cada tipo de nota y aplique automáticamente esa posición para nuevos pacientes.
 
 ---
 
-## Concepto Visual
+## Cómo Funciona
 
 ```text
-Antes (posición libre - se solapan):
-┌────────────────────┐
-│  [CT] [ECHO]       │  <- pueden quedar encima
-│    [MRI]           │     unas de otras
-│ [+]                │
-└────────────────────┘
-
-Después (cuadrícula - ordenadas):
-┌────────────────────┐
-│ [CT]  [ECHO] [MRI] │  <- fila 1
-│ [LAB] [RX]   [___] │  <- fila 2
-│ [+]                │
-└────────────────────┘
+Escenario:
+1. Usuario agrega "CT" → va al primer slot disponible (slot 0)
+2. Usuario arrastra "CT" al slot 5
+3. Sistema guarda: "study:CT prefiere slot 5"
+4. Usuario agrega otro paciente y agrega "CT"
+5. El "CT" aparece automáticamente en slot 5 (si está libre)
 ```
 
 ---
 
 ## Cambios Necesarios
 
-### 1. Cambiar el Tipo de Posición
+### 1. Agregar Estado de Preferencias
 
-**Archivo:** `src/types/patient.ts`
+**Archivo:** `src/store/patientStore.ts`
 
-Cambiar de coordenadas X/Y a índice de cuadrícula:
+Nuevo campo en el store que mapea tipo+texto de nota a su slot preferido:
 
 ```typescript
-interface StickerNote {
-  // ... campos existentes
-  gridIndex?: number;  // Posición en la cuadrícula (0, 1, 2, ...)
+// Nuevo estado
+noteSlotPreferences: Record<string, number>;
+// Ejemplo: { "study:CT": 5, "precaution:Flu A +": 8 }
+```
+
+---
+
+### 2. Guardar Preferencia al Mover Nota
+
+**Archivo:** `src/store/patientStore.ts`
+
+Cuando el usuario mueve una nota a un nuevo slot, guardar esa preferencia:
+
+```typescript
+moveNoteToSlot: (patientId, noteId, targetSlotIndex) => {
+  set((state) => {
+    // ... lógica existente de mover/intercambiar ...
+    
+    // NUEVO: Guardar preferencia
+    const note = patient.stickerNotes.find(n => n.id === noteId);
+    const preferenceKey = `${note.type}:${note.text}`;
+    
+    return {
+      ...nuevoEstado,
+      noteSlotPreferences: {
+        ...state.noteSlotPreferences,
+        [preferenceKey]: targetSlotIndex,
+      },
+    };
+  });
 }
 ```
 
 ---
 
-### 2. Reducir Márgenes de DOB y M-Number
-
-**Archivo:** `src/components/PatientSticker.tsx`
-
-Hacer más compacta la información del paciente para dar más espacio a las notas:
-
-- Combinar DOB y M-Number en una sola línea
-- Reducir el tamaño de texto
-
-```text
-Antes:
-Juan García          B5
-12/03/1985           DR
-M12345678            EN
-
-Después:
-Juan García          B5
-12/03/1985 M12345678 DR
-                     EN
-```
-
----
-
-### 3. Modificar el Contenedor de Notas
-
-**Archivo:** `src/components/StickerNotesColumn.tsx`
-
-- Usar CSS Grid en lugar de posición absoluta
-- Definir celdas de tamaño fijo
-- Cuando se arrastra una nota, calcular a qué celda corresponde y hacer "swap" con la nota que esté ahí
-- Volver a usar `@dnd-kit/sortable` pero con grid layout
-
-```typescript
-// Cuadrícula de 3 columnas
-<div className="grid grid-cols-3 gap-0.5">
-  {sortedNotes.map(note => (
-    <StickerNoteItem key={note.id} note={note} ... />
-  ))}
-</div>
-```
-
----
-
-### 4. Simplificar el Item de Nota
-
-**Archivo:** `src/components/StickerNoteItem.tsx`
-
-- Quitar `position: absolute`
-- Volver a `useSortable` en lugar de `useDraggable`
-- Mantener el arrastre desde cualquier parte
-
----
-
-### 5. Actualizar el Store
+### 3. Aplicar Preferencia al Agregar Nota
 
 **Archivo:** `src/store/patientStore.ts`
 
-- Revertir a `reorderStickerNotes` en lugar de `updateNotePosition`
-- El orden del array determina la posición en la cuadrícula
+Al crear una nota, verificar si hay preferencia guardada:
+
+```typescript
+addStickerNote: (patientId, noteData) => {
+  const preferenceKey = `${noteData.type}:${noteData.text}`;
+  const preferredSlot = state.noteSlotPreferences[preferenceKey];
+  
+  // Si hay preferencia Y el slot está libre, usarlo
+  // Si no, usar primer slot disponible (comportamiento actual)
+  const usedSlots = new Set(patient.stickerNotes.map(n => n.slotIndex));
+  
+  let finalSlot;
+  if (preferredSlot !== undefined && !usedSlots.has(preferredSlot)) {
+    finalSlot = preferredSlot;
+  } else {
+    // Buscar primer slot libre (lógica actual)
+    finalSlot = primerSlotDisponible;
+  }
+}
+```
 
 ---
 
@@ -110,45 +95,61 @@ Juan García          B5
 
 | Archivo | Cambios |
 |---------|---------|
-| `src/types/patient.ts` | Quitar campo `position`, usar orden del array |
-| `src/components/PatientSticker.tsx` | Compactar DOB y M-Number en una línea |
-| `src/components/StickerNotesColumn.tsx` | Cambiar a CSS Grid, volver a sortable |
-| `src/components/StickerNoteItem.tsx` | Quitar position absolute, volver a useSortable |
-| `src/store/patientStore.ts` | Restaurar `reorderStickerNotes` |
+| `src/store/patientStore.ts` | Agregar `noteSlotPreferences`, modificar `moveNoteToSlot` y `addStickerNote` |
 
 ---
 
-## Detalles Técnicos
+## Comportamiento Esperado
 
-### Layout de Cuadrícula
+| Acción | Resultado |
+|--------|-----------|
+| Agregar "CT" por primera vez | Va al primer slot libre |
+| Mover "CT" al slot 5 | CT se mueve, se guarda preferencia |
+| Agregar "CT" a otro paciente | CT aparece en slot 5 automáticamente |
+| Slot 5 ocupado en otro paciente | CT va al primer slot libre |
+| Mover "CT" al slot 2 | Preferencia se actualiza a slot 2 |
 
-```text
-Configuración:
-- Columnas: 3 (ajustable)
-- Tamaño celda: ~35px x ~18px
-- Gap: 2px
+---
 
-Ejemplo con 5 notas:
-┌─────┬─────┬─────┐
-│ CT  │ECHO │ MRI │  <- índices 0, 1, 2
-├─────┼─────┼─────┤
-│ LAB │ RX  │     │  <- índices 3, 4
-└─────┴─────┴─────┘
+## Persistencia
+
+Las preferencias se guardan automáticamente con el middleware `persist` de Zustand que ya está configurado, así que sobreviven recargas del navegador.
+
+Cada coordinador tendrá su propio layout guardado en su dispositivo.
+
+---
+
+## Sección Técnica
+
+### Estructura de Datos
+
+```typescript
+// En PatientStore interface
+noteSlotPreferences: Record<string, number>;
+
+// Clave del mapa
+`${type}:${text}` 
+// Ejemplos:
+// "study:CT" → 5
+// "study:ECHO" → 2
+// "precaution:Flu A +" → 8
+// "critical:Trop 85" → 0
 ```
 
-### Comportamiento de Arrastre
+### Flujo de Datos
 
-1. Usuario toma una nota y la arrastra
-2. Al soltar sobre otra nota, intercambian posiciones
-3. Las notas siempre quedan alineadas en la cuadrícula
-4. No hay superposición posible
-
----
-
-## Resultado Esperado
-
-- Notas organizadas en cuadrícula limpia
-- Se pueden mover libremente pero siempre "encajan" en su celda
-- No hay superposición
-- Más espacio para notas gracias a DOB/M-Number compactados
-- Interfaz más ordenada y profesional
+```text
+Usuario arrastra nota
+       ↓
+handleDragEnd (StickerNotesColumn)
+       ↓
+onMoveToSlot(noteId, targetSlot)
+       ↓
+moveNoteToSlot en store
+       ↓
+1. Actualiza slotIndex de la nota
+2. Intercambia si hay otra nota
+3. Guarda preferencia: type:text → slot
+       ↓
+Estado persistido en localStorage
+```
