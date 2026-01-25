@@ -352,7 +352,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
       )}
     >
       {/* Main 3-column grid */}
-      <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+      <div className="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
         {/* Left column - Patient info (compacted) */}
         <div className="flex flex-col min-w-0">
           <div className="flex items-baseline gap-1 flex-wrap">
@@ -365,14 +365,16 @@ export function PatientSticker({ patient }: PatientStickerProps) {
           </span>
         </div>
 
-        {/* Middle column - Notes (grid layout) */}
-        <StickerNotesColumn
-          notes={patient.stickerNotes}
-          onAddNote={handleAddNote}
-          onToggle={handleToggle}
-          onRemove={handleRemove}
-          onMoveToSlot={handleMoveToSlot}
-        />
+        {/* Middle column - Notes (centered) */}
+        <div className="flex items-center justify-center">
+          <StickerNotesColumn
+            notes={patient.stickerNotes}
+            onAddNote={handleAddNote}
+            onToggle={handleToggle}
+            onRemove={handleRemove}
+            onMoveToSlot={handleMoveToSlot}
+          />
+        </div>
 
         {/* Right column - Box, Doctor, Nurse (clickable dropdowns) */}
         <div className="flex flex-col items-end min-w-[32px]">
