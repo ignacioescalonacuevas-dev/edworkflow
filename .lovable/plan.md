@@ -1,29 +1,32 @@
 
 
-# Plan: Crear Día de Ayer con los 25 Pacientes en el Historial
+# Plan: Conectar el Historial al PatientBoard
 
-## Resumen
+## El Problema
 
-Moveremos los 25 pacientes actuales al historial como el turno del **24/01/2026** (ayer) y actualizaremos el estado actual para que sea **25/01/2026** (hoy) con un board limpio listo para empezar.
+Cuando haces click en "View" en el historial, el board sigue mostrando los pacientes del día actual (vacío) en lugar de los 25 pacientes del snapshot del 24/01/2026.
+
+```text
+ACTUAL:
+┌────────────────────────────────────────────────────────┐
+│ History → View (24/01) → Board VACÍO ❌                │
+│                                                        │
+│ PatientBoard usa patientStore.patients (vacío)         │
+└────────────────────────────────────────────────────────┘
+
+ESPERADO:
+┌────────────────────────────────────────────────────────┐
+│ History → View (24/01) → Board con 25 pacientes ✅     │
+│                                                        │
+│ PatientBoard usa shiftHistoryStore snapshot            │
+└────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Flujo Visual
+## Solución
 
-```text
-ANTES:
-┌─────────────────────────────────────────┐
-│ patient-store: 25 pacientes (24/01)     │
-│ shift-history: vacío                    │
-└─────────────────────────────────────────┘
-
-DESPUÉS:
-┌─────────────────────────────────────────┐
-│ patient-store: board vacío (25/01)      │
-│ shift-history:                          │
-│   └── "2026-01-24" → 25 pacientes       │
-└─────────────────────────────────────────┘
-```
+Modificar `PatientBoard.tsx` para que detecte cuando `viewingDate` está activo y use los pacientes del historial en lugar del store actual.
 
 ---
 
@@ -31,88 +34,74 @@ DESPUÉS:
 
 | Archivo | Descripción |
 |---------|-------------|
-| `src/store/shiftHistoryStore.ts` | Inicializar con los 25 pacientes del 24/01/2026 |
-| `src/store/patientStore.ts` | Cambiar fecha actual a 25/01/2026, empezar con board vacío |
+| `src/components/PatientBoard.tsx` | Usar pacientes del historial cuando `viewingDate` esté activo |
 
 ---
 
 ## Sección Técnica
 
-### 1. shiftHistoryStore.ts - Pre-cargar el historial
-
-Moveremos los 25 pacientes de ejemplo al historial inicial:
+### PatientBoard.tsx - Lógica de fuente de datos
 
 ```typescript
-// Importar los pacientes de ejemplo y crear el snapshot inicial
-const initialHistory: Record<string, ShiftSnapshot> = {
-  '2026-01-24': {
-    date: '2026-01-24',
-    patients: [...los 25 pacientes...],
-    doctors: ['Dr. TAU', 'Dr. Joanna', 'Dr. Caren', 'Dr. Alysha', 'Dr. Salah'],
-    nurses: ['Nebin', 'Beatriz', 'Rinku', 'Rafa'],
-    locations: ['Waiting Area', 'Treatment', 'Box 1', ...],
-    summary: {
-      totalPatients: 25,
-      admissions: 5,
-      discharges: 13,
-      transfers: 0,
-    },
-    savedAt: '2026-01-24T23:59:00.000Z',
-  },
-};
+import { useShiftHistoryStore } from '@/store/shiftHistoryStore';
 
-// En el store:
-history: initialHistory,  // Empezar con el día 24 ya guardado
-```
+export function PatientBoard() {
+  const store = usePatientStore();
+  const { viewingDate, loadShift } = useShiftHistoryStore();
+  
+  // Si estamos viendo historial, usar esos pacientes
+  const historyShift = viewingDate ? loadShift(viewingDate) : null;
+  
+  // Determinar qué pacientes mostrar
+  const patients = historyShift 
+    ? historyShift.patients 
+    : getFilteredPatients(store);
+  
+  // Sort by arrival time (most recent first)
+  const sortedPatients = [...patients].sort(
+    (a, b) => new Date(b.arrivalTime).getTime() - new Date(a.arrivalTime).getTime()
+  );
 
-### 2. patientStore.ts - Actualizar a "hoy" (25/01/2026)
-
-```typescript
-// Cambiar la fecha del turno actual
-const SHIFT_DATE = '2026-01-25';  // Hoy
-
-// Iniciar con pacientes vacíos (nuevo día)
-const samplePatients: Patient[] = [];
-
-// Estado inicial actualizado
-shiftDate: new Date('2026-01-25'),
-shiftConfigured: true,
-patients: [],  // Board vacío, listo para el nuevo turno
+  // ... resto del componente
+}
 ```
 
 ---
 
 ## Resultado Esperado
 
-1. **Hoy (25/01/2026)**: Board vacío, listo para agregar pacientes del nuevo turno
-2. **Historial**: El botón "History" mostrará el turno del 24/01/2026 disponible para ver
-3. **Vista Read-Only**: Al hacer click en "View" del día 24, se verán los 25 pacientes en modo solo lectura
-4. **Navegación**: Botón "Back to Today" para volver al turno actual
+1. **Hoy (25/01/2026)**: Board vacío (correcto, es el estado actual)
+2. **Click en History → View (24/01/2026)**: Se muestran los 25 pacientes del snapshot
+3. **Click en "Back to Today"**: Vuelve al board vacío del día actual
 
 ---
 
-## Estructura del Snapshot del 24/01/2026
+## Flujo Visual Corregido
 
-```typescript
-{
-  date: '2026-01-24',
-  patients: [
-    // 2 Treatment Room
-    // 3 Waiting Room  
-    // 2 Review
-    // 5 Admission
-    // 13 Discharged
-  ],
-  doctors: ['Dr. TAU', 'Dr. Joanna', 'Dr. Caren', 'Dr. Alysha', 'Dr. Salah'],
-  nurses: ['Nebin', 'Beatriz', 'Rinku', 'Rafa'],
-  locations: ['Waiting Area', 'Treatment', 'Box 1', 'Box 2', 'Box 3', 'Box 4', 'Box 5', 'Box 6', 'Resus'],
-  summary: {
-    totalPatients: 25,
-    admissions: 5,
-    discharges: 13,
-    transfers: 0,
-  },
-  savedAt: '2026-01-24T23:59:00.000Z',
-}
+```text
+Estado Actual: 25/01/2026 (vacío)
+         │
+         ▼ Click "History"
+┌─────────────────────────────────────┐
+│  📅 Fri, 24 Jan 2026  [View]        │
+└─────────────────────────────────────┘
+         │
+         ▼ Click "View"
+┌─────────────────────────────────────┐
+│ ED Coordination Board [READ-ONLY]   │
+│ 📅 Friday, 24 January 2026          │
+├─────────────────────────────────────┤
+│ [25 Patient Stickers...]            │
+│ Michael O'Brien, Sarah Kelly, etc.  │
+└─────────────────────────────────────┘
+         │
+         ▼ Click "Back to Today"
+┌─────────────────────────────────────┐
+│ ED Coordination Board               │
+│ 📅 Sunday, 25 January 2026          │
+├─────────────────────────────────────┤
+│ No Patients Found                   │
+│ Add a new patient or adjust filters │
+└─────────────────────────────────────┘
 ```
 
