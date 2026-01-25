@@ -1,14 +1,23 @@
 import { usePatientStore, getFilteredPatients } from '@/store/patientStore';
+import { useShiftHistoryStore } from '@/store/shiftHistoryStore';
 import { PatientSticker } from './PatientSticker';
 import { BoardHeader } from './BoardHeader';
 import { Activity } from 'lucide-react';
 
 export function PatientBoard() {
   const store = usePatientStore();
-  const filteredPatients = getFilteredPatients(store);
+  const { viewingDate, loadShift } = useShiftHistoryStore();
+  
+  // Si estamos viendo historial, usar esos pacientes
+  const historyShift = viewingDate ? loadShift(viewingDate) : null;
+  
+  // Determinar qué pacientes mostrar
+  const patients = historyShift 
+    ? historyShift.patients 
+    : getFilteredPatients(store);
 
   // Sort by arrival time (most recent first)
-  const sortedPatients = [...filteredPatients].sort(
+  const sortedPatients = [...patients].sort(
     (a, b) => new Date(b.arrivalTime).getTime() - new Date(a.arrivalTime).getTime()
   );
 
