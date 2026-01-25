@@ -1,50 +1,29 @@
 
 
-# Plan: Centrar y Expandir el Área de Notas en el Sticker
+# Plan: Agregar Fecha del Turno y Generar 25 Pacientes de Ejemplo
 
-## Problema Actual
+## Resumen
 
-```text
-┌────────────────────────────────────────────────────────┐
-│ Nombre    [notas muy   │ B1  │ ← Notas muy arriba,    │
-│ DOB · M#   angostas]   │ MD  │   no ocupan el espacio │
-│                        │ RN  │   disponible al centro │
-├────────────────────────────────────────────────────────┤
-│ Chief Complaint                              Status    │
-└────────────────────────────────────────────────────────┘
-```
-
-## Solución Propuesta
-
-Centrar verticalmente la cuadrícula de notas y expandir su ancho para ocupar mejor el espacio disponible.
-
-```text
-┌────────────────────────────────────────────────────────┐
-│ Nombre              [    notas centradas    ] │ B1    │
-│ DOB · M#            [    y más anchas       ] │ MD    │
-│                     [                       ] │ RN    │
-├────────────────────────────────────────────────────────┤
-│ Chief Complaint                              Status    │
-└────────────────────────────────────────────────────────┘
-```
+Agregaremos la fecha del turno visible en el header del board y generaremos 25 pacientes con datos realistas simulando un día típico de urgencias (24/01/2026).
 
 ---
 
-## Cambios Necesarios
+## Cambios Visuales
 
-### 1. PatientSticker.tsx - Centrar verticalmente la columna de notas
+### Antes
+```text
+┌────────────────────────────────────────────────────────────┐
+│ 🏥 ED Coordination Board                    [Controles]    │
+├────────────────────────────────────────────────────────────┤
+```
 
-**Línea 355**: Agregar `items-center` al contenedor principal para alinear verticalmente todas las columnas.
-
-**Línea 368-375**: Agregar `flex items-center` al contenedor de notas para centrarlo.
-
-### 2. StickerNotesColumn.tsx - Expandir el ancho
-
-**Línea 141**: Cambiar las restricciones de ancho:
-- De: `min-w-[100px] max-w-[140px]`  
-- A: `min-w-[140px] max-w-[200px] flex-1`
-
-Esto permite que la columna de notas crezca para ocupar el espacio disponible.
+### Después
+```text
+┌────────────────────────────────────────────────────────────┐
+│ 🏥 ED Coordination Board                    [Controles]    │
+│ 📅 Friday, 24 January 2026                                 │
+├────────────────────────────────────────────────────────────┤
+```
 
 ---
 
@@ -52,49 +31,108 @@ Esto permite que la columna de notas crezca para ocupar el espacio disponible.
 
 | Archivo | Cambios |
 |---------|---------|
-| `src/components/PatientSticker.tsx` | Agregar alineación vertical centrada |
-| `src/components/StickerNotesColumn.tsx` | Expandir restricciones de ancho |
+| `src/components/BoardHeader.tsx` | Agregar línea con la fecha del turno formateada |
+| `src/store/patientStore.ts` | Reemplazar datos de ejemplo con 25 pacientes del 24/01/2026 |
+
+---
+
+## Datos de los 25 Pacientes
+
+Los pacientes tendrán una mezcla realista de:
+
+**Distribución de Estados:**
+- 2 en Treatment Room (en evaluación activa)
+- 3 en Waiting Room (esperando resultados)
+- 0 en CT/MRI/Echo (en estudios)
+- 2 en Review (pendientes de decisión)
+- 5 en Admission (esperando cama)
+- 18 Discharged (dados de alta)
+
+**Motivos de Consulta Variados:**
+- Dolor torácico, disnea
+- Dolor abdominal, náuseas
+- Cefalea, mareo
+- Traumatismos (caída, accidente)
+- Fiebre, síntomas respiratorios
+- Síncope, palpitaciones
+- Dolor lumbar
+
+**Notas Clínicas:**
+- Estudios: CT, ECHO, ECG, X-Ray
+- Valores críticos: Trop +, K+ elevado, Lactato
+- Precauciones: Flu A+, COVID+, MRSA
+- Follow-ups: GP, Clinic, RACC
+- Médicos admitiendo
+
+**Staff del Turno:**
+- Physicians: Dr. TAU, Dr. Joanna, Dr. Caren, Dr. Alysha, Dr. Salah
+- Nurses: Nebin, Beatriz, Rinku, Rafa
 
 ---
 
 ## Sección Técnica
 
-### PatientSticker.tsx
+### 1. BoardHeader.tsx - Agregar fecha visible
 
 ```typescript
-// Línea 355 - Agregar items-center al grid principal
-<div className="grid grid-cols-[1fr_auto_auto] gap-2 items-center">
+import { Calendar } from 'lucide-react';
+import { format } from 'date-fns';
 
-// Líneas 368-375 - Envolver en contenedor centrado  
-{/* Middle column - Notes (centered) */}
-<div className="flex items-center justify-center">
-  <StickerNotesColumn
-    notes={patient.stickerNotes}
-    onAddNote={handleAddNote}
-    onToggle={handleToggle}
-    onRemove={handleRemove}
-    onMoveToSlot={handleMoveToSlot}
-  />
-</div>
+// Dentro del componente:
+const { shiftDate, hideDischargedFromBoard, setHideDischargedFromBoard } = usePatientStore();
+
+// Después del título, agregar:
+{shiftDate && (
+  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+    <Calendar className="h-4 w-4" />
+    <span>{format(new Date(shiftDate), 'EEEE, dd MMMM yyyy')}</span>
+  </div>
+)}
 ```
 
-### StickerNotesColumn.tsx
+### 2. patientStore.ts - Datos de ejemplo
 
+Se generarán 25 pacientes con:
+- Llegadas distribuidas entre 10:00 y 18:00 del 24/01/2026
+- Boxes del 1 al 6 + treatment + Waiting Area
+- Variedad de estudios y notas según el caso clínico
+- Estados coherentes con el tiempo de estadía
+- Algunos ya dados de alta
+
+Ejemplo de estructura:
 ```typescript
-// Línea 141 - Expandir ancho y permitir crecimiento
-<div 
-  className="min-w-[140px] max-w-[200px] flex-1"
-  onClick={(e) => e.stopPropagation()}
->
+{
+  id: 'p1',
+  name: 'Michael O\'Brien',
+  dateOfBirth: '18/05/1958',
+  mNumber: 'M00234567',
+  chiefComplaint: 'Chest pain radiating to left arm',
+  box: 'Resus',
+  doctor: 'Dr. Smith',
+  nurse: 'N. Garcia',
+  arrivalTime: new Date('2026-01-24T06:30:00'),
+  status: 'admission',
+  stickerNotes: [
+    { type: 'study', text: 'ECG', completed: true },
+    { type: 'study', text: 'ECHO', completed: true },
+    { type: 'critical', text: 'Trop 156' },
+    { type: 'admitting', text: 'Cardio' },
+  ],
+  // ... más datos
+}
+```
+
+### 3. Inicializar shiftDate
+
+Al cargar los datos de ejemplo, también se establecerá:
+```typescript
+shiftDate: new Date('2026-01-24'),
+shiftConfigured: true,
 ```
 
 ---
 
-## Resultado Visual Esperado
+## Resultado Esperado
 
-| Antes | Después |
-|-------|---------|
-| Notas pegadas arriba | Notas centradas verticalmente |
-| Ancho fijo 100-140px | Ancho flexible 140-200px |
-| Espacio blanco desperdiciado | Mejor uso del espacio central |
+Un board completamente poblado con 25 pacientes que representa un turno real del 24/01/2026, con la fecha visible debajo del título. Esto permitirá continuar el desarrollo de otras funcionalidades con datos realistas para probar.
 
