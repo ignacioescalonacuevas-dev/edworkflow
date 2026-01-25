@@ -46,13 +46,13 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
           }}
           onPointerDown={(e) => e.stopPropagation()}
           className={cn(
-            "flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-medium border transition-colors",
+            "flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] font-medium border transition-colors",
             note.completed 
               ? "bg-green-500/30 text-green-700 border-green-500/40"
               : "bg-blue-500/20 text-blue-700 border-blue-500/30 hover:bg-blue-500/30"
           )}
         >
-          {note.completed && <Check className="h-2.5 w-2.5" />}
+          {note.completed && <Check className="h-3 w-3" />}
           <span>{note.text}</span>
         </button>
         <button
@@ -63,7 +63,7 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
           onPointerDown={(e) => e.stopPropagation()}
           className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
         >
-          <X className="h-2.5 w-2.5" />
+          <X className="h-3 w-3" />
         </button>
       </div>
     );
@@ -81,7 +81,7 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
       )}
     >
       <span className={cn(
-        "px-1 py-0.5 rounded text-[10px] font-medium border",
+        "px-1.5 py-0.5 rounded text-[11px] font-medium border",
         config.color
       )}>
         {note.text}
@@ -94,7 +94,7 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
         onPointerDown={(e) => e.stopPropagation()}
         className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
       >
-        <X className="h-2.5 w-2.5" />
+        <X className="h-3 w-3" />
       </button>
     </div>
   );

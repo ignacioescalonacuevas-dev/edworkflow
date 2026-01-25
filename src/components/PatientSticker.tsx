@@ -66,7 +66,7 @@ function EditableBedNumber({ patientId, bedNumber }: EditableBedNumberProps) {
         e.stopPropagation();
         setIsEditing(true);
       }}
-      className="absolute top-1 right-1 bg-blue-500 text-white text-[9px] px-1 py-0.5 rounded font-medium cursor-pointer hover:bg-blue-600"
+      className="absolute top-1 right-1 bg-blue-500 text-white text-[11px] px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-blue-600"
     >
       {bedNumber || '+Cama'}
     </div>
@@ -108,7 +108,7 @@ function EditableChiefComplaint({ patientId, complaint }: EditableChiefComplaint
         onChange={(e) => setValue(e.target.value)}
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
-        className="h-4 text-[10px] px-1 py-0 flex-1"
+        className="h-5 text-xs px-1.5 py-0 flex-1"
         onClick={(e) => e.stopPropagation()}
       />
     );
@@ -120,7 +120,7 @@ function EditableChiefComplaint({ patientId, complaint }: EditableChiefComplaint
         e.stopPropagation();
         setIsEditing(true);
       }}
-      className="text-[10px] text-muted-foreground flex-1 cursor-pointer hover:text-foreground transition-colors truncate"
+      className="text-xs text-muted-foreground flex-1 cursor-pointer hover:text-foreground transition-colors truncate"
     >
       {complaint}
     </span>
@@ -167,7 +167,7 @@ function StaffDropdown({ type, patientId, currentValue, options, displayValue }:
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-        <button className={cn("text-[10px] cursor-pointer hover:opacity-70 transition-opacity", getColorClass())}>
+        <button className={cn("text-xs cursor-pointer hover:opacity-70 transition-opacity min-h-[20px]", getColorClass())}>
           {displayValue}
         </button>
       </DropdownMenuTrigger>
@@ -212,8 +212,8 @@ function StickerActionsMenu({ patientId, patientName }: StickerActionsMenuProps)
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-          <button className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-muted rounded transition-opacity shrink-0">
-            <MoreVertical className="h-3 w-3 text-muted-foreground" />
+        <button className="opacity-0 group-hover:opacity-100 p-0.5 hover:bg-muted rounded transition-opacity shrink-0">
+            <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
@@ -270,7 +270,7 @@ function StatusDropdown({ patientId, currentStatus, statusConfig }: StatusDropdo
       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
         <button
           className={cn(
-            "text-[9px] px-1 py-0.5 shrink-0 rounded border cursor-pointer hover:opacity-80 transition-opacity",
+            "text-[11px] px-1.5 py-0.5 shrink-0 rounded border cursor-pointer hover:opacity-80 transition-opacity",
             statusConfig?.color
           )}
         >
@@ -354,22 +354,22 @@ export function PatientSticker({ patient }: PatientStickerProps) {
   return (
     <div
       className={cn(
-        "sticker transition-all hover:border-primary/50 group h-full flex flex-col p-2",
+        "sticker transition-all hover:border-primary/50 group h-full flex flex-col p-2.5",
         isAdmission && "sticker-admission",
         isDischarged && "sticker-discharged"
       )}
     >
       {/* Main 3-column grid */}
-      <div className="grid grid-cols-[1fr_auto_40px] gap-1.5 flex-1 min-h-0">
+      <div className="grid grid-cols-[1fr_auto_48px] gap-2 flex-1 min-h-0">
         {/* COL 1: Patient Info (vertical stack) */}
         <div className="flex flex-col justify-center min-w-0">
-          <div className="flex items-baseline gap-0.5">
+          <div className="flex items-baseline gap-1">
             {!isReadOnly && <StickerActionsMenu patientId={patient.id} patientName={patient.name} />}
-            <span className="font-semibold text-xs truncate">{patient.name}</span>
-            <span className="text-[9px] text-muted-foreground whitespace-nowrap ml-0.5">{elapsedTime}</span>
+            <span className="font-semibold text-sm truncate">{patient.name}</span>
+            <span className="text-[11px] text-muted-foreground whitespace-nowrap ml-0.5">{elapsedTime}</span>
           </div>
-          <span className="text-[9px] text-muted-foreground">{patient.dateOfBirth}</span>
-          <span className="text-[9px] text-muted-foreground font-mono">{patient.mNumber}</span>
+          <span className="text-xs text-muted-foreground">{patient.dateOfBirth}</span>
+          <span className="text-xs text-muted-foreground font-mono">{patient.mNumber}</span>
         </div>
 
         {/* COL 2: Notes Grid 3×2 = 6 slots */}
@@ -385,12 +385,12 @@ export function PatientSticker({ patient }: PatientStickerProps) {
         </div>
 
         {/* COL 3: Box + Doctor + Nurse (vertical centered) */}
-        <div className="flex flex-col items-center justify-between py-0.5">
+        <div className="flex flex-col items-center justify-between py-1">
           {isReadOnly ? (
             <>
-              <span className="text-[10px] font-semibold">{patient.box.replace('Box ', 'B')}</span>
-              <span className="text-[10px] text-primary">{getInitials(patient.doctor)}</span>
-              <span className="text-[10px] text-muted-foreground">{getInitials(patient.nurse)}</span>
+              <span className="text-xs font-semibold">{patient.box.replace('Box ', 'B')}</span>
+              <span className="text-xs text-primary">{getInitials(patient.doctor)}</span>
+              <span className="text-xs text-muted-foreground">{getInitials(patient.nurse)}</span>
             </>
           ) : (
             <>
@@ -421,9 +421,9 @@ export function PatientSticker({ patient }: PatientStickerProps) {
       </div>
 
       {/* Footer: Chief Complaint + Status */}
-      <div className="flex items-center justify-between gap-1 pt-1 mt-1 border-t border-border/50">
+      <div className="flex items-center justify-between gap-2 pt-1.5 mt-1.5 border-t border-border/50">
         {isReadOnly ? (
-          <span className="text-[10px] text-muted-foreground flex-1 truncate">{patient.chiefComplaint}</span>
+          <span className="text-xs text-muted-foreground flex-1 truncate">{patient.chiefComplaint}</span>
         ) : (
           <EditableChiefComplaint 
             patientId={patient.id}
@@ -433,7 +433,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
         {isReadOnly ? (
           <span
             className={cn(
-              "text-[9px] px-1 py-0.5 shrink-0 rounded border",
+              "text-[11px] px-1.5 py-0.5 shrink-0 rounded border",
               statusConfig?.color
             )}
           >
@@ -452,7 +452,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
       {isAdmission && (
         isReadOnly ? (
           patient.admission?.bedNumber && (
-            <div className="absolute top-1 right-1 bg-blue-500 text-white text-[9px] px-1 py-0.5 rounded font-medium">
+            <div className="absolute top-1 right-1 bg-blue-500 text-white text-[11px] px-1.5 py-0.5 rounded font-medium">
               {patient.admission.bedNumber}
             </div>
           )

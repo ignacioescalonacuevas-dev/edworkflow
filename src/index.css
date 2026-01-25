@@ -128,7 +128,7 @@
 
 /* Sticker styles */
 .sticker {
-  @apply p-2 rounded-lg border bg-card text-sm relative;
+  @apply p-2.5 rounded-lg border bg-card text-sm relative;
 }
 
 .sticker-admission {
