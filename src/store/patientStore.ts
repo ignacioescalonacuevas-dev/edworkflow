@@ -97,7 +97,7 @@ interface PatientStore {
   updateStickerNote: (patientId: string, noteId: string, updates: Partial<StickerNote>) => void;
   removeStickerNote: (patientId: string, noteId: string) => void;
   toggleStudyCompleted: (patientId: string, noteId: string) => void;
-  updateNotePosition: (patientId: string, noteId: string, position: { x: number; y: number }) => void;
+  reorderStickerNotes: (patientId: string, fromIndex: number, toIndex: number) => void;
   
   // Board filters
   setSearchQuery: (query: string) => void;
@@ -645,18 +645,15 @@ export const usePatientStore = create<PatientStore>()(
         }));
       },
 
-      updateNotePosition: (patientId, noteId, position) => {
+      reorderStickerNotes: (patientId, fromIndex, toIndex) => {
         set((state) => ({
-          patients: state.patients.map((p) =>
-            p.id === patientId
-              ? {
-                  ...p,
-                  stickerNotes: p.stickerNotes.map((n) =>
-                    n.id === noteId ? { ...n, position } : n
-                  ),
-                }
-              : p
-          ),
+          patients: state.patients.map((p) => {
+            if (p.id !== patientId) return p;
+            const newNotes = [...p.stickerNotes];
+            const [removed] = newNotes.splice(fromIndex, 1);
+            newNotes.splice(toIndex, 0, removed);
+            return { ...p, stickerNotes: newNotes };
+          }),
         }));
       },
 
