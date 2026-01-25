@@ -13,7 +13,7 @@ import {
   useDroppable,
 } from '@dnd-kit/core';
 
-const TOTAL_SLOTS = 16; // 4x4 grid
+const TOTAL_SLOTS = 12; // 3x4 grid
 
 interface SlotProps {
   slotIndex: number;
@@ -138,14 +138,14 @@ export function StickerNotesColumn({
 
   return (
     <div 
-      className="min-w-[120px] max-w-[180px]" 
+      className="min-w-[100px] max-w-[140px]"
       onClick={(e) => e.stopPropagation()}
     >
       <DndContext
         sensors={sensors}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-4 gap-0.5">
+        <div className="grid grid-cols-3 gap-0.5">
           {Array.from({ length: TOTAL_SLOTS }).map((_, slotIndex) => {
             const note = slotMap.get(slotIndex);
             const isAddButtonSlot = slotIndex === addButtonSlot;
