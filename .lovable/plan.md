@@ -1,124 +1,127 @@
 
-# Plan: Arrastrar Notas desde Cualquier Parte
+# Plan: Notas con Posicion Libre (Estilo Post-it)
 
 ## Resumen
 
-Modificar el componente `StickerNoteItem` para que toda la nota sea arrastrable, no solo el icono de las rayitas. Esto hara que sea mas intuitivo mover las notas dentro del sticker.
+Cambiar el sistema de notas para que cada nota tenga coordenadas X/Y y pueda colocarse libremente dentro del area del sticker, como post-its en un tablero.
 
 ---
 
-## Cambio Principal
+## Cambios Necesarios
 
-### Archivo: `src/components/StickerNoteItem.tsx`
+### 1. Actualizar el Tipo de Datos
 
-**Problema actual:**
-- Los `listeners` y `attributes` del drag-and-drop solo estan en el icono `GripVertical`
-- El icono es muy pequeno (h-2.5 w-2.5) y esta oculto hasta hacer hover
-- Es dificil descubrir que se puede arrastrar
+**Archivo:** `src/types/patient.ts`
 
-**Solucion:**
-- Mover los `listeners` y `attributes` al contenedor principal (`div` exterior)
-- Agregar cursor `grab` al contenedor cuando no se esta arrastrando
-- Agregar cursor `grabbing` cuando se esta arrastrando activamente
-- Eliminar el icono GripVertical ya que no sera necesario
+Agregar coordenadas de posicion al tipo StickerNote:
 
----
-
-## Cambios Especificos
-
-### Para notas tipo "study"
-
-```text
-Antes:
-<div ref={setNodeRef}>
-  <div {...listeners}>GripVertical</div>  <- Solo aqui se puede arrastrar
-  <button>CT</button>
-  <X />
-</div>
-
-Despues:
-<div ref={setNodeRef} {...listeners} {...attributes}>  <- Todo el elemento es arrastrable
-  <button>CT</button>
-  <X />
-</div>
-```
-
-### Para otras notas
-
-```text
-Antes:
-<div ref={setNodeRef}>
-  <div {...listeners}>GripVertical</div>  <- Solo aqui se puede arrastrar
-  <span>Nota</span>
-  <X />
-</div>
-
-Despues:
-<div ref={setNodeRef} {...listeners} {...attributes}>  <- Todo el elemento es arrastrable
-  <span>Nota</span>
-  <X />
-</div>
+```typescript
+interface StickerNote {
+  id: string;
+  type: StickerNoteType;
+  text: string;
+  completed: boolean;
+  createdAt: Date;
+  position?: { x: number; y: number }; // NUEVO: posicion libre
+}
 ```
 
 ---
 
-## Estilos Actualizados
+### 2. Modificar el Contenedor de Notas
 
-| Estado | Cursor | Opacidad |
-|--------|--------|----------|
-| Normal | `cursor-grab` | 1 |
-| Arrastrando | `cursor-grabbing` | 0.5 |
+**Archivo:** `src/components/StickerNotesColumn.tsx`
+
+- Cambiar de `@dnd-kit/sortable` a `@dnd-kit/core` puro (sin ordenamiento, solo drag)
+- Usar `DragOverlay` para mostrar la nota mientras se arrastra
+- Calcular la nueva posicion basandose en donde se suelta la nota
+- El contenedor sera `position: relative` con area definida
+- Las notas seran `position: absolute` con top/left basados en sus coordenadas
+
+```text
+Antes (lista ordenable):
+┌─────────────────┐
+│ [CT] [ECHO] [+] │  <- notas en fila, solo intercambian orden
+└─────────────────┘
+
+Despues (posicion libre):
+┌─────────────────────┐
+│  [CT]       [ECHO]  │  <- notas en posiciones X/Y libres
+│        [MRI]        │
+│ [+]                 │  <- boton de agregar fijo
+└─────────────────────┘
+```
 
 ---
 
-## Archivo a Modificar
+### 3. Modificar el Item de Nota
+
+**Archivo:** `src/components/StickerNoteItem.tsx`
+
+- Cambiar de `useSortable` a `useDraggable`
+- Aplicar `position: absolute` con las coordenadas guardadas
+- Mantener la funcionalidad de toggle y remove
+
+---
+
+### 4. Actualizar el Store
+
+**Archivo:** `src/store/patientStore.ts`
+
+- Cambiar `reorderStickerNotes` por `updateNotePosition`
+- Nueva funcion que actualiza las coordenadas X/Y de una nota
+
+```typescript
+updateNotePosition: (patientId: string, noteId: string, position: { x: number; y: number }) => {
+  set((state) => ({
+    patients: state.patients.map((p) => {
+      if (p.id !== patientId) return p;
+      return {
+        ...p,
+        stickerNotes: p.stickerNotes.map((n) =>
+          n.id === noteId ? { ...n, position } : n
+        ),
+      };
+    }),
+  }));
+}
+```
+
+---
+
+### 5. Agregar Notas con Posicion Inicial
+
+**Archivo:** `src/store/patientStore.ts`
+
+Al agregar una nota nueva, calcular una posicion inicial que no se solape con las existentes.
+
+---
+
+## Archivos a Modificar
 
 | Archivo | Cambios |
 |---------|---------|
-| `src/components/StickerNoteItem.tsx` | Mover listeners al contenedor, eliminar GripVertical, agregar cursores |
+| `src/types/patient.ts` | Agregar campo `position` opcional al tipo StickerNote |
+| `src/store/patientStore.ts` | Cambiar `reorderStickerNotes` por `updateNotePosition`, asignar posicion inicial |
+| `src/components/StickerNotesColumn.tsx` | Cambiar a drag libre, contenedor relativo, calcular posicion al soltar |
+| `src/components/StickerNoteItem.tsx` | Cambiar a `useDraggable`, aplicar posicion absoluta |
+| `src/components/PatientSticker.tsx` | Pasar nueva funcion de actualizar posicion |
 
 ---
 
-## Codigo Final Simplificado
+## Consideraciones Tecnicas
 
-```typescript
-// Para study type
-<div 
-  ref={setNodeRef} 
-  style={style} 
-  {...attributes}
-  {...listeners}
-  className={cn(
-    "flex items-center gap-0.5 group touch-none",
-    isDragging ? "cursor-grabbing" : "cursor-grab"
-  )}
->
-  <button onClick={() => onToggle(note.id)}>...</button>
-  <button onClick={() => onRemove(note.id)}><X /></button>
-</div>
-
-// Para otras notas
-<div 
-  ref={setNodeRef} 
-  style={style}
-  {...attributes}
-  {...listeners}
-  className={cn(
-    "flex items-center gap-0.5 group touch-none",
-    isDragging ? "cursor-grabbing" : "cursor-grab"
-  )}
->
-  <span>{note.text}</span>
-  <button onClick={() => onRemove(note.id)}><X /></button>
-</div>
-```
+- **Area del contenedor:** Definir un tamano minimo para el area de notas (ej: 120x80px)
+- **Limites:** Las notas no pueden salir del area del sticker
+- **Colisiones:** Las notas pueden solaparse (como post-its reales)
+- **Posicion inicial:** Notas nuevas se colocan en una posicion libre calculada
+- **Compatibilidad:** Notas existentes sin posicion usaran posicion por defecto
 
 ---
 
 ## Resultado Esperado
 
-- Puedes tomar cualquier nota desde cualquier parte y arrastrarla
-- El cursor cambia a "mano abierta" cuando pasas sobre una nota
-- El cursor cambia a "mano cerrada" mientras arrastras
-- Ya no hay icono de rayitas porque no es necesario
-- Mas intuitivo y facil de usar
+- Cada nota se puede arrastrar y soltar en cualquier parte del area de notas
+- Las notas permanecen donde las colocas
+- Puedes organizar visualmente los estudios como prefieras
+- El boton [+] permanece en una posicion fija
