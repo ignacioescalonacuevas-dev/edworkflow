@@ -1,101 +1,36 @@
 
-# Plan: Memoria de Preferencias de Posición por Tipo de Nota
 
-## Resumen
+# Plan: Habilitar Arrastre de Notas a Cualquier Slot Vacío
 
-Agregar un sistema que recuerde dónde coloca el usuario cada tipo de nota y aplique automáticamente esa posición para nuevos pacientes.
+## Problema Identificado
+
+El componente `StickerNoteItem` usa `useSortable` (del sistema sortable) pero los slots vacíos usan `useDroppable` (del sistema core). Estos dos sistemas no están conectados correctamente, por lo que las notas solo se pueden intercambiar entre sí pero no mover a slots vacíos.
 
 ---
 
-## Cómo Funciona
+## Solución
 
-```text
-Escenario:
-1. Usuario agrega "CT" → va al primer slot disponible (slot 0)
-2. Usuario arrastra "CT" al slot 5
-3. Sistema guarda: "study:CT prefiere slot 5"
-4. Usuario agrega otro paciente y agrega "CT"
-5. El "CT" aparece automáticamente en slot 5 (si está libre)
-```
+Cambiar `StickerNoteItem` para usar `useDraggable` en lugar de `useSortable`. Esto hará que las notas sean arrastrables y compatibles con los slots vacíos que ya tienen `useDroppable`.
 
 ---
 
 ## Cambios Necesarios
 
-### 1. Agregar Estado de Preferencias
+### Archivo: `src/components/StickerNoteItem.tsx`
 
-**Archivo:** `src/store/patientStore.ts`
-
-Nuevo campo en el store que mapea tipo+texto de nota a su slot preferido:
+Cambiar de `useSortable` a `useDraggable`:
 
 ```typescript
-// Nuevo estado
-noteSlotPreferences: Record<string, number>;
-// Ejemplo: { "study:CT": 5, "precaution:Flu A +": 8 }
+// ANTES
+import { useSortable } from '@dnd-kit/sortable';
+
+const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: note.id });
+
+// DESPUÉS  
+import { useDraggable } from '@dnd-kit/core';
+
+const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: note.id });
 ```
-
----
-
-### 2. Guardar Preferencia al Mover Nota
-
-**Archivo:** `src/store/patientStore.ts`
-
-Cuando el usuario mueve una nota a un nuevo slot, guardar esa preferencia:
-
-```typescript
-moveNoteToSlot: (patientId, noteId, targetSlotIndex) => {
-  set((state) => {
-    // ... lógica existente de mover/intercambiar ...
-    
-    // NUEVO: Guardar preferencia
-    const note = patient.stickerNotes.find(n => n.id === noteId);
-    const preferenceKey = `${note.type}:${note.text}`;
-    
-    return {
-      ...nuevoEstado,
-      noteSlotPreferences: {
-        ...state.noteSlotPreferences,
-        [preferenceKey]: targetSlotIndex,
-      },
-    };
-  });
-}
-```
-
----
-
-### 3. Aplicar Preferencia al Agregar Nota
-
-**Archivo:** `src/store/patientStore.ts`
-
-Al crear una nota, verificar si hay preferencia guardada:
-
-```typescript
-addStickerNote: (patientId, noteData) => {
-  const preferenceKey = `${noteData.type}:${noteData.text}`;
-  const preferredSlot = state.noteSlotPreferences[preferenceKey];
-  
-  // Si hay preferencia Y el slot está libre, usarlo
-  // Si no, usar primer slot disponible (comportamiento actual)
-  const usedSlots = new Set(patient.stickerNotes.map(n => n.slotIndex));
-  
-  let finalSlot;
-  if (preferredSlot !== undefined && !usedSlots.has(preferredSlot)) {
-    finalSlot = preferredSlot;
-  } else {
-    // Buscar primer slot libre (lógica actual)
-    finalSlot = primerSlotDisponible;
-  }
-}
-```
-
----
-
-## Archivos a Modificar
-
-| Archivo | Cambios |
-|---------|---------|
-| `src/store/patientStore.ts` | Agregar `noteSlotPreferences`, modificar `moveNoteToSlot` y `addStickerNote` |
 
 ---
 
@@ -103,53 +38,58 @@ addStickerNote: (patientId, noteData) => {
 
 | Acción | Resultado |
 |--------|-----------|
-| Agregar "CT" por primera vez | Va al primer slot libre |
-| Mover "CT" al slot 5 | CT se mueve, se guarda preferencia |
-| Agregar "CT" a otro paciente | CT aparece en slot 5 automáticamente |
-| Slot 5 ocupado en otro paciente | CT va al primer slot libre |
-| Mover "CT" al slot 2 | Preferencia se actualiza a slot 2 |
+| Arrastrar nota a slot vacío | La nota se mueve a ese slot |
+| Arrastrar nota sobre otra nota | Las notas intercambian posiciones |
+| Arrastrar nota a slot con botón [+] | La nota reemplaza el botón [+], que se mueve al próximo slot vacío |
 
 ---
 
-## Persistencia
+## Archivos a Modificar
 
-Las preferencias se guardan automáticamente con el middleware `persist` de Zustand que ya está configurado, así que sobreviven recargas del navegador.
-
-Cada coordinador tendrá su propio layout guardado en su dispositivo.
+| Archivo | Cambio |
+|---------|--------|
+| `src/components/StickerNoteItem.tsx` | Cambiar `useSortable` por `useDraggable` |
 
 ---
 
 ## Sección Técnica
 
-### Estructura de Datos
-
-```typescript
-// En PatientStore interface
-noteSlotPreferences: Record<string, number>;
-
-// Clave del mapa
-`${type}:${text}` 
-// Ejemplos:
-// "study:CT" → 5
-// "study:ECHO" → 2
-// "precaution:Flu A +" → 8
-// "critical:Trop 85" → 0
-```
-
-### Flujo de Datos
+### Diferencia entre sistemas
 
 ```text
-Usuario arrastra nota
-       ↓
-handleDragEnd (StickerNotesColumn)
-       ↓
-onMoveToSlot(noteId, targetSlot)
-       ↓
-moveNoteToSlot en store
-       ↓
-1. Actualiza slotIndex de la nota
-2. Intercambia si hay otra nota
-3. Guarda preferencia: type:text → slot
-       ↓
-Estado persistido en localStorage
+useSortable (sortable):
+- Diseñado para listas ordenables
+- Las items se reordenan automáticamente
+- No funciona bien con "huecos" vacíos
+
+useDraggable + useDroppable (core):
+- Sistema más flexible
+- Cada nota es arrastrable
+- Cada slot (vacío o con nota) es un objetivo
+- Perfecto para una cuadrícula con espacios vacíos
 ```
+
+### Código actualizado
+
+```typescript
+import { useDraggable } from '@dnd-kit/core';
+
+export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({ id: note.id });
+
+  const style: React.CSSProperties = {
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 100 : 1,
+  };
+  
+  // ... resto del componente igual
+}
+```
+
