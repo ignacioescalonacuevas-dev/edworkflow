@@ -1,8 +1,7 @@
 import { X, Check } from 'lucide-react';
 import { StickerNote, NOTE_TYPE_CONFIG } from '@/types/patient';
 import { cn } from '@/lib/utils';
-import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
+import { useDraggable } from '@dnd-kit/core';
 
 interface StickerNoteItemProps {
   note: StickerNote;
@@ -18,15 +17,16 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
     listeners,
     setNodeRef,
     transform,
-    transition,
     isDragging,
-  } = useSortable({ id: note.id });
+  } = useDraggable({ id: note.id });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 10 : undefined,
+  const style: React.CSSProperties = {
+    position: 'absolute',
+    left: note.position?.x ?? 0,
+    top: note.position?.y ?? 0,
+    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
+    opacity: isDragging ? 0.7 : 1,
+    zIndex: isDragging ? 100 : 1,
   };
 
   // Study type: show checkmark when completed, click to toggle, X to remove
@@ -43,7 +43,11 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
         )}
       >
         <button
-          onClick={() => onToggle(note.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle(note.id);
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
           className={cn(
             "flex items-center gap-0.5 px-1 py-0.5 rounded text-[10px] font-medium border transition-colors",
             note.completed 
@@ -59,6 +63,7 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
             e.stopPropagation();
             onRemove(note.id);
           }}
+          onPointerDown={(e) => e.stopPropagation()}
           className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
         >
           <X className="h-2.5 w-2.5" />
@@ -89,6 +94,7 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
           e.stopPropagation();
           onRemove(note.id);
         }}
+        onPointerDown={(e) => e.stopPropagation()}
         className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
       >
         <X className="h-2.5 w-2.5" />

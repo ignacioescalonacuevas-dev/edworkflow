@@ -86,6 +86,7 @@ export interface StickerNote {
   text: string;
   completed?: boolean;  // Only for type 'study'
   createdAt: Date;
+  position?: { x: number; y: number };  // Free positioning within sticker
 }
 
 export const STUDY_OPTIONS = ['CT', 'ECHO', 'ECG', 'US', 'X-Ray', 'Vascular'] as const;
