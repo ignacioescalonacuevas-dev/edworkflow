@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Patient, PatientStatus, PATIENT_STATUSES } from '@/types/patient';
 import { usePatientStore } from '@/store/patientStore';
+import { useShiftHistoryStore } from '@/store/shiftHistoryStore';
 import { StickerNotesColumn } from './StickerNotesColumn';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -320,6 +321,9 @@ function getElapsedTime(arrivalTime: Date): string {
 
 export function PatientSticker({ patient }: PatientStickerProps) {
   const { addStickerNote, toggleStudyCompleted, removeStickerNote, moveNoteToSlot, doctors, nurses, locations } = usePatientStore();
+  const { viewingDate } = useShiftHistoryStore();
+  
+  const isReadOnly = viewingDate !== null;
   
   const elapsedTime = useMemo(() => getElapsedTime(patient.arrivalTime), [patient.arrivalTime]);
   const statusConfig = PATIENT_STATUSES.find(s => s.value === patient.status);
@@ -328,18 +332,22 @@ export function PatientSticker({ patient }: PatientStickerProps) {
   const isDischarged = patient.status === 'discharged' || patient.status === 'transferred';
 
   const handleAddNote = (note: Parameters<typeof addStickerNote>[1]) => {
+    if (isReadOnly) return;
     addStickerNote(patient.id, note);
   };
 
   const handleToggle = (noteId: string) => {
+    if (isReadOnly) return;
     toggleStudyCompleted(patient.id, noteId);
   };
 
   const handleRemove = (noteId: string) => {
+    if (isReadOnly) return;
     removeStickerNote(patient.id, noteId);
   };
 
   const handleMoveToSlot = (noteId: string, slotIndex: number) => {
+    if (isReadOnly) return;
     moveNoteToSlot(patient.id, noteId, slotIndex);
   };
 
@@ -356,7 +364,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
         {/* Left column - Patient info (compacted) */}
         <div className="flex flex-col min-w-0">
           <div className="flex items-baseline gap-1 flex-wrap">
-            <StickerActionsMenu patientId={patient.id} patientName={patient.name} />
+            {!isReadOnly && <StickerActionsMenu patientId={patient.id} patientName={patient.name} />}
             <span className="font-semibold text-sm">{patient.name}</span>
             <span className="text-[10px] text-muted-foreground whitespace-nowrap">{elapsedTime}</span>
           </div>
@@ -378,49 +386,82 @@ export function PatientSticker({ patient }: PatientStickerProps) {
 
         {/* Right column - Box, Doctor, Nurse (clickable dropdowns) */}
         <div className="flex flex-col items-end min-w-[32px]">
-          <StaffDropdown
-            type="location"
-            patientId={patient.id}
-            currentValue={patient.box}
-            options={locations}
-            displayValue={patient.box.replace('Box ', 'B')}
-          />
-          <StaffDropdown
-            type="doctor"
-            patientId={patient.id}
-            currentValue={patient.doctor}
-            options={doctors}
-            displayValue={getInitials(patient.doctor)}
-          />
-          <StaffDropdown
-            type="nurse"
-            patientId={patient.id}
-            currentValue={patient.nurse}
-            options={nurses}
-            displayValue={getInitials(patient.nurse)}
-          />
+          {isReadOnly ? (
+            <>
+              <span className="text-xs font-medium">{patient.box.replace('Box ', 'B')}</span>
+              <span className="text-xs font-medium text-primary">{getInitials(patient.doctor)}</span>
+              <span className="text-xs font-medium text-muted-foreground">{getInitials(patient.nurse)}</span>
+            </>
+          ) : (
+            <>
+              <StaffDropdown
+                type="location"
+                patientId={patient.id}
+                currentValue={patient.box}
+                options={locations}
+                displayValue={patient.box.replace('Box ', 'B')}
+              />
+              <StaffDropdown
+                type="doctor"
+                patientId={patient.id}
+                currentValue={patient.doctor}
+                options={doctors}
+                displayValue={getInitials(patient.doctor)}
+              />
+              <StaffDropdown
+                type="nurse"
+                patientId={patient.id}
+                currentValue={patient.nurse}
+                options={nurses}
+                displayValue={getInitials(patient.nurse)}
+              />
+            </>
+          )}
         </div>
       </div>
 
       {/* Bottom row - Chief Complaint (editable) + Status */}
       <div className="flex items-center justify-between gap-2 mt-2 pt-2 border-t border-border/50">
-        <EditableChiefComplaint 
-          patientId={patient.id}
-          complaint={patient.chiefComplaint}
-        />
-        <StatusDropdown 
-          patientId={patient.id}
-          currentStatus={patient.status}
-          statusConfig={statusConfig}
-        />
+        {isReadOnly ? (
+          <span className="text-xs text-muted-foreground flex-1">{patient.chiefComplaint}</span>
+        ) : (
+          <EditableChiefComplaint 
+            patientId={patient.id}
+            complaint={patient.chiefComplaint}
+          />
+        )}
+        {isReadOnly ? (
+          <span
+            className={cn(
+              "text-[10px] px-1.5 py-0.5 h-5 shrink-0 rounded-md border",
+              statusConfig?.color
+            )}
+          >
+            {statusConfig?.label}
+          </span>
+        ) : (
+          <StatusDropdown 
+            patientId={patient.id}
+            currentStatus={patient.status}
+            statusConfig={statusConfig}
+          />
+        )}
       </div>
 
       {/* Bed number for admissions - editable */}
       {isAdmission && (
-        <EditableBedNumber 
-          patientId={patient.id}
-          bedNumber={patient.admission?.bedNumber || ''}
-        />
+        isReadOnly ? (
+          patient.admission?.bedNumber && (
+            <div className="absolute top-1 right-1 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium">
+              {patient.admission.bedNumber}
+            </div>
+          )
+        ) : (
+          <EditableBedNumber 
+            patientId={patient.id}
+            bedNumber={patient.admission?.bedNumber || ''}
+          />
+        )
       )}
     </div>
   );

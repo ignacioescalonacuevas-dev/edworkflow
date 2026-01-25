@@ -141,3 +141,19 @@ export const SPECIALTIES = [
   'Neurology Registrar',
   'Pediatrics Registrar',
 ] as const;
+
+// Shift History Types
+export interface ShiftSnapshot {
+  date: string;                    // "2026-01-24" (key)
+  patients: Patient[];
+  doctors: string[];
+  nurses: string[];
+  locations: string[];
+  summary: {
+    totalPatients: number;
+    admissions: number;
+    discharges: number;
+    transfers: number;
+  };
+  savedAt: string;                 // ISO timestamp
+}

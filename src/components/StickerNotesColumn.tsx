@@ -3,6 +3,7 @@ import { StickerNote } from '@/types/patient';
 import { StickerNoteItem } from './StickerNoteItem';
 import { AddNotePopover } from './AddNotePopover';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { useShiftHistoryStore } from '@/store/shiftHistoryStore';
 import {
   DndContext,
   DragEndEvent,
@@ -86,6 +87,7 @@ interface StickerNotesColumnProps {
   onToggle: (noteId: string) => void;
   onRemove: (noteId: string) => void;
   onMoveToSlot: (noteId: string, slotIndex: number) => void;
+  readOnly?: boolean;
 }
 
 export function StickerNotesColumn({ 
@@ -94,8 +96,11 @@ export function StickerNotesColumn({
   onToggle, 
   onRemove,
   onMoveToSlot,
+  readOnly = false,
 }: StickerNotesColumnProps) {
   const safeNotes = notes || [];
+  const { viewingDate } = useShiftHistoryStore();
+  const isReadOnly = readOnly || viewingDate !== null;
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -105,7 +110,16 @@ export function StickerNotesColumn({
     })
   );
 
+  // Create a map of slot -> note
+  const slotMap = new Map<number, StickerNote>();
+  safeNotes.forEach((note, index) => {
+    const slotIndex = note.slotIndex ?? index;
+    slotMap.set(slotIndex, note);
+  });
+
   const handleDragEnd = (event: DragEndEvent) => {
+    if (isReadOnly) return;
+    
     const { active, over } = event;
     
     if (!over) return;
@@ -120,21 +134,18 @@ export function StickerNotesColumn({
     }
   };
 
-  // Create a map of slot -> note
-  const slotMap = new Map<number, StickerNote>();
-  safeNotes.forEach((note, index) => {
-    const slotIndex = note.slotIndex ?? index;
-    slotMap.set(slotIndex, note);
-  });
-
-  // Find first empty slot for the add button
+  // Find first empty slot for the add button (only if not read-only)
   let addButtonSlot = -1;
-  for (let i = 0; i < TOTAL_SLOTS; i++) {
-    if (!slotMap.has(i)) {
-      addButtonSlot = i;
-      break;
+  if (!isReadOnly) {
+    for (let i = 0; i < TOTAL_SLOTS; i++) {
+      if (!slotMap.has(i)) {
+        addButtonSlot = i;
+        break;
+      }
     }
   }
+
+  // Remove duplicate add button logic (now handled above)
 
   return (
     <div 
@@ -142,7 +153,7 @@ export function StickerNotesColumn({
       onClick={(e) => e.stopPropagation()}
     >
       <DndContext
-        sensors={sensors}
+        sensors={isReadOnly ? [] : sensors}
         onDragEnd={handleDragEnd}
       >
         <div className="grid grid-cols-3 gap-0.5">

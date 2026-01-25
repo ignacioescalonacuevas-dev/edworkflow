@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { format } from 'date-fns';
 import { Patient, Order, OrderStatus, AdmissionData, PatientEvent, PatientStatus, PATIENT_STATUSES, StickerNote, StickerNoteType } from '@/types/patient';
+import { useShiftHistoryStore } from './shiftHistoryStore';
 
 const DEFAULT_DOCTORS = [
   'Dr. TAU',
@@ -114,6 +116,7 @@ interface PatientStore {
   setShiftStaff: (physicians: string[], nurses: string[]) => void;
   loadPreviousShift: () => void;
   endShift: () => void;
+  saveCurrentShiftToHistory: () => void;
   
   // Admission
   startAdmission: (patientId: string) => void;
@@ -1319,6 +1322,29 @@ export const usePatientStore = create<PatientStore>()(
             p.id === patientId ? { ...p, chiefComplaint: complaint } : p
           ),
         }));
+      },
+
+      saveCurrentShiftToHistory: () => {
+        const state = get();
+        if (!state.shiftDate) return;
+        
+        const dateKey = format(new Date(state.shiftDate), 'yyyy-MM-dd');
+        const snapshot = {
+          date: dateKey,
+          patients: state.patients,
+          doctors: state.doctors,
+          nurses: state.nurses,
+          locations: state.locations,
+          summary: {
+            totalPatients: state.patients.length,
+            admissions: state.patients.filter(p => p.status === 'admission').length,
+            discharges: state.patients.filter(p => p.status === 'discharged').length,
+            transfers: state.patients.filter(p => p.status === 'transferred').length,
+          },
+          savedAt: new Date().toISOString(),
+        };
+        
+        useShiftHistoryStore.getState().saveShift(snapshot);
       },
     }),
     {

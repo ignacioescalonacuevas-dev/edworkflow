@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePatientStore } from '@/store/patientStore';
+import { useShiftHistoryStore } from '@/store/shiftHistoryStore';
 
 export function NewPatientForm() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,6 +19,9 @@ export function NewPatientForm() {
   const [doctor, setDoctor] = useState('');
   const [nurse, setNurse] = useState('');
   const { addPatient, doctors, nurses, locations } = usePatientStore();
+  const { viewingDate } = useShiftHistoryStore();
+  
+  const isReadOnly = viewingDate !== null;
 
   const handleMNumberChange = (value: string) => {
     // Format: M followed by 8 digits
@@ -54,6 +58,10 @@ export function NewPatientForm() {
       setIsOpen(false);
     }
   };
+
+  if (isReadOnly) {
+    return null;
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
