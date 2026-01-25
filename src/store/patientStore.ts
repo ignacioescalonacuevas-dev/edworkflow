@@ -97,7 +97,7 @@ interface PatientStore {
   updateStickerNote: (patientId: string, noteId: string, updates: Partial<StickerNote>) => void;
   removeStickerNote: (patientId: string, noteId: string) => void;
   toggleStudyCompleted: (patientId: string, noteId: string) => void;
-  reorderStickerNotes: (patientId: string, fromIndex: number, toIndex: number) => void;
+  moveNoteToSlot: (patientId: string, noteId: string, slotIndex: number) => void;
   
   // Board filters
   setSearchQuery: (query: string) => void;
@@ -589,18 +589,35 @@ export const usePatientStore = create<PatientStore>()(
 
       // Sticker Notes
       addStickerNote: (patientId, noteData) => {
-        const newNote: StickerNote = {
-          ...noteData,
-          id: generateId(),
-          createdAt: new Date(),
-        };
-        set((state) => ({
-          patients: state.patients.map((p) =>
-            p.id === patientId
-              ? { ...p, stickerNotes: [...p.stickerNotes, newNote] }
-              : p
-          ),
-        }));
+        set((state) => {
+          const patient = state.patients.find(p => p.id === patientId);
+          if (!patient) return state;
+          
+          // Find first available slot
+          const usedSlots = new Set(patient.stickerNotes.map(n => n.slotIndex ?? 0));
+          let availableSlot = 0;
+          for (let i = 0; i < 9; i++) {
+            if (!usedSlots.has(i)) {
+              availableSlot = i;
+              break;
+            }
+          }
+          
+          const newNote: StickerNote = {
+            ...noteData,
+            id: generateId(),
+            createdAt: new Date(),
+            slotIndex: noteData.slotIndex ?? availableSlot,
+          };
+          
+          return {
+            patients: state.patients.map((p) =>
+              p.id === patientId
+                ? { ...p, stickerNotes: [...p.stickerNotes, newNote] }
+                : p
+            ),
+          };
+        });
       },
 
       updateStickerNote: (patientId, noteId, updates) => {
@@ -645,14 +662,32 @@ export const usePatientStore = create<PatientStore>()(
         }));
       },
 
-      reorderStickerNotes: (patientId, fromIndex, toIndex) => {
+      moveNoteToSlot: (patientId, noteId, targetSlotIndex) => {
         set((state) => ({
           patients: state.patients.map((p) => {
             if (p.id !== patientId) return p;
-            const newNotes = [...p.stickerNotes];
-            const [removed] = newNotes.splice(fromIndex, 1);
-            newNotes.splice(toIndex, 0, removed);
-            return { ...p, stickerNotes: newNotes };
+            
+            // Find if there's a note already in the target slot
+            const noteInTargetSlot = p.stickerNotes.find(n => n.slotIndex === targetSlotIndex);
+            const movingNote = p.stickerNotes.find(n => n.id === noteId);
+            
+            if (!movingNote) return p;
+            
+            const movingNoteCurrentSlot = movingNote.slotIndex ?? 0;
+            
+            // Swap slots if target is occupied, otherwise just move
+            return {
+              ...p,
+              stickerNotes: p.stickerNotes.map((n) => {
+                if (n.id === noteId) {
+                  return { ...n, slotIndex: targetSlotIndex };
+                }
+                if (noteInTargetSlot && n.id === noteInTargetSlot.id) {
+                  return { ...n, slotIndex: movingNoteCurrentSlot };
+                }
+                return n;
+              }),
+            };
           }),
         }));
       },
