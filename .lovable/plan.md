@@ -1,99 +1,108 @@
 
-# Plan: Notas con Posicion Libre (Estilo Post-it)
+# Plan: Sistema de Cuadrícula para Notas (Estilo Escritorio)
 
 ## Resumen
 
-Cambiar el sistema de notas para que cada nota tenga coordenadas X/Y y pueda colocarse libremente dentro del area del sticker, como post-its en un tablero.
+Cambiar el sistema de posicionamiento libre a un sistema de cuadrícula donde las notas se "acomodan" automáticamente en celdas predefinidas, evitando que se sobrepongan. Como los íconos del escritorio de Windows/Mac.
+
+---
+
+## Concepto Visual
+
+```text
+Antes (posición libre - se solapan):
+┌────────────────────┐
+│  [CT] [ECHO]       │  <- pueden quedar encima
+│    [MRI]           │     unas de otras
+│ [+]                │
+└────────────────────┘
+
+Después (cuadrícula - ordenadas):
+┌────────────────────┐
+│ [CT]  [ECHO] [MRI] │  <- fila 1
+│ [LAB] [RX]   [___] │  <- fila 2
+│ [+]                │
+└────────────────────┘
+```
 
 ---
 
 ## Cambios Necesarios
 
-### 1. Actualizar el Tipo de Datos
+### 1. Cambiar el Tipo de Posición
 
 **Archivo:** `src/types/patient.ts`
 
-Agregar coordenadas de posicion al tipo StickerNote:
+Cambiar de coordenadas X/Y a índice de cuadrícula:
 
 ```typescript
 interface StickerNote {
-  id: string;
-  type: StickerNoteType;
-  text: string;
-  completed: boolean;
-  createdAt: Date;
-  position?: { x: number; y: number }; // NUEVO: posicion libre
+  // ... campos existentes
+  gridIndex?: number;  // Posición en la cuadrícula (0, 1, 2, ...)
 }
 ```
 
 ---
 
-### 2. Modificar el Contenedor de Notas
+### 2. Reducir Márgenes de DOB y M-Number
+
+**Archivo:** `src/components/PatientSticker.tsx`
+
+Hacer más compacta la información del paciente para dar más espacio a las notas:
+
+- Combinar DOB y M-Number en una sola línea
+- Reducir el tamaño de texto
+
+```text
+Antes:
+Juan García          B5
+12/03/1985           DR
+M12345678            EN
+
+Después:
+Juan García          B5
+12/03/1985 M12345678 DR
+                     EN
+```
+
+---
+
+### 3. Modificar el Contenedor de Notas
 
 **Archivo:** `src/components/StickerNotesColumn.tsx`
 
-- Cambiar de `@dnd-kit/sortable` a `@dnd-kit/core` puro (sin ordenamiento, solo drag)
-- Usar `DragOverlay` para mostrar la nota mientras se arrastra
-- Calcular la nueva posicion basandose en donde se suelta la nota
-- El contenedor sera `position: relative` con area definida
-- Las notas seran `position: absolute` con top/left basados en sus coordenadas
+- Usar CSS Grid en lugar de posición absoluta
+- Definir celdas de tamaño fijo
+- Cuando se arrastra una nota, calcular a qué celda corresponde y hacer "swap" con la nota que esté ahí
+- Volver a usar `@dnd-kit/sortable` pero con grid layout
 
-```text
-Antes (lista ordenable):
-┌─────────────────┐
-│ [CT] [ECHO] [+] │  <- notas en fila, solo intercambian orden
-└─────────────────┘
-
-Despues (posicion libre):
-┌─────────────────────┐
-│  [CT]       [ECHO]  │  <- notas en posiciones X/Y libres
-│        [MRI]        │
-│ [+]                 │  <- boton de agregar fijo
-└─────────────────────┘
+```typescript
+// Cuadrícula de 3 columnas
+<div className="grid grid-cols-3 gap-0.5">
+  {sortedNotes.map(note => (
+    <StickerNoteItem key={note.id} note={note} ... />
+  ))}
+</div>
 ```
 
 ---
 
-### 3. Modificar el Item de Nota
+### 4. Simplificar el Item de Nota
 
 **Archivo:** `src/components/StickerNoteItem.tsx`
 
-- Cambiar de `useSortable` a `useDraggable`
-- Aplicar `position: absolute` con las coordenadas guardadas
-- Mantener la funcionalidad de toggle y remove
+- Quitar `position: absolute`
+- Volver a `useSortable` en lugar de `useDraggable`
+- Mantener el arrastre desde cualquier parte
 
 ---
 
-### 4. Actualizar el Store
+### 5. Actualizar el Store
 
 **Archivo:** `src/store/patientStore.ts`
 
-- Cambiar `reorderStickerNotes` por `updateNotePosition`
-- Nueva funcion que actualiza las coordenadas X/Y de una nota
-
-```typescript
-updateNotePosition: (patientId: string, noteId: string, position: { x: number; y: number }) => {
-  set((state) => ({
-    patients: state.patients.map((p) => {
-      if (p.id !== patientId) return p;
-      return {
-        ...p,
-        stickerNotes: p.stickerNotes.map((n) =>
-          n.id === noteId ? { ...n, position } : n
-        ),
-      };
-    }),
-  }));
-}
-```
-
----
-
-### 5. Agregar Notas con Posicion Inicial
-
-**Archivo:** `src/store/patientStore.ts`
-
-Al agregar una nota nueva, calcular una posicion inicial que no se solape con las existentes.
+- Revertir a `reorderStickerNotes` en lugar de `updateNotePosition`
+- El orden del array determina la posición en la cuadrícula
 
 ---
 
@@ -101,27 +110,45 @@ Al agregar una nota nueva, calcular una posicion inicial que no se solape con la
 
 | Archivo | Cambios |
 |---------|---------|
-| `src/types/patient.ts` | Agregar campo `position` opcional al tipo StickerNote |
-| `src/store/patientStore.ts` | Cambiar `reorderStickerNotes` por `updateNotePosition`, asignar posicion inicial |
-| `src/components/StickerNotesColumn.tsx` | Cambiar a drag libre, contenedor relativo, calcular posicion al soltar |
-| `src/components/StickerNoteItem.tsx` | Cambiar a `useDraggable`, aplicar posicion absoluta |
-| `src/components/PatientSticker.tsx` | Pasar nueva funcion de actualizar posicion |
+| `src/types/patient.ts` | Quitar campo `position`, usar orden del array |
+| `src/components/PatientSticker.tsx` | Compactar DOB y M-Number en una línea |
+| `src/components/StickerNotesColumn.tsx` | Cambiar a CSS Grid, volver a sortable |
+| `src/components/StickerNoteItem.tsx` | Quitar position absolute, volver a useSortable |
+| `src/store/patientStore.ts` | Restaurar `reorderStickerNotes` |
 
 ---
 
-## Consideraciones Tecnicas
+## Detalles Técnicos
 
-- **Area del contenedor:** Definir un tamano minimo para el area de notas (ej: 120x80px)
-- **Limites:** Las notas no pueden salir del area del sticker
-- **Colisiones:** Las notas pueden solaparse (como post-its reales)
-- **Posicion inicial:** Notas nuevas se colocan en una posicion libre calculada
-- **Compatibilidad:** Notas existentes sin posicion usaran posicion por defecto
+### Layout de Cuadrícula
+
+```text
+Configuración:
+- Columnas: 3 (ajustable)
+- Tamaño celda: ~35px x ~18px
+- Gap: 2px
+
+Ejemplo con 5 notas:
+┌─────┬─────┬─────┐
+│ CT  │ECHO │ MRI │  <- índices 0, 1, 2
+├─────┼─────┼─────┤
+│ LAB │ RX  │     │  <- índices 3, 4
+└─────┴─────┴─────┘
+```
+
+### Comportamiento de Arrastre
+
+1. Usuario toma una nota y la arrastra
+2. Al soltar sobre otra nota, intercambian posiciones
+3. Las notas siempre quedan alineadas en la cuadrícula
+4. No hay superposición posible
 
 ---
 
 ## Resultado Esperado
 
-- Cada nota se puede arrastrar y soltar en cualquier parte del area de notas
-- Las notas permanecen donde las colocas
-- Puedes organizar visualmente los estudios como prefieras
-- El boton [+] permanece en una posicion fija
+- Notas organizadas en cuadrícula limpia
+- Se pueden mover libremente pero siempre "encajan" en su celda
+- No hay superposición
+- Más espacio para notas gracias a DOB/M-Number compactados
+- Interfaz más ordenada y profesional
