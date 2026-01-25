@@ -45,6 +45,9 @@ interface PatientStore {
   precautionOptions: string[];
   dischargeOptions: string[];
   
+  // Note slot preferences (remembers where user places each type of note)
+  noteSlotPreferences: Record<string, number>;
+  
   // Shift management
   shiftDate: Date | null;
   shiftConfigured: boolean;
@@ -282,6 +285,9 @@ export const usePatientStore = create<PatientStore>()(
       followupOptions: ['GP', "Women's Clinic", 'RACC', 'Fracture Clinic', 'Surgical Clinic'],
       precautionOptions: ['Flu A +', 'Flu B +', 'COVID +', 'MRSA', 'Isolation'],
       dischargeOptions: ['Home', 'GP F/U', 'Clinic', 'RACC', 'AMA'],
+      
+      // Note slot preferences
+      noteSlotPreferences: {},
       
       // Shift state
       shiftDate: null,
@@ -593,13 +599,26 @@ export const usePatientStore = create<PatientStore>()(
           const patient = state.patients.find(p => p.id === patientId);
           if (!patient) return state;
           
-          // Find first available slot
+          // Check for saved preference for this note type
+          const preferenceKey = `${noteData.type}:${noteData.text}`;
+          const preferredSlot = state.noteSlotPreferences[preferenceKey];
+          
+          // Find used slots
           const usedSlots = new Set(patient.stickerNotes.map(n => n.slotIndex ?? 0));
-          let availableSlot = 0;
-          for (let i = 0; i < 9; i++) {
-            if (!usedSlots.has(i)) {
-              availableSlot = i;
-              break;
+          
+          let finalSlot: number;
+          
+          // If there's a preference and that slot is free, use it
+          if (preferredSlot !== undefined && !usedSlots.has(preferredSlot)) {
+            finalSlot = preferredSlot;
+          } else {
+            // Find first available slot (fallback)
+            finalSlot = 0;
+            for (let i = 0; i < 9; i++) {
+              if (!usedSlots.has(i)) {
+                finalSlot = i;
+                break;
+              }
             }
           }
           
@@ -607,7 +626,7 @@ export const usePatientStore = create<PatientStore>()(
             ...noteData,
             id: generateId(),
             createdAt: new Date(),
-            slotIndex: noteData.slotIndex ?? availableSlot,
+            slotIndex: noteData.slotIndex ?? finalSlot,
           };
           
           return {
@@ -663,33 +682,45 @@ export const usePatientStore = create<PatientStore>()(
       },
 
       moveNoteToSlot: (patientId, noteId, targetSlotIndex) => {
-        set((state) => ({
-          patients: state.patients.map((p) => {
-            if (p.id !== patientId) return p;
-            
-            // Find if there's a note already in the target slot
-            const noteInTargetSlot = p.stickerNotes.find(n => n.slotIndex === targetSlotIndex);
-            const movingNote = p.stickerNotes.find(n => n.id === noteId);
-            
-            if (!movingNote) return p;
-            
-            const movingNoteCurrentSlot = movingNote.slotIndex ?? 0;
-            
-            // Swap slots if target is occupied, otherwise just move
-            return {
-              ...p,
-              stickerNotes: p.stickerNotes.map((n) => {
-                if (n.id === noteId) {
-                  return { ...n, slotIndex: targetSlotIndex };
-                }
-                if (noteInTargetSlot && n.id === noteInTargetSlot.id) {
-                  return { ...n, slotIndex: movingNoteCurrentSlot };
-                }
-                return n;
-              }),
-            };
-          }),
-        }));
+        set((state) => {
+          const patient = state.patients.find(p => p.id === patientId);
+          if (!patient) return state;
+          
+          const movingNote = patient.stickerNotes.find(n => n.id === noteId);
+          if (!movingNote) return state;
+          
+          // Find if there's a note already in the target slot
+          const noteInTargetSlot = patient.stickerNotes.find(n => n.slotIndex === targetSlotIndex);
+          const movingNoteCurrentSlot = movingNote.slotIndex ?? 0;
+          
+          // Save preference for this note type
+          const preferenceKey = `${movingNote.type}:${movingNote.text}`;
+          
+          return {
+            patients: state.patients.map((p) => {
+              if (p.id !== patientId) return p;
+              
+              // Swap slots if target is occupied, otherwise just move
+              return {
+                ...p,
+                stickerNotes: p.stickerNotes.map((n) => {
+                  if (n.id === noteId) {
+                    return { ...n, slotIndex: targetSlotIndex };
+                  }
+                  if (noteInTargetSlot && n.id === noteInTargetSlot.id) {
+                    return { ...n, slotIndex: movingNoteCurrentSlot };
+                  }
+                  return n;
+                }),
+              };
+            }),
+            // Update the preference for this note type
+            noteSlotPreferences: {
+              ...state.noteSlotPreferences,
+              [preferenceKey]: targetSlotIndex,
+            },
+          };
+        });
       },
 
       // Board filters
