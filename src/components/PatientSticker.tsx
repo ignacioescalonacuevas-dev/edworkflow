@@ -319,7 +319,7 @@ function getElapsedTime(arrivalTime: Date): string {
 }
 
 export function PatientSticker({ patient }: PatientStickerProps) {
-  const { addStickerNote, toggleStudyCompleted, removeStickerNote, updateNotePosition, doctors, nurses, locations } = usePatientStore();
+  const { addStickerNote, toggleStudyCompleted, removeStickerNote, reorderStickerNotes, doctors, nurses, locations } = usePatientStore();
   
   const elapsedTime = useMemo(() => getElapsedTime(patient.arrivalTime), [patient.arrivalTime]);
   const statusConfig = PATIENT_STATUSES.find(s => s.value === patient.status);
@@ -339,8 +339,8 @@ export function PatientSticker({ patient }: PatientStickerProps) {
     removeStickerNote(patient.id, noteId);
   };
 
-  const handleUpdatePosition = (noteId: string, position: { x: number; y: number }) => {
-    updateNotePosition(patient.id, noteId, position);
+  const handleReorder = (fromIndex: number, toIndex: number) => {
+    reorderStickerNotes(patient.id, fromIndex, toIndex);
   };
 
   return (
@@ -353,24 +353,25 @@ export function PatientSticker({ patient }: PatientStickerProps) {
     >
       {/* Main 3-column grid */}
       <div className="grid grid-cols-[1fr_auto_auto] gap-2">
-        {/* Left column - Patient info */}
+        {/* Left column - Patient info (compacted) */}
         <div className="flex flex-col min-w-0">
           <div className="flex items-baseline gap-1 flex-wrap">
             <StickerActionsMenu patientId={patient.id} patientName={patient.name} />
             <span className="font-semibold text-sm">{patient.name}</span>
             <span className="text-[10px] text-muted-foreground whitespace-nowrap">{elapsedTime}</span>
           </div>
-          <span className="text-xs text-muted-foreground">{patient.dateOfBirth}</span>
-          <span className="text-xs font-mono text-muted-foreground">{patient.mNumber}</span>
+          <span className="text-[10px] text-muted-foreground">
+            {patient.dateOfBirth} · <span className="font-mono">{patient.mNumber}</span>
+          </span>
         </div>
 
-        {/* Middle column - Notes */}
+        {/* Middle column - Notes (grid layout) */}
         <StickerNotesColumn
           notes={patient.stickerNotes}
           onAddNote={handleAddNote}
           onToggle={handleToggle}
           onRemove={handleRemove}
-          onUpdatePosition={handleUpdatePosition}
+          onReorder={handleReorder}
         />
 
         {/* Right column - Box, Doctor, Nurse (clickable dropdowns) */}

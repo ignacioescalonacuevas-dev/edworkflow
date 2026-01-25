@@ -1,7 +1,8 @@
 import { X, Check } from 'lucide-react';
 import { StickerNote, NOTE_TYPE_CONFIG } from '@/types/patient';
 import { cn } from '@/lib/utils';
-import { useDraggable } from '@dnd-kit/core';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface StickerNoteItemProps {
   note: StickerNote;
@@ -17,15 +18,14 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
     listeners,
     setNodeRef,
     transform,
+    transition,
     isDragging,
-  } = useDraggable({ id: note.id });
+  } = useSortable({ id: note.id });
 
   const style: React.CSSProperties = {
-    position: 'absolute',
-    left: note.position?.x ?? 0,
-    top: note.position?.y ?? 0,
-    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-    opacity: isDragging ? 0.7 : 1,
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 100 : 1,
   };
 
