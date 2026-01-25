@@ -1,49 +1,28 @@
 
-# Plan: Sistema de Historial de Turnos por Fecha
+
+# Plan: Crear Día de Ayer con los 25 Pacientes en el Historial
 
 ## Resumen
 
-Implementar persistencia de turnos por fecha, permitiendo navegar entre días anteriores y ver el historial. Cada día quedará guardado automáticamente y se podrá acceder desde un selector de fechas.
+Moveremos los 25 pacientes actuales al historial como el turno del **24/01/2026** (ayer) y actualizaremos el estado actual para que sea **25/01/2026** (hoy) con un board limpio listo para empezar.
 
 ---
 
-## Arquitectura del Sistema
+## Flujo Visual
 
 ```text
-localStorage
-├── patient-store          ← Estado actual (turno activo)
-└── shift-history          ← Historial de turnos guardados
-    ├── "2026-01-24" → { patients, doctors, nurses, ... }
-    ├── "2026-01-23" → { patients, doctors, nurses, ... }
-    └── "2026-01-22" → { patients, doctors, nurses, ... }
-```
+ANTES:
+┌─────────────────────────────────────────┐
+│ patient-store: 25 pacientes (24/01)     │
+│ shift-history: vacío                    │
+└─────────────────────────────────────────┘
 
----
-
-## Flujo de Usuario
-
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│ ED Coordination Board                                           │
-│ 📅 Saturday, 25 January 2026  [📂 History]                     │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼ Click en History
-┌─────────────────────────────────────────────────────────────────┐
-│  Shift History                                            [X]   │
-├─────────────────────────────────────────────────────────────────┤
-│  📅 Fri, 24 Jan 2026  │ 25 patients │ 5 admitted │ [View]      │
-│  📅 Thu, 23 Jan 2026  │ 22 patients │ 4 admitted │ [View]      │
-│  📅 Wed, 22 Jan 2026  │ 28 patients │ 6 admitted │ [View]      │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼ Click en View (modo solo lectura)
-┌─────────────────────────────────────────────────────────────────┐
-│ ED Coordination Board                    [🔙 Back to Today]     │
-│ 📅 Friday, 24 January 2026 (READ-ONLY)                          │
-├─────────────────────────────────────────────────────────────────┤
-│ [Board del día 24 en modo lectura...]                           │
-└─────────────────────────────────────────────────────────────────┘
+DESPUÉS:
+┌─────────────────────────────────────────┐
+│ patient-store: board vacío (25/01)      │
+│ shift-history:                          │
+│   └── "2026-01-24" → 25 pacientes       │
+└─────────────────────────────────────────┘
 ```
 
 ---
@@ -52,265 +31,88 @@ localStorage
 
 | Archivo | Descripción |
 |---------|-------------|
-| `src/store/patientStore.ts` | Agregar estado y acciones para historial |
-| `src/store/shiftHistoryStore.ts` | **Nuevo** - Store separado para historial |
-| `src/components/BoardHeader.tsx` | Agregar botón "History" y indicador read-only |
-| `src/components/ShiftHistoryDialog.tsx` | **Nuevo** - Diálogo con lista de turnos anteriores |
-| `src/types/patient.ts` | Agregar tipo `ShiftSnapshot` |
-
----
-
-## Comportamiento
-
-### Guardado Automático
-- Al cambiar de fecha (iniciar nuevo turno), el turno actual se guarda en historial
-- Al cerrar la app, el estado persiste normalmente en `patient-store`
-- Opcional: botón "Save Shift" para guardar explícitamente
-
-### Visualización de Historial
-- Lista de fechas con resumen (total pacientes, admisiones, altas)
-- Modo solo lectura (sin edición para días pasados)
-- Indicador visual claro cuando se está viendo historial vs. día actual
-
-### sin Límite de Almacenamiento
-- Guardar últimos 365 dias por defecto
-
-
----
-
-## Tipos de Datos
-
-```typescript
-// src/types/patient.ts
-interface ShiftSnapshot {
-  date: string;                    // "2026-01-24" (key)
-  patients: Patient[];
-  doctors: string[];
-  nurses: string[];
-  locations: string[];
-  summary: {
-    totalPatients: number;
-    admissions: number;
-    discharges: number;
-    transfers: number;
-  };
-  savedAt: string;                 // ISO timestamp
-}
-```
+| `src/store/shiftHistoryStore.ts` | Inicializar con los 25 pacientes del 24/01/2026 |
+| `src/store/patientStore.ts` | Cambiar fecha actual a 25/01/2026, empezar con board vacío |
 
 ---
 
 ## Sección Técnica
 
-### 1. ShiftHistoryStore (nuevo archivo)
+### 1. shiftHistoryStore.ts - Pre-cargar el historial
+
+Moveremos los 25 pacientes de ejemplo al historial inicial:
 
 ```typescript
-// src/store/shiftHistoryStore.ts
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-
-interface ShiftSnapshot {
-  date: string;
-  patients: Patient[];
-  doctors: string[];
-  nurses: string[];
-  locations: string[];
-  summary: {
-    totalPatients: number;
-    admissions: number;
-    discharges: number;
-    transfers: number;
-  };
-  savedAt: string;
-}
-
-interface ShiftHistoryStore {
-  history: Record<string, ShiftSnapshot>;
-  viewingDate: string | null;  // null = viewing current day
-  
-  saveShift: (snapshot: ShiftSnapshot) => void;
-  loadShift: (date: string) => ShiftSnapshot | null;
-  setViewingDate: (date: string | null) => void;
-  getAvailableDates: () => string[];
-  clearOldHistory: (keepDays: number) => void;
-}
-
-export const useShiftHistoryStore = create<ShiftHistoryStore>()(
-  persist(
-    (set, get) => ({
-      history: {},
-      viewingDate: null,
-      
-      saveShift: (snapshot) => {
-        set((state) => ({
-          history: {
-            ...state.history,
-            [snapshot.date]: snapshot,
-          },
-        }));
-      },
-      
-      loadShift: (date) => get().history[date] || null,
-      
-      setViewingDate: (date) => set({ viewingDate: date }),
-      
-      getAvailableDates: () => Object.keys(get().history).sort().reverse(),
-      
-      clearOldHistory: (keepDays) => {
-        const cutoff = new Date();
-        cutoff.setDate(cutoff.getDate() - keepDays);
-        set((state) => ({
-          history: Object.fromEntries(
-            Object.entries(state.history).filter(
-              ([date]) => new Date(date) >= cutoff
-            )
-          ),
-        }));
-      },
-    }),
-    { name: 'shift-history' }
-  )
-);
-```
-
-### 2. PatientStore - Agregar acciones de historial
-
-```typescript
-// Agregar al PatientStore
-saveCurrentShiftToHistory: () => {
-  const state = get();
-  if (!state.shiftDate) return;
-  
-  const dateKey = format(new Date(state.shiftDate), 'yyyy-MM-dd');
-  const snapshot: ShiftSnapshot = {
-    date: dateKey,
-    patients: state.patients,
-    doctors: state.doctors,
-    nurses: state.nurses,
-    locations: state.locations,
+// Importar los pacientes de ejemplo y crear el snapshot inicial
+const initialHistory: Record<string, ShiftSnapshot> = {
+  '2026-01-24': {
+    date: '2026-01-24',
+    patients: [...los 25 pacientes...],
+    doctors: ['Dr. TAU', 'Dr. Joanna', 'Dr. Caren', 'Dr. Alysha', 'Dr. Salah'],
+    nurses: ['Nebin', 'Beatriz', 'Rinku', 'Rafa'],
+    locations: ['Waiting Area', 'Treatment', 'Box 1', ...],
     summary: {
-      totalPatients: state.patients.length,
-      admissions: state.patients.filter(p => p.status === 'admission').length,
-      discharges: state.patients.filter(p => p.status === 'discharged').length,
-      transfers: state.patients.filter(p => p.status === 'transferred').length,
+      totalPatients: 25,
+      admissions: 5,
+      discharges: 13,
+      transfers: 0,
     },
-    savedAt: new Date().toISOString(),
-  };
-  
-  // Llamar al history store
-  useShiftHistoryStore.getState().saveShift(snapshot);
-},
+    savedAt: '2026-01-24T23:59:00.000Z',
+  },
+};
+
+// En el store:
+history: initialHistory,  // Empezar con el día 24 ya guardado
 ```
 
-### 3. BoardHeader - Agregar controles de historial
+### 2. patientStore.ts - Actualizar a "hoy" (25/01/2026)
 
 ```typescript
-// Agregar en BoardHeader.tsx
-import { History, ArrowLeft } from 'lucide-react';
-import { ShiftHistoryDialog } from './ShiftHistoryDialog';
+// Cambiar la fecha del turno actual
+const SHIFT_DATE = '2026-01-25';  // Hoy
 
-const { viewingDate, setViewingDate } = useShiftHistoryStore();
+// Iniciar con pacientes vacíos (nuevo día)
+const samplePatients: Patient[] = [];
 
-// En el header:
-{viewingDate ? (
-  <Button variant="outline" size="sm" onClick={() => setViewingDate(null)}>
-    <ArrowLeft className="h-4 w-4 mr-2" />
-    Back to Today
-  </Button>
-) : (
-  <ShiftHistoryDialog />
-)}
-
-// Indicador de modo lectura:
-{viewingDate && (
-  <Badge variant="secondary" className="ml-2">
-    READ-ONLY
-  </Badge>
-)}
+// Estado inicial actualizado
+shiftDate: new Date('2026-01-25'),
+shiftConfigured: true,
+patients: [],  // Board vacío, listo para el nuevo turno
 ```
-
-### 4. ShiftHistoryDialog (nuevo componente)
-
-```typescript
-// src/components/ShiftHistoryDialog.tsx
-export function ShiftHistoryDialog() {
-  const { getAvailableDates, loadShift, setViewingDate } = useShiftHistoryStore();
-  const dates = getAvailableDates();
-  
-  return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <History className="h-4 w-4 mr-2" />
-          History
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Shift History</DialogTitle>
-        </DialogHeader>
-        <ScrollArea className="h-80">
-          {dates.map(date => {
-            const shift = loadShift(date);
-            return (
-              <div key={date} className="flex items-center justify-between p-3 border-b">
-                <div>
-                  <span className="font-medium">
-                    {format(new Date(date), 'EEEE, dd MMM yyyy')}
-                  </span>
-                  <p className="text-sm text-muted-foreground">
-                    {shift?.summary.totalPatients} patients · 
-                    {shift?.summary.admissions} admitted · 
-                    {shift?.summary.discharges} discharged
-                  </p>
-                </div>
-                <Button size="sm" onClick={() => setViewingDate(date)}>
-                  View
-                </Button>
-              </div>
-            );
-          })}
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
-  );
-}
-```
-
-### 5. Proteger Edición en Modo Historial
-
-Los componentes de edición deben verificar si estamos viendo historial:
-
-```typescript
-// En cualquier componente que edite datos:
-const { viewingDate } = useShiftHistoryStore();
-const isReadOnly = viewingDate !== null;
-
-// Deshabilitar botones/inputs cuando isReadOnly
-<Button disabled={isReadOnly}>Add Patient</Button>
-```
-
----
-
-## Archivos a Crear/Modificar
-
-| Archivo | Acción |
-|---------|--------|
-| `src/types/patient.ts` | Modificar - agregar `ShiftSnapshot` |
-| `src/store/shiftHistoryStore.ts` | **Crear** |
-| `src/store/patientStore.ts` | Modificar - agregar `saveCurrentShiftToHistory` |
-| `src/components/ShiftHistoryDialog.tsx` | **Crear** |
-| `src/components/BoardHeader.tsx` | Modificar - agregar botón History |
-| `src/components/NewPatientForm.tsx` | Modificar - deshabilitar en read-only |
-| `src/components/PatientSticker.tsx` | Modificar - deshabilitar edición en read-only |
 
 ---
 
 ## Resultado Esperado
 
-- Botón "History" en el header que abre lista de turnos anteriores
-- Cada día se guarda automáticamente al iniciar uno nuevo
-- Navegación a días pasados en modo solo lectura
-- Indicador visual "READ-ONLY" cuando se ve historial
-- Botón "Back to Today" para volver al turno actual
-- Historial de últimos 30 días almacenado en localStorage
+1. **Hoy (25/01/2026)**: Board vacío, listo para agregar pacientes del nuevo turno
+2. **Historial**: El botón "History" mostrará el turno del 24/01/2026 disponible para ver
+3. **Vista Read-Only**: Al hacer click en "View" del día 24, se verán los 25 pacientes en modo solo lectura
+4. **Navegación**: Botón "Back to Today" para volver al turno actual
+
+---
+
+## Estructura del Snapshot del 24/01/2026
+
+```typescript
+{
+  date: '2026-01-24',
+  patients: [
+    // 2 Treatment Room
+    // 3 Waiting Room  
+    // 2 Review
+    // 5 Admission
+    // 13 Discharged
+  ],
+  doctors: ['Dr. TAU', 'Dr. Joanna', 'Dr. Caren', 'Dr. Alysha', 'Dr. Salah'],
+  nurses: ['Nebin', 'Beatriz', 'Rinku', 'Rafa'],
+  locations: ['Waiting Area', 'Treatment', 'Box 1', 'Box 2', 'Box 3', 'Box 4', 'Box 5', 'Box 6', 'Resus'],
+  summary: {
+    totalPatients: 25,
+    admissions: 5,
+    discharges: 13,
+    transfers: 0,
+  },
+  savedAt: '2026-01-24T23:59:00.000Z',
+}
+```
+
