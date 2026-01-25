@@ -138,7 +138,7 @@ export function StickerNotesColumn({
 
   return (
     <div 
-      className="min-w-[100px] max-w-[140px]"
+      className="min-w-[140px] max-w-[200px] flex-1"
       onClick={(e) => e.stopPropagation()}
     >
       <DndContext
