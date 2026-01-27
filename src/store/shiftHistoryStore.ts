@@ -237,32 +237,29 @@ const yesterdayPatients: Patient[] = [
 
   // === DISCHARGED (13) ===
   createPatient('p13', 'Kevin Nolan', '12/08/1988', 'M00456790', 'Minor laceration on hand', 'Treatment Room', 'Dr. Caren', 'Nebin', new Date(`${HISTORY_DATE}T10:00:00`), 'discharged', 5, {
-    stickerNotes: [{ id: 'sn29', type: 'discharge', text: 'Home', createdAt: new Date(`${HISTORY_DATE}T11:00:00`) }],
+    stickerNotes: [{ id: 'sn29', type: 'note', text: 'Home', createdAt: new Date(`${HISTORY_DATE}T11:00:00`) }],
     dischargedAt: new Date(`${HISTORY_DATE}T11:00:00`),
   }),
   createPatient('p14', 'Aoife Kennedy', '20/04/1995', 'M00567891', 'UTI symptoms', 'Box 1', 'Dr. Alysha', 'Beatriz', new Date(`${HISTORY_DATE}T10:15:00`), 'discharged', 4, {
     stickerNotes: [
       { id: 'sn30', type: 'followup', text: 'GP', createdAt: new Date(`${HISTORY_DATE}T11:30:00`) },
-      { id: 'sn31', type: 'discharge', text: 'GP F/U', createdAt: new Date(`${HISTORY_DATE}T11:30:00`) },
     ],
     dischargedAt: new Date(`${HISTORY_DATE}T11:30:00`),
   }),
   createPatient('p15', 'Sean Duffy', '07/11/1965', 'M00678902', 'Dizziness, vertigo', 'Box 2', 'Dr. Salah', 'Rinku', new Date(`${HISTORY_DATE}T10:30:00`), 'discharged', 3, {
     stickerNotes: [
       { id: 'sn32', type: 'study', text: 'ECG', completed: true, createdAt: new Date(`${HISTORY_DATE}T10:45:00`) },
-      { id: 'sn33', type: 'discharge', text: 'Home', createdAt: new Date(`${HISTORY_DATE}T12:00:00`) },
     ],
     dischargedAt: new Date(`${HISTORY_DATE}T12:00:00`),
   }),
   createPatient('p16', 'Claire Healy', '29/01/1983', 'M00789013', 'Allergic reaction, hives', 'Box 3', 'Dr. TAU', 'Rafa', new Date(`${HISTORY_DATE}T11:00:00`), 'discharged', 3, {
-    stickerNotes: [{ id: 'sn34', type: 'discharge', text: 'Home', createdAt: new Date(`${HISTORY_DATE}T12:30:00`) }],
+    stickerNotes: [],
     dischargedAt: new Date(`${HISTORY_DATE}T12:30:00`),
   }),
   createPatient('p17', 'Liam Burke', '15/03/1972', 'M00890124', 'Epigastric pain', 'Box 4', 'Dr. Joanna', 'Nebin', new Date(`${HISTORY_DATE}T11:30:00`), 'discharged', 3, {
     stickerNotes: [
       { id: 'sn35', type: 'study', text: 'US', completed: true, createdAt: new Date(`${HISTORY_DATE}T12:00:00`) },
       { id: 'sn36', type: 'followup', text: 'Surgical Clinic', createdAt: new Date(`${HISTORY_DATE}T13:00:00`) },
-      { id: 'sn37', type: 'discharge', text: 'Clinic', createdAt: new Date(`${HISTORY_DATE}T13:00:00`) },
     ],
     dischargedAt: new Date(`${HISTORY_DATE}T13:00:00`),
   }),
@@ -270,7 +267,6 @@ const yesterdayPatients: Patient[] = [
     stickerNotes: [
       { id: 'sn38', type: 'study', text: 'X-Ray', completed: true, createdAt: new Date(`${HISTORY_DATE}T12:20:00`) },
       { id: 'sn39', type: 'followup', text: 'Fracture Clinic', createdAt: new Date(`${HISTORY_DATE}T13:30:00`) },
-      { id: 'sn40', type: 'discharge', text: 'Clinic', createdAt: new Date(`${HISTORY_DATE}T13:30:00`) },
     ],
     dischargedAt: new Date(`${HISTORY_DATE}T13:30:00`),
   }),
@@ -278,29 +274,26 @@ const yesterdayPatients: Patient[] = [
     stickerNotes: [
       { id: 'sn41', type: 'study', text: 'ECG', completed: true, createdAt: new Date(`${HISTORY_DATE}T12:40:00`) },
       { id: 'sn42', type: 'followup', text: 'GP', createdAt: new Date(`${HISTORY_DATE}T14:00:00`) },
-      { id: 'sn43', type: 'discharge', text: 'GP F/U', createdAt: new Date(`${HISTORY_DATE}T14:00:00`) },
     ],
     dischargedAt: new Date(`${HISTORY_DATE}T14:00:00`),
   }),
   createPatient('p20', 'Orla Sullivan', '02/10/1991', 'M00123457', 'Migraine with aura', 'Box 6', 'Dr. Salah', 'Rafa', new Date(`${HISTORY_DATE}T13:00:00`), 'discharged', 3, {
-    stickerNotes: [{ id: 'sn44', type: 'discharge', text: 'Home', createdAt: new Date(`${HISTORY_DATE}T14:30:00`) }],
+    stickerNotes: [],
     dischargedAt: new Date(`${HISTORY_DATE}T14:30:00`),
   }),
   createPatient('p21', 'Conor Maguire', '17/12/1976', 'M00234569', 'Epistaxis', 'Treatment Room', 'Dr. TAU', 'Nebin', new Date(`${HISTORY_DATE}T13:30:00`), 'discharged', 4, {
-    stickerNotes: [{ id: 'sn45', type: 'discharge', text: 'Home', createdAt: new Date(`${HISTORY_DATE}T14:30:00`) }],
+    stickerNotes: [],
     dischargedAt: new Date(`${HISTORY_DATE}T14:30:00`),
   }),
   createPatient('p22', 'Fiona Reilly', '06/04/1986', 'M00345680', 'Painful throat, difficulty swallowing', 'Waiting Room', 'Dr. Joanna', 'Beatriz', new Date(`${HISTORY_DATE}T14:00:00`), 'discharged', 4, {
     stickerNotes: [
       { id: 'sn46', type: 'followup', text: 'GP', createdAt: new Date(`${HISTORY_DATE}T15:00:00`) },
-      { id: 'sn47', type: 'discharge', text: 'GP F/U', createdAt: new Date(`${HISTORY_DATE}T15:00:00`) },
     ],
     dischargedAt: new Date(`${HISTORY_DATE}T15:00:00`),
   }),
   createPatient('p23', 'Eamon Hayes', '21/08/1959', 'M00456791', 'Blood in stool', 'Box 1', 'Dr. Caren', 'Rinku', new Date(`${HISTORY_DATE}T14:30:00`), 'discharged', 3, {
     stickerNotes: [
       { id: 'sn48', type: 'followup', text: 'RACC', createdAt: new Date(`${HISTORY_DATE}T16:00:00`) },
-      { id: 'sn49', type: 'discharge', text: 'RACC', createdAt: new Date(`${HISTORY_DATE}T16:00:00`) },
     ],
     dischargedAt: new Date(`${HISTORY_DATE}T16:00:00`),
   }),
@@ -308,7 +301,6 @@ const yesterdayPatients: Patient[] = [
     stickerNotes: [
       { id: 'sn50', type: 'study', text: 'X-Ray', completed: true, createdAt: new Date(`${HISTORY_DATE}T15:15:00`) },
       { id: 'sn51', type: 'followup', text: 'Fracture Clinic', createdAt: new Date(`${HISTORY_DATE}T16:30:00`) },
-      { id: 'sn52', type: 'discharge', text: 'Clinic', createdAt: new Date(`${HISTORY_DATE}T16:30:00`) },
     ],
     dischargedAt: new Date(`${HISTORY_DATE}T16:30:00`),
   }),
@@ -316,7 +308,6 @@ const yesterdayPatients: Patient[] = [
     stickerNotes: [
       { id: 'sn53', type: 'study', text: 'X-Ray', completed: true, createdAt: new Date(`${HISTORY_DATE}T15:45:00`) },
       { id: 'sn54', type: 'precaution', text: 'MRSA', createdAt: new Date(`${HISTORY_DATE}T16:00:00`) },
-      { id: 'sn55', type: 'discharge', text: 'Home', createdAt: new Date(`${HISTORY_DATE}T17:00:00`) },
     ],
     dischargedAt: new Date(`${HISTORY_DATE}T17:00:00`),
   }),

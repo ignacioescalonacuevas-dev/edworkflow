@@ -7,6 +7,7 @@ import { TriageDropdown } from './TriageDropdown';
 import { AdmissionBadge } from './AdmissionBadge';
 import { ProcessStateDropdown } from './ProcessStateDropdown';
 import { LocationDropdown } from './LocationDropdown';
+import { ConsultantNameDisplay } from './ConsultantNameDisplay';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { MoreVertical, Trash2 } from 'lucide-react';
@@ -355,7 +356,18 @@ export function PatientSticker({ patient }: PatientStickerProps) {
             {!isReadOnly && <StickerActionsMenu patientId={patient.id} patientName={patient.name} />}
             <span className="font-semibold text-sm leading-tight">{patient.name}</span>
           </div>
-          <span className="text-[11px] text-muted-foreground">{patient.dateOfBirth}</span>
+          {/* Row 2: DOB + Consultant (if in admission) */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-muted-foreground">{patient.dateOfBirth}</span>
+            {isInAdmissionProcess && (
+              <ConsultantNameDisplay 
+                patientId={patient.id}
+                consultantName={patient.admission?.consultantName || patient.admission?.consultant}
+                admission={patient.admission}
+                readOnly={isReadOnly}
+              />
+            )}
+          </div>
           <div className="flex items-baseline gap-1">
             <span className="text-[11px] text-muted-foreground font-mono">{patient.mNumber}</span>
             <span className="text-[10px] text-muted-foreground/70 ml-auto">{elapsedTime}</span>

@@ -13,8 +13,8 @@ interface AddNotePopoverProps {
 
 export function AddNotePopover({ onAdd }: AddNotePopoverProps) {
   const { 
-    studyOptions, followupOptions, precautionOptions, dischargeOptions,
-    addStudyOption, addFollowupOption, addPrecautionOption, addDischargeOption 
+    studyOptions, followupOptions, precautionOptions,
+    addStudyOption, addFollowupOption, addPrecautionOption 
   } = usePatientStore();
   const [noteType, setNoteType] = useState<StickerNoteType>('study');
   const [text, setText] = useState('');
@@ -22,7 +22,7 @@ export function AddNotePopover({ onAdd }: AddNotePopoverProps) {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customValue, setCustomValue] = useState('');
 
-  const hasSelectOptions = noteType === 'study' || noteType === 'followup' || noteType === 'precaution' || noteType === 'discharge';
+  const hasSelectOptions = noteType === 'study' || noteType === 'followup' || noteType === 'precaution';
 
   const handleAdd = () => {
     const noteText = hasSelectOptions ? selectedOption : text;
@@ -52,9 +52,6 @@ export function AddNotePopover({ onAdd }: AddNotePopoverProps) {
         break;
       case 'precaution':
         addPrecautionOption(customValue.trim());
-        break;
-      case 'discharge':
-        addDischargeOption(customValue.trim());
         break;
     }
     
@@ -120,8 +117,6 @@ export function AddNotePopover({ onAdd }: AddNotePopoverProps) {
         return renderSelectWithAddOption(followupOptions, 'Select follow-up...');
       case 'precaution':
         return renderSelectWithAddOption(precautionOptions, 'Select precaution...');
-      case 'discharge':
-        return renderSelectWithAddOption(dischargeOptions, 'Select discharge...');
       case 'critical':
         return (
           <Input

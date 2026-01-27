@@ -44,7 +44,6 @@ interface PatientStore {
   studyOptions: string[];
   followupOptions: string[];
   precautionOptions: string[];
-  dischargeOptions: string[];
   
   // Note slot preferences (remembers where user places each type of note)
   noteSlotPreferences: Record<string, number>;
@@ -84,7 +83,6 @@ interface PatientStore {
   addStudyOption: (option: string) => void;
   addFollowupOption: (option: string) => void;
   addPrecautionOption: (option: string) => void;
-  addDischargeOption: (option: string) => void;
   
   // Patient updates
   updatePatientLocation: (patientId: string, location: string) => void;
@@ -182,7 +180,6 @@ export const usePatientStore = create<PatientStore>()(
       studyOptions: ['CT', 'ECHO', 'ECG', 'US', 'X-Ray', 'Vascular'],
       followupOptions: ['GP', "Women's Clinic", 'RACC', 'Fracture Clinic', 'Surgical Clinic'],
       precautionOptions: ['Flu A +', 'Flu B +', 'COVID +', 'MRSA', 'Isolation'],
-      dischargeOptions: ['Home', 'GP F/U', 'Clinic', 'RACC', 'AMA'],
       
       // Note slot preferences
       noteSlotPreferences: {},
@@ -314,14 +311,6 @@ export const usePatientStore = create<PatientStore>()(
           precautionOptions: state.precautionOptions.includes(option) 
             ? state.precautionOptions 
             : [...state.precautionOptions, option],
-        }));
-      },
-
-      addDischargeOption: (option) => {
-        set((state) => ({
-          dischargeOptions: state.dischargeOptions.includes(option) 
-            ? state.dischargeOptions 
-            : [...state.dischargeOptions, option],
         }));
       },
 
