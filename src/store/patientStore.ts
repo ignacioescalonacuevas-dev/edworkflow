@@ -412,24 +412,42 @@ export const usePatientStore = create<PatientStore>()(
       // NEW: Process state update
       updatePatientProcessState: (patientId, processState) => {
         const stateLabel = PROCESS_STATES.find(s => s.value === processState)?.label || processState;
+        const isAdmissionState = ['admission_pending', 'bed_assigned', 'ready_transfer'].includes(processState);
+        
         set((state) => ({
-          patients: state.patients.map((p) =>
-            p.id === patientId
-              ? {
-                  ...p,
-                  processState,
-                  events: [
-                    ...p.events,
-                    {
-                      id: generateId(),
-                      timestamp: new Date(),
-                      type: 'process_state_change',
-                      description: `Process state changed to: ${stateLabel}`,
-                    },
-                  ],
-                }
-              : p
-          ),
+          patients: state.patients.map((p) => {
+            if (p.id !== patientId) return p;
+            
+            return {
+              ...p,
+              processState,
+              // Create admission object if entering admission state and doesn't exist
+              admission: isAdmissionState && !p.admission ? {
+                specialty: '',
+                consultantName: '',
+                consultant: '',
+                bedNumber: '',
+                bedStatus: 'not_assigned' as const,
+                handoverComplete: false,
+                registrarCalled: false,
+                adminComplete: false,
+                idBraceletVerified: false,
+                mrsaSwabs: false,
+                fallsAssessment: false,
+                handoverNotes: '',
+                startedAt: new Date(),
+              } : p.admission,
+              events: [
+                ...p.events,
+                {
+                  id: generateId(),
+                  timestamp: new Date(),
+                  type: 'process_state_change',
+                  description: `Process state changed to: ${stateLabel}`,
+                },
+              ],
+            };
+          }),
         }));
       },
 
@@ -790,16 +808,33 @@ export const usePatientStore = create<PatientStore>()(
       updateAdmission: (patientId, data) => {
         set((state) => ({
           patients: state.patients.map((p) => {
-            if (p.id !== patientId || !p.admission) return p;
+            if (p.id !== patientId) return p;
             
-            // Sincronizar consultant y consultantName
-            const newConsultantName = data.consultantName ?? data.consultant ?? p.admission.consultantName;
-            const newConsultant = data.consultantName ?? data.consultant ?? p.admission.consultant;
+            // Create admission if it doesn't exist
+            const existingAdmission = p.admission || {
+              specialty: '',
+              consultantName: '',
+              consultant: '',
+              bedNumber: '',
+              bedStatus: 'not_assigned' as const,
+              handoverComplete: false,
+              registrarCalled: false,
+              adminComplete: false,
+              idBraceletVerified: false,
+              mrsaSwabs: false,
+              fallsAssessment: false,
+              handoverNotes: '',
+              startedAt: new Date(),
+            };
+            
+            // Sync consultant and consultantName
+            const newConsultantName = data.consultantName ?? data.consultant ?? existingAdmission.consultantName;
+            const newConsultant = data.consultantName ?? data.consultant ?? existingAdmission.consultant;
             
             return {
               ...p,
               admission: { 
-                ...p.admission, 
+                ...existingAdmission, 
                 ...data,
                 consultantName: newConsultantName,
                 consultant: newConsultant,
