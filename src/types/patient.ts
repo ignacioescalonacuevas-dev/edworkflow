@@ -142,6 +142,39 @@ export const SPECIALTIES = [
   'Pediatrics Registrar',
 ] as const;
 
+// Mapa de abreviaciones para cada texto de nota
+export const NOTE_ABBREVIATIONS: Record<string, string> = {
+  // Studies
+  'CT': 'CT',
+  'ECHO': 'ECHO',
+  'ECG': 'ECG',
+  'US': 'US',
+  'X-Ray': 'XR',
+  'Vascular': 'VA',
+  // Follow-ups
+  'GP': 'GP',
+  "Women's Clinic": 'WC',
+  'RACC': 'RA',
+  'Fracture Clinic': 'FC',
+  'Surgical Clinic': 'SC',
+  // Precautions
+  'Flu A +': 'FA',
+  'Flu B +': 'FB',
+  'COVID +': 'CV',
+  'MRSA': 'MR',
+  'Isolation': 'IS',
+  // Discharge
+  'Home': 'HM',
+  'GP F/U': 'GF',
+  'Clinic': 'CL',
+  'AMA': 'AM',
+};
+
+// Función para obtener abreviación
+export function getAbbreviation(text: string): string {
+  return NOTE_ABBREVIATIONS[text] || text.substring(0, 2).toUpperCase();
+}
+
 // Shift History Types
 export interface ShiftSnapshot {
   date: string;                    // "2026-01-24" (key)
