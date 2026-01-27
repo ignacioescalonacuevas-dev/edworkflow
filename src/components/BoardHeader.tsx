@@ -1,4 +1,5 @@
-import { Activity, EyeOff, Eye, Calendar, ArrowLeft } from 'lucide-react';
+import { useState } from 'react';
+import { Activity, EyeOff, Eye, Calendar, ArrowLeft, BarChart3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { usePatientStore } from '@/store/patientStore';
 import { useShiftHistoryStore } from '@/store/shiftHistoryStore';
@@ -8,12 +9,14 @@ import { FilterIndicator } from './FilterIndicator';
 import { NewPatientForm } from './NewPatientForm';
 import { ShiftSetup } from './ShiftSetup';
 import { ShiftHistoryDialog } from './ShiftHistoryDialog';
+import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 export function BoardHeader() {
+  const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const { shiftDate, hideDischargedFromBoard, setHideDischargedFromBoard } = usePatientStore();
   const { viewingDate, setViewingDate, loadShift } = useShiftHistoryStore();
 
@@ -80,9 +83,24 @@ export function BoardHeader() {
                 </Label>
               </div>
 
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setAnalyticsOpen(true)}
+                className="gap-2"
+              >
+                <BarChart3 className="h-4 w-4" />
+                Analytics
+              </Button>
+
               <NewPatientForm />
               <ShiftSetup />
               <ShiftHistoryDialog />
+              
+              <AnalyticsDashboard 
+                open={analyticsOpen} 
+                onOpenChange={setAnalyticsOpen} 
+              />
             </>
           )}
         </div>
