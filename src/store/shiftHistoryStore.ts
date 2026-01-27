@@ -342,6 +342,9 @@ const initialHistory: Record<string, ShiftSnapshot> = {
 
 // Migration helper for history patients
 function migrateHistoryPatient(patient: any): Patient {
+  // Sincronizar consultant y consultantName
+  const consultantValue = patient.admission?.consultantName || patient.admission?.consultant || '';
+  
   return {
     ...patient,
     triageLevel: patient.triageLevel ?? 3,
@@ -350,7 +353,8 @@ function migrateHistoryPatient(patient: any): Patient {
     processState: patient.processState ?? mapStatusToProcessState(patient.status),
     admission: patient.admission ? {
       ...patient.admission,
-      consultant: patient.admission.consultant ?? patient.admission.consultantName ?? '',
+      consultant: consultantValue,
+      consultantName: consultantValue,
       handoverComplete: patient.admission.handoverComplete ?? false,
     } : undefined,
   };
