@@ -340,6 +340,29 @@ const initialHistory: Record<string, ShiftSnapshot> = {
   },
 };
 
+// Migration helper for history patients
+function migrateHistoryPatient(patient: any): Patient {
+  return {
+    ...patient,
+    triageLevel: patient.triageLevel ?? 3,
+    assignedBox: patient.assignedBox ?? patient.box ?? 'Waiting Room',
+    currentLocation: patient.currentLocation ?? patient.box ?? 'Waiting Room',
+    processState: patient.processState ?? mapStatusToProcessState(patient.status),
+    admission: patient.admission ? {
+      ...patient.admission,
+      consultant: patient.admission.consultant ?? patient.admission.consultantName ?? '',
+      handoverComplete: patient.admission.handoverComplete ?? false,
+    } : undefined,
+  };
+}
+
+function migrateSnapshot(snapshot: ShiftSnapshot): ShiftSnapshot {
+  return {
+    ...snapshot,
+    patients: snapshot.patients.map(migrateHistoryPatient),
+  };
+}
+
 export const useShiftHistoryStore = create<ShiftHistoryStore>()(
   persist(
     (set, get) => ({
@@ -355,7 +378,12 @@ export const useShiftHistoryStore = create<ShiftHistoryStore>()(
         }));
       },
       
-      loadShift: (date) => get().history[date] || null,
+      loadShift: (date) => {
+        const snapshot = get().history[date];
+        if (!snapshot) return null;
+        // Always migrate when loading
+        return migrateSnapshot(snapshot);
+      },
       
       setViewingDate: (date) => set({ viewingDate: date }),
       
@@ -373,6 +401,19 @@ export const useShiftHistoryStore = create<ShiftHistoryStore>()(
         }));
       },
     }),
-    { name: 'shift-history' }
+    { 
+      name: 'shift-history',
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        if (version < 2 && persistedState?.history) {
+          const migratedHistory: Record<string, ShiftSnapshot> = {};
+          for (const [date, snapshot] of Object.entries(persistedState.history as Record<string, ShiftSnapshot>)) {
+            migratedHistory[date] = migrateSnapshot(snapshot);
+          }
+          return { ...persistedState, history: migratedHistory };
+        }
+        return persistedState;
+      },
+    }
   )
 );

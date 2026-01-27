@@ -935,6 +935,16 @@ export const usePatientStore = create<PatientStore>()(
     }),
     {
       name: 'patient-store',
+      version: 2,
+      migrate: (persistedState: any, version: number) => {
+        if (version < 2 && persistedState?.patients) {
+          return {
+            ...persistedState,
+            patients: persistedState.patients.map(migratePatient),
+          };
+        }
+        return persistedState as PatientStore;
+      },
     }
   )
 );
