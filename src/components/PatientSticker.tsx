@@ -340,7 +340,11 @@ export function PatientSticker({ patient }: PatientStickerProps) {
       
       {/* Admission Badge - Shows consultant and bed if in admission */}
       {patient.admission && (patient.admission.consultant || patient.admission.consultantName || patient.admission.bedNumber) && (
-        <AdmissionBadge admission={patient.admission} />
+        <AdmissionBadge 
+          patientId={patient.id}
+          admission={patient.admission}
+          readOnly={isReadOnly}
+        />
       )}
 
       {/* Main 3-column grid */}

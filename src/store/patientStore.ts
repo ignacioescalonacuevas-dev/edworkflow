@@ -800,14 +800,23 @@ export const usePatientStore = create<PatientStore>()(
 
       updateAdmission: (patientId, data) => {
         set((state) => ({
-          patients: state.patients.map((p) =>
-            p.id === patientId && p.admission
-              ? {
-                  ...p,
-                  admission: { ...p.admission, ...data },
-                }
-              : p
-          ),
+          patients: state.patients.map((p) => {
+            if (p.id !== patientId || !p.admission) return p;
+            
+            // Sincronizar consultant y consultantName
+            const newConsultantName = data.consultantName ?? data.consultant ?? p.admission.consultantName;
+            const newConsultant = data.consultantName ?? data.consultant ?? p.admission.consultant;
+            
+            return {
+              ...p,
+              admission: { 
+                ...p.admission, 
+                ...data,
+                consultantName: newConsultantName,
+                consultant: newConsultant,
+              },
+            };
+          }),
         }));
       },
 
