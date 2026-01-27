@@ -1,113 +1,122 @@
 
-# Plan: Eliminar Discharge Notes y Mostrar Nombre Completo del Consultant
+# Plan: Corregir Edición del Nombre del Consultant en Admisiones
 
-## Resumen
+## Problema Identificado
 
-Dos mejoras solicitadas:
+Cuando se cambia el proceso del paciente a "Admission Pending" usando el dropdown de estado, **el objeto `admission` no se crea automáticamente**. Esto causa que:
 
-1. **Eliminar "Discharge Notes"**: Remover este tipo de nota del sistema ya que no es necesario
-2. **Nombre completo del Consultant visible**: Mostrarlo a la derecha de la fecha de nacimiento cuando el paciente está "for admission" (estados: admission_pending, bed_assigned, ready_transfer)
+1. El `ConsultantNameDisplay` aparece y permite abrir el popover
+2. Pero al intentar escribir el nombre, `updateAdmission` falla silenciosamente porque `patient.admission` es `undefined`
+
+La condición en `updateAdmission` es:
+```typescript
+if (p.id !== patientId || !p.admission) return p;  // No hace nada si admission no existe
+```
 
 ---
 
-## Cambio 1: Eliminar Discharge Notes
+## Solución
 
-### Archivos a modificar
+Hay dos cambios necesarios:
 
-**`src/types/patient.ts`**
+### Cambio 1: Crear objeto `admission` al entrar en proceso de admisión
 
-- Eliminar `'discharge'` del tipo `StickerNoteType` (línea 156)
-- Eliminar `DISCHARGE_OPTIONS` (línea 174)
-- Eliminar entrada `discharge` de `NOTE_TYPE_CONFIG` (línea 182)
-- Eliminar abreviaciones de discharge de `NOTE_ABBREVIATIONS` (líneas 254-257)
+Cuando `updatePatientProcessState` cambia a un estado de admisión (`admission_pending`, `bed_assigned`, `ready_transfer`), automáticamente crear el objeto `admission` si no existe.
 
-**`src/components/AddNotePopover.tsx`**
+**Archivo**: `src/store/patientStore.ts`
 
-- Eliminar `dischargeOptions` y `addDischargeOption` del destructure del store (línea 16-17)
-- Eliminar el case `'discharge'` en `handleAddCustomOption` (líneas 56-58)
-- Eliminar `'discharge'` del check `hasSelectOptions` (línea 25)
-- Eliminar el case `'discharge'` en `renderInput` (líneas 123-124)
-
-**`src/store/patientStore.ts`**
-
-- Eliminar `dischargeOptions` del estado
-- Eliminar `addDischargeOption` de las acciones
-
----
-
-## Cambio 2: Nombre Completo del Consultant
-
-### Nueva posición en el sticker
-
-El nombre del consultant irá a la derecha de la fecha de nacimiento, en un texto compacto cyan que será clickeable para editar:
-
-```text
-┌──────────────────────────────────────────────────────────────────────────┐
-│ ▲ [⋮] John Smith Johnson      2h15  │ CT EC US │   B3   │
-│ 2     15/03/1972 ▸ Dr. García       │ Lb Fb ── │   TM   │  ← Consultant aquí
-│       M12345678                     │          │   RN   │
-├──────────────────────────────────────────────────────────────────────────┤
-│ Chest pain                                    [Bed Assigned]            │
-└──────────────────────────────────────────────────────────────────────────┘
-```
-
-### Comportamiento
-
-- **Solo visible** cuando `isInAdmissionProcess` es true (admission_pending, bed_assigned, ready_transfer)
-- **Clickeable** para abrir el popover de edición de admisión (consultant + bed + handover)
-- **Si no hay consultant**, mostrar un placeholder clickeable: `[+ Consultant]`
-- El badge celeste actual con iniciales se puede mantener como indicador visual adicional, o se puede eliminar para evitar redundancia
-
-### Modificaciones en PatientSticker.tsx
-
-Dentro de COL 1 (Patient Info), después de la fecha de nacimiento, agregar:
+En la función `updatePatientProcessState` (línea ~413), agregar lógica para crear admission:
 
 ```typescript
-{/* Consultant name - only show if in admission process */}
-{isInAdmissionProcess && (
-  <ConsultantNameDisplay 
-    patientId={patient.id}
-    consultantName={patient.admission?.consultantName || patient.admission?.consultant}
-    readOnly={isReadOnly}
-  />
-)}
+updatePatientProcessState: (patientId, processState) => {
+  const stateLabel = PROCESS_STATES.find(s => s.value === processState)?.label || processState;
+  const isAdmissionState = ['admission_pending', 'bed_assigned', 'ready_transfer'].includes(processState);
+  
+  set((state) => ({
+    patients: state.patients.map((p) => {
+      if (p.id !== patientId) return p;
+      
+      return {
+        ...p,
+        processState,
+        // Crear admission si entramos en estado de admisión y no existe
+        admission: isAdmissionState && !p.admission ? {
+          specialty: '',
+          consultantName: '',
+          consultant: '',
+          bedNumber: '',
+          bedStatus: 'not_assigned',
+          handoverComplete: false,
+          registrarCalled: false,
+          adminComplete: false,
+          idBraceletVerified: false,
+          mrsaSwabs: false,
+          fallsAssessment: false,
+          handoverNotes: '',
+          startedAt: new Date(),
+        } : p.admission,
+        events: [
+          ...p.events,
+          {
+            id: generateId(),
+            timestamp: new Date(),
+            type: 'process_state_change',
+            description: `Process state changed to: ${stateLabel}`,
+          },
+        ],
+      };
+    }),
+  }));
+},
 ```
 
-### Nuevo componente: ConsultantNameDisplay
+### Cambio 2: Hacer que `updateAdmission` cree el objeto si no existe
+
+Como seguridad adicional, si se intenta actualizar admission pero no existe, crearlo:
+
+**Archivo**: `src/store/patientStore.ts`
+
+En la función `updateAdmission` (línea ~790):
 
 ```typescript
-interface ConsultantNameDisplayProps {
-  patientId: string;
-  consultantName?: string;
-  readOnly?: boolean;
-}
-
-function ConsultantNameDisplay({ patientId, consultantName, readOnly }: ConsultantNameDisplayProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const { updateAdmission } = usePatientStore();
-  
-  const display = (
-    <span className={cn(
-      "text-[10px] text-cyan-400 font-medium truncate max-w-[100px]",
-      !readOnly && "cursor-pointer hover:text-cyan-300"
-    )}>
-      {consultantName ? `▸ ${consultantName}` : '[+ Consultant]'}
-    </span>
-  );
-  
-  if (readOnly) return display;
-  
-  return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <PopoverTrigger asChild onClick={(e) => e.stopPropagation()}>
-        {display}
-      </PopoverTrigger>
-      <PopoverContent className="w-64 p-3 space-y-3" align="start">
-        {/* Form para editar consultant, bed, handover */}
-      </PopoverContent>
-    </Popover>
-  );
-}
+updateAdmission: (patientId, data) => {
+  set((state) => ({
+    patients: state.patients.map((p) => {
+      if (p.id !== patientId) return p;
+      
+      // Si no existe admission, crear uno nuevo con los datos
+      const existingAdmission = p.admission || {
+        specialty: '',
+        consultantName: '',
+        consultant: '',
+        bedNumber: '',
+        bedStatus: 'not_assigned' as const,
+        handoverComplete: false,
+        registrarCalled: false,
+        adminComplete: false,
+        idBraceletVerified: false,
+        mrsaSwabs: false,
+        fallsAssessment: false,
+        handoverNotes: '',
+        startedAt: new Date(),
+      };
+      
+      // Sincronizar consultant y consultantName
+      const newConsultantName = data.consultantName ?? data.consultant ?? existingAdmission.consultantName;
+      const newConsultant = data.consultantName ?? data.consultant ?? existingAdmission.consultant;
+      
+      return {
+        ...p,
+        admission: { 
+          ...existingAdmission, 
+          ...data,
+          consultantName: newConsultantName,
+          consultant: newConsultant,
+        },
+      };
+    }),
+  }));
+},
 ```
 
 ---
@@ -118,47 +127,21 @@ function ConsultantNameDisplay({ patientId, consultantName, readOnly }: Consulta
 
 | Archivo | Cambios |
 |---------|---------|
-| `src/types/patient.ts` | Eliminar `discharge` type, options, config y abbreviations |
-| `src/components/AddNotePopover.tsx` | Eliminar referencias a discharge |
-| `src/store/patientStore.ts` | Eliminar `dischargeOptions` y `addDischargeOption` |
-| `src/components/PatientSticker.tsx` | Agregar ConsultantNameDisplay al lado del DOB |
+| `src/store/patientStore.ts` | Modificar `updatePatientProcessState` para crear admission al entrar en estados de admisión, y modificar `updateAdmission` para crear admission si no existe |
 
-### Layout actualizado de COL 1
+### Flujo Después del Fix
 
-```typescript
-{/* COL 1: Patient Info (vertical stack) */}
-<div className="flex flex-col justify-center min-w-0">
-  {/* Row 1: Name */}
-  <div className="flex items-center gap-1">
-    {!isReadOnly && <StickerActionsMenu patientId={patient.id} patientName={patient.name} />}
-    <span className="font-semibold text-sm leading-tight truncate">{patient.name}</span>
-  </div>
-  
-  {/* Row 2: DOB + Consultant (if in admission) */}
-  <div className="flex items-center gap-1.5">
-    <span className="text-[11px] text-muted-foreground">{patient.dateOfBirth}</span>
-    {isInAdmissionProcess && (
-      <ConsultantNameDisplay 
-        patientId={patient.id}
-        consultantName={patient.admission?.consultantName || patient.admission?.consultant}
-        readOnly={isReadOnly}
-      />
-    )}
-  </div>
-  
-  {/* Row 3: M-Number + Time */}
-  <div className="flex items-baseline gap-1">
-    <span className="text-[11px] text-muted-foreground font-mono">{patient.mNumber}</span>
-    <span className="text-[10px] text-muted-foreground/70 ml-auto">{elapsedTime}</span>
-  </div>
-</div>
-```
+1. Usuario cambia estado a "Admission Pending" via ProcessStateDropdown
+2. `updatePatientProcessState` detecta que es estado de admisión
+3. Se crea automáticamente el objeto `admission` con campos vacíos
+4. Usuario hace clic en `[+ Consultant]` 
+5. Se abre popover y puede escribir el nombre
+6. `updateAdmission` actualiza el consultant correctamente
 
 ---
 
 ## Resultado Esperado
 
-1. **Sin discharge notes**: El tipo "Discharge" ya no aparecerá en el selector de notas
-2. **Consultant siempre visible**: Cuando un paciente está en proceso de admisión, el nombre completo del consultant aparecerá junto a la fecha de nacimiento
-3. **Fácil edición**: Clic en el nombre del consultant abre el popover para editar consultant, cama y handover
-4. **Placeholder claro**: Si no hay consultant asignado pero el paciente está for admission, muestra `[+ Consultant]` como indicador visual para agregar
+- Cuando se cambia el estado a "Admission Pending", "Bed Assigned" o "Ready Transfer", el sistema crea automáticamente el objeto de admisión
+- El campo `[+ Consultant]` funciona correctamente para escribir el nombre del médico que admite
+- El nombre del consultant (diferente a los médicos de ED) se guarda y muestra correctamente
