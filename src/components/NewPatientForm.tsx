@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePatientStore } from '@/store/patientStore';
 import { useShiftHistoryStore } from '@/store/shiftHistoryStore';
+import { TriageLevel, TRIAGE_CONFIG } from '@/types/patient';
+import { cn } from '@/lib/utils';
 
 export function NewPatientForm() {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,6 +20,7 @@ export function NewPatientForm() {
   const [box, setBox] = useState('');
   const [doctor, setDoctor] = useState('');
   const [nurse, setNurse] = useState('');
+  const [triageLevel, setTriageLevel] = useState<TriageLevel>(3);
   const { addPatient, doctors, nurses, locations } = usePatientStore();
   const { viewingDate } = useShiftHistoryStore();
   
@@ -42,6 +45,10 @@ export function NewPatientForm() {
         mNumber,
         chiefComplaint: chiefComplaint || 'Not specified',
         box,
+        assignedBox: box,
+        currentLocation: box,
+        triageLevel,
+        processState: 'registered',
         doctor: doctor || '',
         nurse: nurse || '',
         arrivalTime: new Date(),
@@ -55,6 +62,7 @@ export function NewPatientForm() {
       setBox('');
       setDoctor('');
       setNurse('');
+      setTriageLevel(3);
       setIsOpen(false);
     }
   };
@@ -116,6 +124,37 @@ export function NewPatientForm() {
                 required
               />
             </div>
+          </div>
+
+          {/* Triage Level */}
+          <div className="space-y-2">
+            <Label>Triage Level (Manchester)</Label>
+            <div className="flex gap-2">
+              {([1, 2, 3, 4, 5] as TriageLevel[]).map((level) => {
+                const config = TRIAGE_CONFIG[level];
+                return (
+                  <button
+                    key={level}
+                    type="button"
+                    onClick={() => setTriageLevel(level)}
+                    className={cn(
+                      "flex-1 py-2 rounded text-sm font-medium transition-all",
+                      config.bgColor,
+                      config.color,
+                      triageLevel === level 
+                        ? "ring-2 ring-offset-2 ring-offset-background ring-white scale-105" 
+                        : "opacity-60 hover:opacity-80"
+                    )}
+                    title={`${config.label} (${config.time})`}
+                  >
+                    {level}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Selected: {TRIAGE_CONFIG[triageLevel].label} ({TRIAGE_CONFIG[triageLevel].time})
+            </p>
           </div>
 
           <div className="space-y-2">

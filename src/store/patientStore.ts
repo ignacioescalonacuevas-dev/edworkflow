@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { format } from 'date-fns';
-import { Patient, Order, OrderStatus, AdmissionData, PatientEvent, PatientStatus, PATIENT_STATUSES, StickerNote, StickerNoteType } from '@/types/patient';
+import { Patient, Order, OrderStatus, AdmissionData, PatientEvent, PatientStatus, PATIENT_STATUSES, StickerNote, StickerNoteType, ProcessState, PROCESS_STATES, TriageLevel, mapStatusToProcessState } from '@/types/patient';
 import { useShiftHistoryStore } from './shiftHistoryStore';
 
 const DEFAULT_DOCTORS = [
@@ -20,8 +20,8 @@ const DEFAULT_NURSES = [
 ];
 
 const DEFAULT_LOCATIONS = [
-  'Waiting Area',
-  'Treatment',
+  'Waiting Room',
+  'Treatment Room',
   'Box 1',
   'Box 2',
   'Box 3',
@@ -96,6 +96,12 @@ interface PatientStore {
   updateOrderStatus: (patientId: string, orderId: string, status: OrderStatus, timestamp?: Date) => void;
   updateOrderTimestamp: (patientId: string, orderId: string, field: 'orderedAt' | 'doneAt' | 'reportedAt', time: Date) => void;
   
+  // NEW: Triage, Location, and Process State
+  updatePatientTriage: (patientId: string, level: TriageLevel) => void;
+  updatePatientAssignedBox: (patientId: string, box: string) => void;
+  updatePatientCurrentLocation: (patientId: string, location: string) => void;
+  updatePatientProcessState: (patientId: string, state: ProcessState) => void;
+  
   // Sticker Notes
   addStickerNote: (patientId: string, note: Omit<StickerNote, 'id' | 'createdAt'>) => void;
   updateStickerNote: (patientId: string, noteId: string, updates: Partial<StickerNote>) => void;
@@ -135,6 +141,22 @@ interface PatientStore {
   
   // Events
   addEvent: (patientId: string, event: Omit<PatientEvent, 'id'>) => void;
+}
+
+// Helper to migrate old patient data to new structure
+function migratePatient(patient: Patient): Patient {
+  return {
+    ...patient,
+    triageLevel: patient.triageLevel ?? 3,
+    assignedBox: patient.assignedBox ?? patient.box ?? 'Waiting Room',
+    currentLocation: patient.currentLocation ?? patient.box ?? 'Waiting Room',
+    processState: patient.processState ?? mapStatusToProcessState(patient.status),
+    admission: patient.admission ? {
+      ...patient.admission,
+      consultant: patient.admission.consultant ?? patient.admission.consultantName ?? '',
+      handoverComplete: patient.admission.handoverComplete ?? false,
+    } : undefined,
+  };
 }
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -179,6 +201,11 @@ export const usePatientStore = create<PatientStore>()(
         const newPatient: Patient = {
           ...patientData,
           id: generateId(),
+          // Ensure new fields have defaults
+          triageLevel: patientData.triageLevel ?? 3,
+          assignedBox: patientData.assignedBox ?? patientData.box ?? 'Waiting Room',
+          currentLocation: patientData.currentLocation ?? patientData.box ?? 'Waiting Room',
+          processState: patientData.processState ?? 'registered',
           orders: [],
           stickerNotes: [],
           events: [
@@ -305,6 +332,8 @@ export const usePatientStore = create<PatientStore>()(
               ? {
                   ...p,
                   box: location,
+                  assignedBox: location,
+                  currentLocation: location,
                   events: [
                     ...p.events,
                     {
@@ -312,6 +341,101 @@ export const usePatientStore = create<PatientStore>()(
                       timestamp: new Date(),
                       type: 'location_change',
                       description: `Moved to ${location}`,
+                    },
+                  ],
+                }
+              : p
+          ),
+        }));
+      },
+
+      // NEW: Triage update
+      updatePatientTriage: (patientId, level) => {
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? {
+                  ...p,
+                  triageLevel: level,
+                  events: [
+                    ...p.events,
+                    {
+                      id: generateId(),
+                      timestamp: new Date(),
+                      type: 'triage_change',
+                      description: `Triage level changed to ${level}`,
+                    },
+                  ],
+                }
+              : p
+          ),
+        }));
+      },
+
+      // NEW: Assigned box update
+      updatePatientAssignedBox: (patientId, box) => {
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? {
+                  ...p,
+                  assignedBox: box,
+                  currentLocation: box, // Reset current location when box changes
+                  box: box, // Keep legacy field in sync
+                  events: [
+                    ...p.events,
+                    {
+                      id: generateId(),
+                      timestamp: new Date(),
+                      type: 'location_change',
+                      description: `Assigned to ${box}`,
+                    },
+                  ],
+                }
+              : p
+          ),
+        }));
+      },
+
+      // NEW: Current location update (temporary location like CT, MRI, etc.)
+      updatePatientCurrentLocation: (patientId, location) => {
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? {
+                  ...p,
+                  currentLocation: location,
+                  events: [
+                    ...p.events,
+                    {
+                      id: generateId(),
+                      timestamp: new Date(),
+                      type: 'location_change',
+                      description: `Currently at ${location}`,
+                    },
+                  ],
+                }
+              : p
+          ),
+        }));
+      },
+
+      // NEW: Process state update
+      updatePatientProcessState: (patientId, processState) => {
+        const stateLabel = PROCESS_STATES.find(s => s.value === processState)?.label || processState;
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? {
+                  ...p,
+                  processState,
+                  events: [
+                    ...p.events,
+                    {
+                      id: generateId(),
+                      timestamp: new Date(),
+                      type: 'process_state_change',
+                      description: `Process state changed to: ${stateLabel}`,
                     },
                   ],
                 }
@@ -643,19 +767,22 @@ export const usePatientStore = create<PatientStore>()(
               ? {
                   ...p,
                   status: 'admission',
-                    admission: {
-                      specialty: '',
-                      consultantName: '',
-                      bedNumber: '',
-                      bedStatus: 'not_assigned',
-                      registrarCalled: false,
-                      adminComplete: false,
-                      idBraceletVerified: false,
-                      mrsaSwabs: false,
-                      fallsAssessment: false,
-                      handoverNotes: '',
-                      startedAt: new Date(),
-                    },
+                  processState: 'admission_pending',
+                  admission: {
+                    specialty: '',
+                    consultantName: '',
+                    consultant: '',
+                    bedNumber: '',
+                    bedStatus: 'not_assigned',
+                    handoverComplete: false,
+                    registrarCalled: false,
+                    adminComplete: false,
+                    idBraceletVerified: false,
+                    mrsaSwabs: false,
+                    fallsAssessment: false,
+                    handoverNotes: '',
+                    startedAt: new Date(),
+                  },
                   events: [
                     ...p.events,
                     {
@@ -812,21 +939,41 @@ export const usePatientStore = create<PatientStore>()(
   )
 );
 
-// Selector for filtered patients
+// Selector for filtered patients with intelligent search
 export const getFilteredPatients = (state: PatientStore): Patient[] => {
-  let result = state.patients;
+  let result = state.patients.map(migratePatient);
   
-  // Filter by search query
+  // Filter by search query with intelligent matching
   if (state.searchQuery) {
     const query = state.searchQuery.toLowerCase();
-    result = result.filter(p => 
-      p.name.toLowerCase().includes(query) ||
-      p.mNumber.toLowerCase().includes(query) ||
-      p.doctor.toLowerCase().includes(query) ||
-      p.nurse?.toLowerCase().includes(query) ||
-      p.chiefComplaint.toLowerCase().includes(query) ||
-      p.box.toLowerCase().includes(query)
-    );
+    result = result.filter(p => {
+      // Basic text search
+      if (p.name.toLowerCase().includes(query)) return true;
+      if (p.mNumber.toLowerCase().includes(query)) return true;
+      if (p.doctor.toLowerCase().includes(query)) return true;
+      if (p.nurse?.toLowerCase().includes(query)) return true;
+      if (p.chiefComplaint.toLowerCase().includes(query)) return true;
+      if (p.box.toLowerCase().includes(query)) return true;
+      if (p.assignedBox?.toLowerCase().includes(query)) return true;
+      if (p.currentLocation?.toLowerCase().includes(query)) return true;
+      
+      // Process state search
+      const stateConfig = PROCESS_STATES.find(s => s.value === p.processState);
+      if (stateConfig?.label.toLowerCase().includes(query)) return true;
+      
+      // Triage level search (e.g., "1", "triage 2", "immediate")
+      if (query === String(p.triageLevel)) return true;
+      const triageConfig = { 1: 'immediate', 2: 'very urgent', 3: 'urgent', 4: 'standard', 5: 'non-urgent' };
+      if (triageConfig[p.triageLevel as keyof typeof triageConfig]?.includes(query)) return true;
+      
+      // Admission data search
+      if (p.admission?.consultant?.toLowerCase().includes(query)) return true;
+      if (p.admission?.consultantName?.toLowerCase().includes(query)) return true;
+      if (p.admission?.bedNumber?.toLowerCase().includes(query)) return true;
+      if (p.admission?.specialty?.toLowerCase().includes(query)) return true;
+      
+      return false;
+    });
   }
   
   // Filter by doctor
@@ -841,7 +988,13 @@ export const getFilteredPatients = (state: PatientStore): Patient[] => {
   
   // Hide discharged
   if (state.hideDischargedFromBoard) {
-    result = result.filter(p => p.status !== 'discharged' && p.status !== 'transferred');
+    result = result.filter(p => 
+      p.processState !== 'discharged' && 
+      p.processState !== 'transferred' && 
+      p.processState !== 'admitted' &&
+      p.status !== 'discharged' && 
+      p.status !== 'transferred'
+    );
   }
   
   return result;
