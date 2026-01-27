@@ -1,182 +1,260 @@
 
 
-# Plan: Optimización de Tamaños y Espaciado para Tablet
+# Plan: Layout Comprimido Adaptativo con Abreviaciones
 
 ## Resumen
 
-Ajustar todos los tamaños de fuente, espaciado y proporciones de los stickers para maximizar la legibilidad en pantallas tablet (1024×768), manteniendo la estructura de 3 columnas del sticker y la grilla 4×8.
+Reducir significativamente el ancho de la columna de notas usando **abreviaciones de 2-3 caracteres** y colores distintivos, manteniendo el nombre del paciente siempre visible completo.
 
 ---
 
-## Análisis de Tamaños Actuales vs Propuestos
+## Mapa de Abreviaciones
 
-### Problema Actual
+| Tipo | Texto Original | Abreviación | Color |
+|------|----------------|-------------|-------|
+| **Studies** | CT | CT | Azul |
+| | ECHO | ECHO | Azul |
+| | ECG | ECG | Azul |
+| | US (Ultrasound) | US | Azul |
+| | X-Ray | XR | Azul |
+| | Vascular | VA | Azul |
+| **Follow-up** | GP | GP | Verde |
+| | Women's Clinic | WC | Verde |
+| | RACC | RA | Verde |
+| | Fracture Clinic | FC | Verde |
+| | Surgical Clinic | SC | Verde |
+| **Precaution** | Flu A + | Flu A + | Naranja |
+| | Flu B + | Flu B + | Naranja |
+| | COVID + | COVID + | Naranja |
+| | MRI | MRI | Amarillo |
+| | Isolation | IS | Naranja |
+| **Discharge** | Home | HM | Teal |
+| | GP F/U | GF | Teal |
+| | Clinic | CL | Teal |
+| | RACC | RA | Teal |
+| | AMA | AM | Teal |
+| **Critical** | (valor libre) | 1ª letra | Rojo |
+| **Admitting** | (médico) | 2 iniciales | Púrpura |
+| **Note** | (libre) | NT | Gris |
 
-Los tamaños actuales usan fuentes muy pequeñas (`text-[9px]`, `text-[10px]`) que son difíciles de leer en tablet. El espaciado es mínimo y los elementos están muy comprimidos.
+---
 
-### Propuesta de Escalado
+## Visualización del Nuevo Sticker
 
 ```text
-Pantalla tablet: ~1024×768 útiles
-Grid 4×8: 32 celdas
-Espacio por celda: ~245px ancho × ~85px alto
+┌──────────────────────────────────────────────────────────────────────────┐
+│ [⋮] John Smith Johnson      2h15  │ CT EC US │   B3   │  ← Nombre COMPLETO
+│     15/03/1972                    │ Lb +  ── │   TM   │  ← Grid 3×2
+│     M12345                        │          │   RN   │  ← ~70px ancho
+├──────────────────────────────────────────────────────────────────────────┤
+│ Chest pain with radiation to left arm             [Waiting Room]        │
+└──────────────────────────────────────────────────────────────────────────┘
 
-Con estos tamaños, podemos usar fuentes más grandes:
-```
-
-| Elemento | Actual | Propuesto | Mejora |
-|----------|--------|-----------|--------|
-| Nombre paciente | `text-xs` (12px) | `text-sm` (14px) | +17% |
-| DOB / M-Number | `text-[9px]` | `text-xs` (12px) | +33% |
-| Tiempo transcurrido | `text-[9px]` | `text-[11px]` | +22% |
-| Staff initials (Box/Dr/Nurse) | `text-[10px]` | `text-xs` (12px) | +20% |
-| Chief Complaint | `text-[10px]` | `text-xs` (12px) | +20% |
-| Status badge | `text-[9px]` | `text-[11px]` | +22% |
-| Notas/Studies | `text-[10px]` | `text-[11px]` | +10% |
-
----
-
-## Visualización: Antes vs Después
-
-```text
-ANTES (tamaños pequeños):
-┌─────────────────────────────────────────────────────────┐
-│ [⋮] John Smith  2h15 │ [CT][E][MR] │   B3    │ ← 12px nombre
-│     15/03/1972       │ [Lab][+][ ] │   TM    │ ← 9px fecha
-│     M12345           │             │   RN    │ ← 9px M#
-├─────────────────────────────────────────────────────────┤
-│ Chest pain                    [Waiting Room] │ ← 10px CC
-└─────────────────────────────────────────────────────────┘ ← 9px status
-
-DESPUÉS (optimizado para tablet):
-┌─────────────────────────────────────────────────────────┐
-│ [⋮] John Smith    2h15  │ [CT][Eco][MR] │   B3   │ ← 14px nombre
-│     15/03/1972          │ [Lab][ + ][ ] │   TM   │ ← 12px fecha
-│     M12345              │               │   RN   │ ← 12px M#
-├─────────────────────────────────────────────────────────┤
-│ Chest pain                       [Waiting Room]  │ ← 12px CC
-└─────────────────────────────────────────────────────────┘ ← 11px status
+Cada celda: ~22px × 20px
+- Azul oscuro = Study pendiente
+- Verde = Study completado  
+- Rojo = Critical
+- Naranja = Precaution
+- + = Agregar (solo en primer slot vacío)
+- ── = Slot vacío (no interactivo)
 ```
 
 ---
 
-## Cambios Necesarios
+## Cambios de Proporciones
 
-| Archivo | Descripción |
-|---------|-------------|
-| `src/components/PatientSticker.tsx` | Aumentar fuentes y espaciado interno |
-| `src/components/StickerNotesColumn.tsx` | Ajustar altura de slots y ancho mínimo |
-| `src/components/StickerNoteItem.tsx` | Aumentar tamaño de notas y botones |
-| `src/index.css` | Actualizar estilos base del `.sticker` |
+| Elemento | Antes | Después | Ahorro |
+|----------|-------|---------|--------|
+| Columna Notas | 150-220px | 70-80px | ~65% |
+| Columna Info | Truncada | Espacio completo | +100px |
+| Grid notas | `grid-cols-3` con gap | `grid-cols-3` compacto | -50% |
+| Celda nota | `px-1.5 py-0.5 + texto largo` | `w-[22px] h-[18px]` | -70% |
 
 ---
 
 ## Sección Técnica
 
-### 1. PatientSticker.tsx - Cambios de Tamaño
+### 1. patient.ts - Agregar Mapa de Abreviaciones
 
 ```typescript
-// CAMBIOS EN EL COMPONENTE PRINCIPAL
+// Mapa de abreviaciones para cada texto de nota
+export const NOTE_ABBREVIATIONS: Record<string, string> = {
+  // Studies
+  'CT': 'CT',
+  'ECHO': 'EC',
+  'ECG': 'EG',
+  'US': 'US',
+  'X-Ray': 'XR',
+  'Vascular': 'VA',
+  // Follow-ups
+  'GP': 'GP',
+  "Women's Clinic": 'WC',
+  'RACC': 'RA',
+  'Fracture Clinic': 'FC',
+  'Surgical Clinic': 'SC',
+  // Precautions
+  'Flu A +': 'FA',
+  'Flu B +': 'FB',
+  'COVID +': 'CV',
+  'MRSA': 'MR',
+  'Isolation': 'IS',
+  // Discharge
+  'Home': 'HM',
+  'GP F/U': 'GF',
+  'Clinic': 'CL',
+  'AMA': 'AM',
+};
 
-// Sticker container: aumentar padding
-className="sticker ... p-2.5" // antes: p-2
-
-// Grid principal: aumentar gap
-className="grid grid-cols-[1fr_auto_48px] gap-2 flex-1" // antes: gap-1.5, col3: 40px
-
-// COL 1: Patient Info
-<span className="font-semibold text-sm truncate">{patient.name}</span>  // antes: text-xs
-<span className="text-[11px] text-muted-foreground">{elapsedTime}</span> // antes: text-[9px]
-<span className="text-xs text-muted-foreground">{patient.dateOfBirth}</span> // antes: text-[9px]
-<span className="text-xs text-muted-foreground font-mono">{patient.mNumber}</span> // antes: text-[9px]
-
-// COL 3: Staff dropdowns
-<button className="text-xs cursor-pointer ..."> // antes: text-[10px]
-
-// Footer
-<span className="text-xs text-muted-foreground ..."> // antes: text-[10px]
-<button className="text-[11px] px-1.5 py-0.5 ...">  // antes: text-[9px], px-1
-
-// Bed number
-className="... text-[11px] px-1.5 ..." // antes: text-[9px], px-1
+// Función para obtener abreviación
+export function getAbbreviation(text: string): string {
+  return NOTE_ABBREVIATIONS[text] || text.substring(0, 2).toUpperCase();
+}
 ```
 
-### 2. StickerNotesColumn.tsx - Ajuste de Grid
+### 2. StickerNotesColumn.tsx - Layout Compacto
 
 ```typescript
-// Aumentar altura de slots
-<div className="h-6 ..."> // antes: h-[22px]
-
-// Aumentar ancho mínimo del contenedor
-<div className="min-w-[150px] max-w-[220px] flex-1"> // antes: min-w-[140px], max-w-[200px]
-
-// Botón de agregar más grande
-<button className="... text-[11px] px-2 py-1 ..."> // antes: text-[10px], px-1.5, py-0.5
-<Plus className="h-3 w-3" /> // antes: h-2.5 w-2.5
+// Reducir ancho del contenedor
+<div 
+  className="w-[72px]"  // Antes: min-w-[150px] max-w-[220px]
+  onClick={(e) => e.stopPropagation()}
+>
+  <DndContext ...>
+    <div className="grid grid-cols-3 gap-0.5">
+      {Array.from({ length: TOTAL_SLOTS }).map((_, slotIndex) => (
+        <CompactSlot ... />
+      ))}
+    </div>
+  </DndContext>
+</div>
 ```
 
-### 3. StickerNoteItem.tsx - Notas Más Legibles
+### 3. StickerNoteItem.tsx - Celdas Compactas
 
 ```typescript
-// Study notes
-<button className="... px-1.5 py-0.5 rounded text-[11px] ..."> // antes: px-1, text-[10px]
-<Check className="h-3 w-3" /> // antes: h-2.5 w-2.5
-<X className="h-3 w-3" /> // antes: h-2.5 w-2.5
+import { getAbbreviation, NOTE_TYPE_CONFIG } from '@/types/patient';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
-// Other note types
-<span className="px-1.5 py-0.5 rounded text-[11px] ..."> // antes: px-1, text-[10px]
-```
-
-### 4. index.css - Sticker Base Styles
-
-```css
-/* Sticker base - aumentar padding */
-.sticker {
-  @apply p-2.5 rounded-lg border bg-card text-sm relative;
+// Study type
+if (note.type === 'study') {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={(e) => { e.stopPropagation(); onToggle(note.id); }}
+          className={cn(
+            "w-[22px] h-[18px] rounded text-[9px] font-bold flex items-center justify-center",
+            note.completed 
+              ? "bg-green-500/40 text-green-200 border border-green-500/50"
+              : "bg-blue-500/30 text-blue-200 border border-blue-500/40"
+          )}
+        >
+          {getAbbreviation(note.text)}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="text-xs">
+        {note.text} {note.completed ? '✓' : '(pendiente)'}
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
-/* Staff dropdown hover area más grande */
-.staff-dropdown-trigger {
-  @apply min-h-[20px] min-w-[24px];
-}
+// Other types (critical, precaution, etc.)
+return (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <span className={cn(
+        "w-[22px] h-[18px] rounded text-[9px] font-bold flex items-center justify-center",
+        config.color
+      )}>
+        {getAbbreviation(note.text)}
+      </span>
+    </TooltipTrigger>
+    <TooltipContent>{note.text}</TooltipContent>
+  </Tooltip>
+);
+```
+
+### 4. PatientSticker.tsx - Ajustar Grid
+
+```typescript
+// Cambiar proporciones del grid principal
+<div className="grid grid-cols-[1fr_72px_44px] gap-1.5 flex-1 min-h-0">
+  
+  {/* COL 1: Patient Info - Ahora sin truncate */}
+  <div className="flex flex-col justify-center min-w-0">
+    <div className="flex items-center gap-1">
+      {!isReadOnly && <StickerActionsMenu ... />}
+      <span className="font-semibold text-sm leading-tight">{patient.name}</span>
+    </div>
+    <span className="text-[11px] text-muted-foreground">{patient.dateOfBirth}</span>
+    <div className="flex items-baseline gap-1">
+      <span className="text-[11px] text-muted-foreground font-mono">{patient.mNumber}</span>
+      <span className="text-[10px] text-muted-foreground/70 ml-auto">{elapsedTime}</span>
+    </div>
+  </div>
+
+  {/* COL 2: Notes - Ancho fijo 72px */}
+  <div className="flex items-center justify-center">
+    <StickerNotesColumn ... />
+  </div>
+
+  {/* COL 3: Staff - Sin cambios */}
+  <div className="flex flex-col items-center justify-between py-0.5">
+    ...
+  </div>
+</div>
+```
+
+### 5. Slot Vacío y Botón Agregar Compactos
+
+```typescript
+// Empty slot (visual only)
+<div className="w-[22px] h-[18px] rounded border border-dashed border-muted-foreground/20" />
+
+// Add button (first empty slot only)
+<Popover>
+  <PopoverTrigger asChild>
+    <button className="w-[22px] h-[18px] rounded border border-dashed border-muted-foreground/40 
+                      hover:border-primary/60 hover:bg-primary/10 flex items-center justify-center">
+      <Plus className="h-2.5 w-2.5 text-muted-foreground" />
+    </button>
+  </PopoverTrigger>
+  <PopoverContent>...</PopoverContent>
+</Popover>
 ```
 
 ---
 
-## Resumen de Cambios de Tamaño
+## Resultado Esperado
 
-### Fuentes
+```text
+ANTES (solo 12 pacientes, nombres truncados):
+┌──────────────────────────────────────────────────────────────────────────┐
+│ John Smi...  │  [CT Scan] [Echo] [MRI]  │   B3   │  ← Nombre cortado
+│ 15/03/1972   │  [Labs] [Note: ...] [+]  │   TM   │  ← Notas muy anchas
+│ M12345       │                          │   RN   │
+└──────────────────────────────────────────────────────────────────────────┘
 
-| Elemento | Antes | Después |
-|----------|-------|---------|
-| Nombre | `text-xs` (12px) | `text-sm` (14px) |
-| DOB, M# | `text-[9px]` | `text-xs` (12px) |
-| Elapsed time | `text-[9px]` | `text-[11px]` |
-| Staff (Box/Dr/Nurse) | `text-[10px]` | `text-xs` (12px) |
-| Chief Complaint | `text-[10px]` | `text-xs` (12px) |
-| Status badge | `text-[9px]` | `text-[11px]` |
-| Notes | `text-[10px]` | `text-[11px]` |
-| Bed number | `text-[9px]` | `text-[11px]` |
+DESPUÉS (32 pacientes, nombres completos):
+┌──────────────────────────────────────────────────────────────────────────┐
+│ [⋮] John Smith Johnson          │ CT EC US │   B3   │  ← Nombre COMPLETO
+│     15/03/1972                   │ Lb +  ── │   TM   │  ← Notas compactas
+│     M12345                  2h15 │          │   RN   │
+├──────────────────────────────────────────────────────────────────────────┤
+│ Chest pain with radiation                     [Waiting Room]            │
+└──────────────────────────────────────────────────────────────────────────┘
+```
 
-### Espaciado
+---
 
-| Elemento | Antes | Después |
-|----------|-------|---------|
-| Sticker padding | `p-2` (8px) | `p-2.5` (10px) |
-| Grid gap interno | `gap-1.5` | `gap-2` |
-| Col 3 width | `40px` | `48px` |
-| Notes container min-width | `140px` | `150px` |
-| Notes container max-width | `200px` | `220px` |
-| Slot height | `22px` | `24px` (h-6) |
-| Status padding | `px-1` | `px-1.5` |
+## Interacción
 
-### Iconos
-
-| Elemento | Antes | Después |
-|----------|-------|---------|
-| Check/X en notes | `h-2.5 w-2.5` | `h-3 w-3` |
-| Plus button | `h-2.5 w-2.5` | `h-3 w-3` |
-| MoreVertical menu | `h-3 w-3` | `h-3.5 w-3.5` |
+- **Hover/Tap en abreviación** → Tooltip muestra texto completo
+- **Click en Study** → Toggle completado/pendiente
+- **Click en +** → Popover para agregar nueva nota
+- **Arrastrar nota** → Reorganizar en los 6 slots
+- **Hover + X** → Eliminar nota (igual que antes)
 
 ---
 
@@ -184,8 +262,8 @@ className="... text-[11px] px-1.5 ..." // antes: text-[9px], px-1
 
 | Archivo | Cambios |
 |---------|---------|
-| `src/components/PatientSticker.tsx` | Fuentes más grandes, padding y gaps aumentados |
-| `src/components/StickerNotesColumn.tsx` | Slots más altos, contenedor más ancho |
-| `src/components/StickerNoteItem.tsx` | Notas más grandes, iconos más visibles |
-| `src/index.css` | Padding base del sticker |
+| `src/types/patient.ts` | Agregar `NOTE_ABBREVIATIONS` y función `getAbbreviation()` |
+| `src/components/StickerNotesColumn.tsx` | Reducir ancho a 72px, ajustar grid |
+| `src/components/StickerNoteItem.tsx` | Celdas de 22×18px con tooltips |
+| `src/components/PatientSticker.tsx` | Grid `[1fr_72px_44px]`, quitar truncate del nombre |
 
