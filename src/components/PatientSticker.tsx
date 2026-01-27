@@ -277,6 +277,10 @@ function getElapsedTime(arrivalTime: Date): string {
 
 export function PatientSticker({ patient }: PatientStickerProps) {
   const { addStickerNote, toggleStudyCompleted, removeStickerNote, moveNoteToSlot, doctors, nurses, locations } = usePatientStore();
+  
+  // Fallback for empty staff arrays (migration from old localStorage)
+  const doctorOptions = doctors.length > 0 ? doctors : ['Dr. TAU', 'Dr. Joanna', 'Dr. Caren'];
+  const nurseOptions = nurses.length > 0 ? nurses : ['Nebin', 'Beatriz', 'Rinku'];
   const { viewingDate } = useShiftHistoryStore();
   
   const isReadOnly = viewingDate !== null;
@@ -402,7 +406,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
                 type="doctor"
                 patientId={patient.id}
                 currentValue={patient.doctor}
-                options={doctors}
+                options={doctorOptions}
                 displayValue={getInitials(patient.doctor)}
               />
               {/* Nurse - ALWAYS visible */}
@@ -410,7 +414,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
                 type="nurse"
                 patientId={patient.id}
                 currentValue={patient.nurse}
-                options={nurses}
+                options={nurseOptions}
                 displayValue={getInitials(patient.nurse)}
               />
             </>
