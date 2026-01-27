@@ -359,21 +359,23 @@ export function PatientSticker({ patient }: PatientStickerProps) {
         isDischarged && "sticker-discharged"
       )}
     >
-      {/* Main 3-column grid */}
-      <div className="grid grid-cols-[1fr_auto_48px] gap-2 flex-1 min-h-0">
-        {/* COL 1: Patient Info (vertical stack) */}
+      {/* Main 3-column grid - compact notes column */}
+      <div className="grid grid-cols-[1fr_72px_44px] gap-1.5 flex-1 min-h-0">
+        {/* COL 1: Patient Info (vertical stack) - full name visible */}
         <div className="flex flex-col justify-center min-w-0">
-          <div className="flex items-baseline gap-1">
+          <div className="flex items-center gap-1">
             {!isReadOnly && <StickerActionsMenu patientId={patient.id} patientName={patient.name} />}
-            <span className="font-semibold text-sm truncate">{patient.name}</span>
-            <span className="text-[11px] text-muted-foreground whitespace-nowrap ml-0.5">{elapsedTime}</span>
+            <span className="font-semibold text-sm leading-tight">{patient.name}</span>
           </div>
-          <span className="text-xs text-muted-foreground">{patient.dateOfBirth}</span>
-          <span className="text-xs text-muted-foreground font-mono">{patient.mNumber}</span>
+          <span className="text-[11px] text-muted-foreground">{patient.dateOfBirth}</span>
+          <div className="flex items-baseline gap-1">
+            <span className="text-[11px] text-muted-foreground font-mono">{patient.mNumber}</span>
+            <span className="text-[10px] text-muted-foreground/70 ml-auto">{elapsedTime}</span>
+          </div>
         </div>
 
-        {/* COL 2: Notes Grid 3×2 = 6 slots */}
-        <div className="flex items-center">
+        {/* COL 2: Notes Grid 3×2 = 6 slots - fixed 72px width */}
+        <div className="flex items-center justify-center">
           <StickerNotesColumn
             notes={patient.stickerNotes}
             onAddNote={handleAddNote}
