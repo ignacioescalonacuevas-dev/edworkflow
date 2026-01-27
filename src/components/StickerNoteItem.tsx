@@ -15,7 +15,11 @@ interface StickerNoteItemProps {
 }
 
 export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemProps) {
-  const config = NOTE_TYPE_CONFIG[note.type];
+  // Fallback config if note type is not recognized
+  const config = NOTE_TYPE_CONFIG[note.type] || { 
+    label: 'Note', 
+    color: 'bg-gray-500/20 text-gray-300 border-gray-500/30' 
+  };
   
   const {
     attributes,
