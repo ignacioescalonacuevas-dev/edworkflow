@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { format } from 'date-fns';
 import { Patient, Order, OrderStatus, AdmissionData, PatientEvent, PatientStatus, PATIENT_STATUSES, StickerNote, StickerNoteType, ProcessState, PROCESS_STATES, TriageLevel, mapStatusToProcessState } from '@/types/patient';
 import { useShiftHistoryStore } from './shiftHistoryStore';
+import { samplePatients } from '@/data/samplePatients';
 
 const DEFAULT_DOCTORS = [
   'Dr. TAU',
@@ -161,9 +162,6 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 
 // Current shift date (today)
 const SHIFT_DATE = '2026-01-25';
-
-// Empty board for today - all patients from yesterday are in history
-const samplePatients: Patient[] = [];
 
 export const usePatientStore = create<PatientStore>()(
   persist(

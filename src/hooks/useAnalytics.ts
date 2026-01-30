@@ -53,6 +53,12 @@ export interface AnalyticsData {
   transfers: number;
   admissionRate: number;
   
+  // NEW: DNW (Did Not Wait)
+  dnwCount: number;
+  
+  // NEW: Follow-up breakdown
+  followupCounts: Record<string, number>;
+  
   // Triage distribution
   triageDistribution: Record<TriageLevel, number>;
   criticalCount: number; // Triage 1-2
@@ -133,6 +139,22 @@ export function useAnalytics(patients: Patient[]): AnalyticsData {
     const discharges = patients.filter(p => p.processState === 'discharged').length;
     const transfers = patients.filter(p => p.processState === 'transferred').length;
     const admissionRate = totalPatients > 0 ? (admissions / totalPatients) * 100 : 0;
+    
+    // DNW (Did Not Wait) - patients discharged without ever being seen
+    const dnwCount = patients.filter(p => 
+      p.processState === 'discharged' && 
+      !p.events.some(e => e.description.toLowerCase().includes('being seen'))
+    ).length;
+    
+    // Follow-up breakdown
+    const followupCounts: Record<string, number> = {};
+    patients.forEach(p => {
+      p.stickerNotes?.forEach(note => {
+        if (note.type === 'followup') {
+          followupCounts[note.text] = (followupCounts[note.text] || 0) + 1;
+        }
+      });
+    });
     
     // Triage Distribution
     const triageDistribution: Record<TriageLevel, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
@@ -336,6 +358,8 @@ export function useAnalytics(patients: Patient[]): AnalyticsData {
       discharges,
       transfers,
       admissionRate,
+      dnwCount,
+      followupCounts,
       triageDistribution,
       criticalCount,
       studiesCounts,
