@@ -26,9 +26,10 @@ import {
   Ambulance,
   AlertTriangle,
   Activity,
-  Percent,
   Copy,
-  Check
+  Check,
+  UserX,
+  CalendarCheck
 } from 'lucide-react';
 
 import { StatCard } from './analytics/StatCard';
@@ -71,18 +72,27 @@ export function AnalyticsDashboard({ open, onOpenChange }: AnalyticsDashboardPro
   
   // Export/Copy functionality
   const handleCopyStats = () => {
+    const followupsText = Object.entries(analytics.followupCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, count]) => `${name}: ${count}`)
+      .join(', ') || 'None';
+    
     const stats = `
 ED Analytics Report - ${format(new Date(displayDate), 'EEEE, dd MMMM yyyy')}
 =====================================
 
-GENERAL STATISTICS
+END OF DAY SUMMARY
 ------------------
-Total Patients: ${analytics.totalPatients}
-Active Patients: ${analytics.activePatients}
-Admissions: ${analytics.admissions} (${analytics.admissionRate.toFixed(1)}%)
+Total Arrivals: ${analytics.totalPatients}
+DNW (Did Not Wait): ${analytics.dnwCount}
 Discharges: ${analytics.discharges}
+Admissions: ${analytics.admissions} (${analytics.admissionRate.toFixed(1)}% rate)
 Transfers: ${analytics.transfers}
-Critical (T1-T2): ${analytics.criticalCount}
+Active Patients: ${analytics.activePatients}
+
+FOLLOW-UPS SCHEDULED
+--------------------
+${followupsText}
 
 TRIAGE DISTRIBUTION
 -------------------
@@ -91,6 +101,7 @@ T2 (Very Urgent): ${analytics.triageDistribution[2]}
 T3 (Urgent): ${analytics.triageDistribution[3]}
 T4 (Standard): ${analytics.triageDistribution[4]}
 T5 (Non-Urgent): ${analytics.triageDistribution[5]}
+Critical (T1-T2): ${analytics.criticalCount}
 
 STUDIES PERFORMED
 -----------------
@@ -99,7 +110,6 @@ ECG: ${analytics.studiesCounts.ecg}
 ECHO: ${analytics.studiesCounts.echo}
 X-Ray: ${analytics.studiesCounts.xray}
 US: ${analytics.studiesCounts.us}
-Labs: ${analytics.studiesCounts.labs}
 Total: ${analytics.totalStudies}
 
 WAIT TIMES
@@ -189,7 +199,7 @@ Peak Hour: ${analytics.peakHour !== null ? `${String(analytics.peakHour).padStar
         <ScrollArea className="h-[calc(90vh-100px)]">
           <div className="p-4 space-y-4">
             {/* Top Stats Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
               <StatCard
                 title="Total Patients"
                 value={analytics.totalPatients}
@@ -211,6 +221,14 @@ Peak Hour: ${analytics.peakHour !== null ? `${String(analytics.peakHour).padStar
                 title="Transfers"
                 value={analytics.transfers}
                 icon={Ambulance}
+              />
+              <StatCard
+                title="DNW"
+                value={analytics.dnwCount}
+                icon={UserX}
+                subtitle="Did Not Wait"
+                className="border-orange-500/30"
+                iconClassName="bg-orange-500/20"
               />
               <StatCard
                 title="Critical (T1-T2)"
@@ -241,6 +259,29 @@ Peak Hour: ${analytics.peakHour !== null ? `${String(analytics.peakHour).padStar
               physicianStats={analytics.physicianStats}
               nurseStats={analytics.nurseStats}
             />
+            
+            
+            {/* Follow-ups Summary */}
+            {Object.keys(analytics.followupCounts).length > 0 && (
+              <div className="rounded-lg border bg-card p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <CalendarCheck className="h-4 w-4 text-green-400" />
+                  <h3 className="text-sm font-medium text-muted-foreground">Follow-up Appointments Scheduled</h3>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(analytics.followupCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([followup, count]) => (
+                      <span 
+                        key={followup}
+                        className="px-3 py-1.5 rounded-md text-sm font-medium bg-green-500/20 text-green-400 border border-green-500/30"
+                      >
+                        {followup}: {count}
+                      </span>
+                    ))}
+                </div>
+              </div>
+            )}
             
             {/* Precautions Summary */}
             {Object.keys(analytics.precautionCounts).length > 0 && (
