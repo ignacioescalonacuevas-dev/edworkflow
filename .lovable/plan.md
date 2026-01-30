@@ -1,286 +1,158 @@
 
-# Plan: Sección de Analíticas del Servicio de Emergencias
+# Plan: Datos de Prueba para Día Actual y Mejoras de Analíticas
 
 ## Resumen
 
-Crear una nueva página de analíticas accesible desde el header del board que muestre estadísticas completas del servicio, con capacidad de análisis histórico y desglose por funcionario.
+1. **Agregar 25 pacientes de muestra para el día actual** (2026-01-25) con un flujo realista de urgencias (10am-11pm)
+2. **Agregar métricas importantes que faltan**: DNW (Did Not Wait), Follow-ups breakdown
+3. **No es necesario cambiar el modo lectura** porque ya existe solo para ver días anteriores desde el historial, y el día actual siempre es editable
 
 ---
 
-## Datos Disponibles para Analíticas
+## Diseño de los 25 Pacientes
 
-Basándome en la estructura de datos actual, podemos extraer:
+Considerando que ED cierra admisiones a las 7pm y para las 10-11pm todos deben tener disposición final:
 
-### Métricas Generales del Día
-| Métrica | Fuente de Datos |
-|---------|-----------------|
-| Total de pacientes atendidos | `patients.length` |
-| Pacientes activos | `patients.filter(p => !['discharged','transferred','admitted'].includes(p.processState))` |
-| Admisiones | `patients.filter(p => admission !== undefined)` |
-| Altas (discharges) | `patients.filter(p => processState === 'discharged')` |
-| Transferencias | `patients.filter(p => processState === 'transferred')` |
-| Distribución por triage (1-5) | Agrupación por `triageLevel` |
+| Hora Llegada | Estado Final | Cantidad |
+|--------------|--------------|----------|
+| 10:00-12:00 | Discharged | 5 |
+| 12:00-14:00 | Discharged | 4 |
+| 14:00-16:00 | Admitted (3) + Discharged (2) | 5 |
+| 16:00-18:00 | Admitted (2) + Discharged (3) | 5 |
+| 18:00-20:00 | Discharged (3) + Transfer (1) + Admitted (1) | 5 |
+| 20:00-22:00 | DNW (1) | 1 (Late arrival that left without being seen) |
 
-### Estudios/Órdenes del Día
-| Estudio | Fuente |
-|---------|--------|
-| CT realizados | `stickerNotes.filter(n => n.text === 'CT')` |
-| ECG realizados | `stickerNotes.filter(n => n.text === 'ECG')` |
-| ECHO realizados | `stickerNotes.filter(n => n.text === 'ECHO')` |
-| X-Ray realizados | `stickerNotes.filter(n => n.text === 'X-Ray')` |
-| US realizados | `stickerNotes.filter(n => n.text === 'US')` |
-| Laboratorios | `orders.filter(o => o.type === 'lab')` |
-
-### Tiempos de Espera (calculables)
-| Métrica | Cálculo |
-|---------|---------|
-| Tiempo en sala de espera | Desde `arrivalTime` hasta primer cambio a `being_seen` |
-| Tiempo total de atención | Desde `arrivalTime` hasta `dischargedAt` o fin del turno |
-| Tiempo hasta admisión | Desde `arrivalTime` hasta `admission.startedAt` |
-| Tiempo promedio por triage | Agrupado por nivel de triage |
-
-### Estadísticas por Funcionario
-| Métrica | Descripción |
-|---------|-------------|
-| Pacientes por médico | Lista con detalles: nombre, triage, queja, estado |
-| Pacientes por enfermero | Lista con detalles: nombre, triage, queja, estado |
-| Órdenes realizadas por médico | Conteo de estudios ordenados |
-| Admisiones por médico | Cuántos pacientes admitió cada uno |
-| Altas por médico | Cuántos pacientes dio de alta |
-
-### Datos Adicionales Sugeridos
-| Métrica | Valor |
-|---------|-------|
-| **Hora pico** | Hora con más llegadas |
-| **Ocupación por box** | Cuántos pacientes pasaron por cada box |
-| **Precauciones activas** | COVID+, Flu+, MRSA, Isolation |
-| **Follow-ups generados** | GP, RACC, Clinics |
-| **Pacientes críticos (Triage 1-2)** | Conteo y porcentaje |
-| **Tiempo promedio a disposición** | Desde llegada hasta decisión de admitir/dar alta |
+**Distribución final:**
+- Discharged: 17
+- Admitted: 6
+- Transferred: 1
+- DNW (Did Not Wait): 1
+- **Total: 25**
 
 ---
 
-## Diseño de la UI
+## Nueva Métrica: DNW (Did Not Wait)
 
-### Acceso
-- Nuevo botón "Analytics" en el `BoardHeader` junto a los otros controles
-- Abre un Dialog/Sheet con las analíticas completas
+Los pacientes que se fueron sin esperar se marcan con `processState: 'discharged'` pero sin haber pasado nunca por `being_seen`. Se puede detectar así:
 
-### Layout de la Página de Analíticas
-
-```text
-┌─────────────────────────────────────────────────────────────────────┐
-│  📊 Analytics Dashboard              [Today ▼] [Export]       [✕]  │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐            │
-│  │    25    │  │    13    │  │     5    │  │     2    │            │
-│  │ Patients │  │ Discharg │  │ Admitted │  │ Transfer │            │
-│  └──────────┘  └──────────┘  └──────────┘  └──────────┘            │
-│                                                                     │
-│  TRIAGE DISTRIBUTION          │  WAIT TIMES                        │
-│  ┌─────────────────────────┐  │  ┌─────────────────────────┐       │
-│  │ ████████████ T1: 2      │  │  │ Avg Wait: 45 min        │       │
-│  │ ██████████████ T2: 8    │  │  │ Avg Total: 3h 20min     │       │
-│  │ ████████ T3: 10         │  │  │ Longest: 6h 45min       │       │
-│  │ ███ T4: 4               │  │  │ Shortest: 45 min        │       │
-│  │ █ T5: 1                 │  │  └─────────────────────────┘       │
-│  └─────────────────────────┘                                        │
-│                                                                     │
-│  STUDIES PERFORMED TODAY                                            │
-│  ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐             │
-│  │  8   │ │  12  │ │  6   │ │  15  │ │  4   │ │  22  │             │
-│  │  CT  │ │  ECG │ │ ECHO │ │ X-Ray│ │  US  │ │ Labs │             │
-│  └──────┘ └──────┘ └──────┘ └──────┘ └──────┘ └──────┘             │
-│                                                                     │
-├─────────────────────────────────────────────────────────────────────┤
-│  STAFF WORKLOAD                                                     │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │  Physicians                                                  │   │
-│  │  ┌─────────────┬───────┬───────┬───────┬───────────────────┐│   │
-│  │  │ Name        │ Pts   │ Admit │ D/C   │ Studies           ││   │
-│  │  ├─────────────┼───────┼───────┼───────┼───────────────────┤│   │
-│  │  │ Dr. TAU     │   6   │   2   │   3   │ 4 CT, 3 ECG       ││   │
-│  │  │ Dr. Joanna  │   5   │   1   │   4   │ 2 CT, 2 ECHO      ││   │
-│  │  └─────────────┴───────┴───────┴───────┴───────────────────┘│   │
-│  │                                                              │   │
-│  │  Nurses                                                      │   │
-│  │  ┌─────────────┬───────┬─────────────────────────────────────│   │
-│  │  │ Name        │ Pts   │ Patients                           ││   │
-│  │  ├─────────────┼───────┼─────────────────────────────────────│   │
-│  │  │ Nebin       │   7   │ M. O'Brien(T2), K. Nolan(T5)...   ││   │
-│  │  │ Beatriz     │   6   │ S. Kelly(T2), A. Kennedy(T4)...   ││   │
-│  │  └─────────────┴───────┴─────────────────────────────────────┘   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                                                                     │
-│  [Expand: Detailed Patient List per Staff Member]                   │
-└─────────────────────────────────────────────────────────────────────┘
+```typescript
+const dnw = patients.filter(p => 
+  p.processState === 'discharged' && 
+  !p.events.some(e => e.description.toLowerCase().includes('being seen'))
+).length;
 ```
 
-### Detalle por Funcionario (Expandible)
+## Nueva Métrica: Follow-ups Breakdown
 
-Al hacer clic en un médico/enfermero, se expande mostrando:
+Contar los follow-ups por tipo desde los stickerNotes:
 
-```text
-┌─────────────────────────────────────────────────────────────────────┐
-│  Dr. TAU - 6 Patients                                               │
-├─────────────────────────────────────────────────────────────────────┤
-│  ▲2 Michael O'Brien    │ Chest pain        │ Admission │ 2h 30m    │
-│  ▲3 Catherine Walsh    │ Syncope           │ Review    │ 4h 15m    │
-│  ▲1 Brian Gallagher    │ STEMI             │ Admitted  │ 3h 45m    │
-│  ▲3 Claire Healy       │ Allergic reaction │ D/C       │ 1h 30m    │
-│  ▲4 Conor Maguire      │ Epistaxis         │ D/C       │ 1h 00m    │
-│  ▲3 Eamon Hayes        │ GI Bleed          │ D/C       │ 1h 30m    │
-└─────────────────────────────────────────────────────────────────────┘
+```typescript
+const followupCounts: Record<string, number> = {};
+patients.forEach(p => {
+  p.stickerNotes?.forEach(note => {
+    if (note.type === 'followup') {
+      followupCounts[note.text] = (followupCounts[note.text] || 0) + 1;
+    }
+  });
+});
 ```
 
 ---
 
 ## Sección Técnica
 
-### Archivos a Crear
-
-| Archivo | Descripción |
-|---------|-------------|
-| `src/components/AnalyticsDashboard.tsx` | Componente principal del dashboard |
-| `src/components/analytics/StatCard.tsx` | Tarjeta individual de estadística |
-| `src/components/analytics/TriageDistribution.tsx` | Gráfico de distribución por triage |
-| `src/components/analytics/StudiesChart.tsx` | Visualización de estudios realizados |
-| `src/components/analytics/StaffWorkload.tsx` | Tabla de carga laboral por staff |
-| `src/components/analytics/WaitTimeStats.tsx` | Estadísticas de tiempos de espera |
-| `src/components/analytics/StaffDetail.tsx` | Detalle expandible por funcionario |
-| `src/hooks/useAnalytics.ts` | Hook para cálculo de métricas |
-
 ### Archivos a Modificar
 
 | Archivo | Cambios |
 |---------|---------|
-| `src/components/BoardHeader.tsx` | Agregar botón para abrir Analytics |
+| `src/store/patientStore.ts` | Reemplazar `samplePatients` vacío con 25 pacientes realistas |
+| `src/hooks/useAnalytics.ts` | Agregar `dnwCount` y `followupCounts` al AnalyticsData |
+| `src/components/AnalyticsDashboard.tsx` | Mostrar DNW y Follow-ups en el dashboard |
 
-### Hook de Analíticas (useAnalytics.ts)
+### Estructura de Pacientes de Muestra
 
 ```typescript
-interface AnalyticsData {
-  // General stats
-  totalPatients: number;
-  activePatients: number;
-  admissions: number;
-  discharges: number;
-  transfers: number;
-  
-  // Triage distribution
-  triageDistribution: Record<TriageLevel, number>;
-  
-  // Studies
-  studiesCounts: {
-    ct: number;
-    ecg: number;
-    echo: number;
-    xray: number;
-    us: number;
-    labs: number;
-  };
-  
-  // Wait times
-  waitTimes: {
-    averageWait: number; // minutes
-    averageTotal: number;
-    longest: number;
-    shortest: number;
-  };
-  
-  // Staff workload
-  physicianStats: StaffStats[];
-  nurseStats: StaffStats[];
-  
-  // Peak hours
-  peakHour: number;
-  hourlyArrivals: number[];
-}
+const SHIFT_DATE = '2026-01-25';
 
-interface StaffStats {
-  name: string;
-  patientCount: number;
-  admissions: number;
-  discharges: number;
-  studies: Record<string, number>;
-  patients: PatientSummary[];
-}
+// Helper function ya existe en shiftHistoryStore.ts, la reutilizamos
+const samplePatients: Patient[] = [
+  // 10:00 - Discharged
+  createPatient('t1', 'John McCarthy', '12/05/1985', 'M00100001', 
+    'Headache x 3 days', 'Box 1', 'Dr. TAU', 'Nebin',
+    new Date(`${SHIFT_DATE}T10:15:00`), 'discharged', 3, {
+      stickerNotes: [
+        { id: 'ts1', type: 'study', text: 'CT', completed: true, createdAt: new Date(`${SHIFT_DATE}T10:45:00`) },
+        { id: 'ts2', type: 'followup', text: 'GP', createdAt: new Date(`${SHIFT_DATE}T12:30:00`) },
+      ],
+      dischargedAt: new Date(`${SHIFT_DATE}T12:30:00`),
+  }),
+  // ... 24 more patients
+];
+```
 
-interface PatientSummary {
-  name: string;
-  triageLevel: TriageLevel;
-  chiefComplaint: string;
-  status: ProcessState;
-  duration: number; // minutes
+### Distribución por Médico y Enfermero
+
+Para mantener la carga laboral realista:
+- **Dr. TAU**: 6 pacientes
+- **Dr. Joanna**: 5 pacientes  
+- **Dr. Caren**: 5 pacientes
+- **Dr. Alysha**: 5 pacientes
+- **Dr. Salah**: 4 pacientes
+
+- **Nebin**: 7 pacientes
+- **Beatriz**: 6 pacientes
+- **Rinku**: 6 pacientes
+- **Rafa**: 6 pacientes
+
+### Nuevas Métricas en AnalyticsData
+
+```typescript
+export interface AnalyticsData {
+  // ... existing fields
+  
+  // NEW
+  dnwCount: number;           // Did Not Wait
+  followupCounts: Record<string, number>;  // GP: 5, RACC: 2, etc.
 }
 ```
 
-### Cálculo de Tiempos
+### Display en Dashboard
+
+Agregar una nueva sección "End of Day Summary" con:
+- Total arrivals
+- DNW (Did Not Wait)
+- Admissions
+- Transfers  
+- Follow-ups by type (GP, RACC, MRI Scheduled, Ortho Clinic, etc.)
+
+---
+
+## Flujo de Eventos por Paciente (Ejemplo Realista)
 
 ```typescript
-function calculateWaitTime(patient: Patient): number {
-  const arrival = new Date(patient.arrivalTime);
-  
-  // Find first "being_seen" event
-  const seenEvent = patient.events.find(e => 
-    e.type === 'process_state_change' && 
-    e.description.includes('Being Seen')
-  );
-  
-  if (seenEvent) {
-    return (new Date(seenEvent.timestamp).getTime() - arrival.getTime()) / 60000;
-  }
-  
-  return null; // Still waiting
-}
-
-function calculateTotalTime(patient: Patient): number {
-  const arrival = new Date(patient.arrivalTime);
-  const end = patient.dischargedAt 
-    ? new Date(patient.dischargedAt) 
-    : new Date();
-    
-  return (end.getTime() - arrival.getTime()) / 60000;
-}
+events: [
+  { type: 'arrival', description: 'Patient arrived at ED', timestamp: 10:15 },
+  { type: 'triage_change', description: 'Triage level: 3', timestamp: 10:20 },
+  { type: 'process_state_change', description: 'Process state changed to: Triaged', timestamp: 10:20 },
+  { type: 'doctor_assigned', description: 'Physician assigned: Dr. TAU', timestamp: 10:30 },
+  { type: 'process_state_change', description: 'Process state changed to: Being Seen', timestamp: 10:30 },
+  { type: 'process_state_change', description: 'Process state changed to: Awaiting Results', timestamp: 11:00 },
+  { type: 'process_state_change', description: 'Process state changed to: Disposition', timestamp: 12:00 },
+  { type: 'process_state_change', description: 'Process state changed to: Discharged', timestamp: 12:30 },
+]
 ```
-
-### Selector de Fecha
-
-Permite ver analíticas de:
-- Día actual (por defecto)
-- Cualquier fecha del historial (usando `shiftHistoryStore`)
-
-### Visualización con Recharts
-
-Usar los componentes de `recharts` ya instalados para:
-- Gráfico de barras para distribución de triage
-- Gráfico de pastel para distribución de estudios
-- Gráfico de línea para llegadas por hora
 
 ---
 
 ## Resultado Esperado
 
-1. **Visión general inmediata**: Contadores grandes con totales del día
-2. **Distribución de triage**: Ver la gravedad de los pacientes atendidos
-3. **Estudios realizados**: Cuántos CT, ECG, etc. se hicieron
-4. **Tiempos de espera**: Promedios y extremos para identificar cuellos de botella
-5. **Carga por funcionario**: Ver cuántos pacientes atendió cada médico/enfermero
-6. **Detalle de pacientes**: Lista expandible con todos los datos de cada paciente por staff
-7. **Análisis histórico**: Capacidad de ver datos de días anteriores
-8. **Exportación**: Opción para copiar/exportar datos para reportes
-
----
-
-## Métricas Adicionales Propuestas
-
-Además de lo solicitado, podríamos incluir:
-
-- **Tasa de admisión**: % de pacientes que terminan hospitalizados
-- **Tiempo door-to-doctor**: Desde llegada hasta ser visto
-- **Tiempo door-to-disposition**: Desde llegada hasta decisión
-- **Readmisiones** (si el M-Number aparece más de una vez)
-- **Ocupación por hora**: Cuántos pacientes había en ED cada hora
-- **Precauciones activas**: Conteo de COVID+, Flu+, MRSA
-- **Follow-ups generados**: A dónde se derivaron los pacientes
+1. **25 pacientes cargados** en el día actual para poder probar todas las funciones
+2. **Analíticas completas** mostrando:
+   - Total de llegadas: 25
+   - DNW: 1
+   - Admisiones: 6
+   - Transfers: 1
+   - Altas: 17
+   - Follow-ups: GP (X), RACC (X), Fracture Clinic (X), etc.
+3. **Poder editar** todos los pacientes ya que es el día actual (no modo lectura)
+4. **Estadísticas de fin de día** con toda la información necesaria para el cierre de turno
