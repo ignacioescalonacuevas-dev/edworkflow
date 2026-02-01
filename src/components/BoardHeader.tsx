@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Activity, EyeOff, Eye, Calendar, ArrowLeft, BarChart3 } from 'lucide-react';
+import { Activity, EyeOff, Eye, Calendar, ArrowLeft, BarChart3, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { usePatientStore } from '@/store/patientStore';
 import { useShiftHistoryStore } from '@/store/shiftHistoryStore';
@@ -14,11 +14,17 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 
 export function BoardHeader() {
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
-  const { shiftDate, hideDischargedFromBoard, setHideDischargedFromBoard } = usePatientStore();
+  const { shiftDate, hideDischargedFromBoard, setHideDischargedFromBoard, resetToSampleData } = usePatientStore();
   const { viewingDate, setViewingDate, loadShift } = useShiftHistoryStore();
+
+  const handleResetData = () => {
+    resetToSampleData();
+    toast.success('Data reset to 25 sample patients');
+  };
 
   // If viewing history, show that date instead
   const displayDate = viewingDate || (shiftDate ? format(new Date(shiftDate), 'yyyy-MM-dd') : null);
@@ -91,6 +97,16 @@ export function BoardHeader() {
               >
                 <BarChart3 className="h-4 w-4" />
                 Analytics
+              </Button>
+
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleResetData}
+                className="gap-2 text-muted-foreground"
+                title="Reset to sample data"
+              >
+                <RotateCcw className="h-4 w-4" />
               </Button>
 
               <NewPatientForm />

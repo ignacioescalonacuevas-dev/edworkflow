@@ -140,6 +140,9 @@ interface PatientStore {
   
   // Events
   addEvent: (patientId: string, event: Omit<PatientEvent, 'id'>) => void;
+  
+  // Reset data to sample patients (for testing)
+  resetToSampleData: () => void;
 }
 
 // Helper to migrate old patient data to new structure
@@ -962,6 +965,21 @@ export const usePatientStore = create<PatientStore>()(
         };
         
         useShiftHistoryStore.getState().saveShift(snapshot);
+      },
+
+      resetToSampleData: () => {
+        set({
+          patients: samplePatients,
+          shiftDate: new Date(SHIFT_DATE),
+          shiftConfigured: true,
+          doctors: DEFAULT_DOCTORS,
+          nurses: DEFAULT_NURSES,
+          locations: DEFAULT_LOCATIONS,
+          searchQuery: '',
+          filterByDoctor: null,
+          filterByNurse: null,
+          hideDischargedFromBoard: true,
+        });
       },
     }),
     {
