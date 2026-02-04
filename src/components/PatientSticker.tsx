@@ -295,8 +295,8 @@ export function PatientSticker({ patient }: PatientStickerProps) {
   const processStateConfig = PROCESS_STATES.find(s => s.value === processState);
   
   // Determine if patient is in admission process
-  const isInAdmissionProcess = processState === 'admission_pending' || processState === 'bed_assigned' || processState === 'ready_transfer';
-  const isDischarged = processState === 'discharged' || processState === 'transferred' || processState === 'admitted';
+  const isInAdmissionProcess = processState === 'admission';
+  const isDischarged = processState === 'discharged' || processState === 'transferred';
   
   // Show admission info if patient has any admission data (even after transfer)
   const hasAdmissionInfo = patient.admission && 

@@ -79,12 +79,12 @@ function createPatient(
       type: 'process_state_change',
       description: `Process state changed to: Transferred to ${options.transferredTo}`,
     });
-  } else if (processState === 'admitted' && options.admission) {
+  } else if (processState === 'admission' && options.admission) {
     events.push({
       id: generateId(),
       timestamp: options.admission.completedAt || new Date(),
       type: 'process_state_change',
-      description: 'Process state changed to: Admitted',
+      description: 'Process state changed to: Admission',
     });
   }
 
@@ -254,7 +254,7 @@ export const samplePatients: Patient[] = [
   createPatient(
     'Margaret Ryan', '04/06/1955', 'M00100010',
     'STEMI', 'Resus', 'Dr. TAU', 'Beatriz',
-    new Date(`${SHIFT_DATE}T14:00:00`), 'admitted', 1,
+    new Date(`${SHIFT_DATE}T14:00:00`), 'admission', 1,
     {
       stickerNotes: [
         { type: 'study', text: 'ECG', completed: true, createdAt: new Date(`${SHIFT_DATE}T14:05:00`) },
@@ -267,7 +267,7 @@ export const samplePatients: Patient[] = [
   createPatient(
     'Thomas Byrne', '22/03/1948', 'M00100011',
     'Stroke symptoms', 'Resus', 'Dr. Alysha', 'Rinku',
-    new Date(`${SHIFT_DATE}T14:15:00`), 'admitted', 1,
+    new Date(`${SHIFT_DATE}T14:15:00`), 'admission', 1,
     {
       stickerNotes: [
         { type: 'study', text: 'CT', completed: true, createdAt: new Date(`${SHIFT_DATE}T14:25:00`) },
@@ -279,7 +279,7 @@ export const samplePatients: Patient[] = [
   createPatient(
     'Susan Maguire', '11/10/1970', 'M00100012',
     'GI Bleed', 'Box 4', 'Dr. Salah', 'Rafa',
-    new Date(`${SHIFT_DATE}T14:30:00`), 'admitted', 2,
+    new Date(`${SHIFT_DATE}T14:30:00`), 'admission', 2,
     {
       stickerNotes: [
         { type: 'study', text: 'CT', completed: true, createdAt: new Date(`${SHIFT_DATE}T15:00:00`) },
@@ -315,7 +315,7 @@ export const samplePatients: Patient[] = [
   createPatient(
     'Kevin O\'Connor', '14/08/1960', 'M00100015',
     'Pneumonia', 'Box 1', 'Dr. TAU', 'Rinku',
-    new Date(`${SHIFT_DATE}T16:00:00`), 'admitted', 2,
+    new Date(`${SHIFT_DATE}T16:00:00`), 'admission', 2,
     {
       stickerNotes: [
         { type: 'study', text: 'X-Ray', completed: true, createdAt: new Date(`${SHIFT_DATE}T16:20:00`) },
@@ -328,7 +328,7 @@ export const samplePatients: Patient[] = [
   createPatient(
     'Emma Fitzgerald', '31/12/1975', 'M00100016',
     'Sepsis query', 'Box 2', 'Dr. Alysha', 'Rafa',
-    new Date(`${SHIFT_DATE}T16:30:00`), 'admitted', 2,
+    new Date(`${SHIFT_DATE}T16:30:00`), 'admission', 2,
     {
       stickerNotes: [
         { type: 'study', text: 'US', completed: true, createdAt: new Date(`${SHIFT_DATE}T17:15:00`) },
@@ -414,7 +414,7 @@ export const samplePatients: Patient[] = [
   createPatient(
     'Michael Kennedy', '05/03/1952', 'M00100023',
     'CHF exacerbation', 'Box 2', 'Dr. TAU', 'Rinku',
-    new Date(`${SHIFT_DATE}T18:45:00`), 'admitted', 2,
+    new Date(`${SHIFT_DATE}T18:45:00`), 'admission', 2,
     {
       stickerNotes: [
         { type: 'study', text: 'ECHO', completed: true, createdAt: new Date(`${SHIFT_DATE}T19:15:00`) },

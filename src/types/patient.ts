@@ -83,20 +83,14 @@ export function getLocationAbbreviation(location: string): string {
   return LOCATION_ABBREVIATIONS[location] || location.substring(0, 2).toUpperCase();
 }
 
-// ============= NEW: Process States (Clinical Workflow) =============
+// ============= Process States (Clinical Workflow - Simplified) =============
 export type ProcessState = 
   | 'registered'
-  | 'triaged'
-  | 'being_seen'
+  | 'to_be_seen'
   | 'awaiting_results'
-  | 'results_review'
-  | 'disposition'
-  | 'admission_pending'
-  | 'bed_assigned'
-  | 'ready_transfer'
+  | 'admission'
   | 'discharged'
-  | 'transferred'
-  | 'admitted';
+  | 'transferred';
 
 export interface ProcessStateConfig {
   value: ProcessState;
@@ -106,17 +100,11 @@ export interface ProcessStateConfig {
 
 export const PROCESS_STATES: ProcessStateConfig[] = [
   { value: 'registered', label: 'Registered', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
-  { value: 'triaged', label: 'Triaged', color: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
-  { value: 'being_seen', label: 'Being Seen', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+  { value: 'to_be_seen', label: 'To Be Seen', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
   { value: 'awaiting_results', label: 'Awaiting Results', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-  { value: 'results_review', label: 'Results Review', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
-  { value: 'disposition', label: 'Disposition', color: 'bg-indigo-500/20 text-indigo-400 border-indigo-500/30' },
-  { value: 'admission_pending', label: 'Admission Pending', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' },
-  { value: 'bed_assigned', label: 'Bed Assigned', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
-  { value: 'ready_transfer', label: 'Ready Transfer', color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' },
+  { value: 'admission', label: 'Admission', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' },
   { value: 'discharged', label: 'Discharged', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
   { value: 'transferred', label: 'Transferred', color: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
-  { value: 'admitted', label: 'Admitted', color: 'bg-teal-500/20 text-teal-400 border-teal-500/30' },
 ];
 
 export interface Order {
@@ -293,18 +281,40 @@ export function getAbbreviation(text: string): string {
 // ============= Migration Helpers =============
 export function mapStatusToProcessState(status: PatientStatus): ProcessState {
   const map: Partial<Record<PatientStatus, ProcessState>> = {
-    'waiting_room': 'triaged',
-    'treatment_room': 'being_seen',
-    'review': 'results_review',
+    'waiting_room': 'registered',
+    'treatment_room': 'to_be_seen',
+    'review': 'awaiting_results',
     'ct': 'awaiting_results',
     'mri': 'awaiting_results',
     'echo': 'awaiting_results',
     'vascular': 'awaiting_results',
-    'admission': 'admission_pending',
+    'admission': 'admission',
     'discharged': 'discharged',
     'transferred': 'transferred',
   };
   return map[status] ?? 'registered';
+}
+
+// Migrate old process states to new simplified ones
+export function migrateProcessState(state: string): ProcessState {
+  const map: Record<string, ProcessState> = {
+    'registered': 'registered',
+    'triaged': 'registered',
+    'being_seen': 'to_be_seen',
+    'awaiting_results': 'awaiting_results',
+    'results_review': 'awaiting_results',
+    'disposition': 'awaiting_results',
+    'admission_pending': 'admission',
+    'bed_assigned': 'admission',
+    'ready_transfer': 'admission',
+    'discharged': 'discharged',
+    'transferred': 'transferred',
+    'admitted': 'discharged',
+    // New states map to themselves
+    'to_be_seen': 'to_be_seen',
+    'admission': 'admission',
+  };
+  return map[state] || 'registered';
 }
 
 // Shift History Types
