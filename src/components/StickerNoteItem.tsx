@@ -18,7 +18,7 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
   // Fallback config if note type is not recognized
   const config = NOTE_TYPE_CONFIG[note.type] || { 
     label: 'Note', 
-    color: 'bg-gray-500/20 text-gray-300 border-gray-500/30' 
+    color: 'bg-slate-100 text-slate-700 border-slate-300' 
   };
   
   const {
@@ -59,10 +59,10 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
               }}
               onPointerDown={(e) => e.stopPropagation()}
               className={cn(
-                "w-[28px] h-[22px] rounded text-[10px] font-bold flex items-center justify-center border transition-colors",
+                "w-[34px] h-[26px] rounded text-[11px] font-bold flex items-center justify-center border transition-colors",
                 note.completed 
-                  ? "bg-green-500/40 text-green-300 border-green-500/50"
-                  : "bg-blue-500/30 text-blue-300 border-blue-500/40 hover:bg-blue-500/40"
+                  ? "bg-green-100 text-green-700 border-green-400"
+                  : "bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200"
               )}
             >
               {abbreviation}
@@ -102,7 +102,7 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
           )}
         >
           <span className={cn(
-            "w-[28px] h-[22px] rounded text-[10px] font-bold flex items-center justify-center border",
+            "w-[34px] h-[26px] rounded text-[11px] font-bold flex items-center justify-center border",
             config.color
           )}>
             {abbreviation}
