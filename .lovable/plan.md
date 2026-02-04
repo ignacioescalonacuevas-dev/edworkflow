@@ -1,45 +1,105 @@
 
 
-# Plan: Asignar Rol de Coordinator a Usuario
+# Plan: Corregir Filtro "Hide D/C" para Incluir Admisiones Completadas
 
-## Problema
+## Problema Identificado
 
-La tabla `user_roles` está vacía. El trigger `handle_new_user` no creó el rol cuando te registraste, por lo que el sistema te asigna `viewer` por defecto.
+El botón "Hide D/C" actualmente filtra:
+- `processState === 'discharged'`
+- `processState === 'transferred'`
 
-## Datos del Usuario
+Pero NO filtra pacientes con admisión **completada** (`admission?.completedAt` existe). Estos pacientes ya fueron transferidos al ward y no deberían mostrarse en el tablero activo.
 
-| Campo | Valor |
-|-------|-------|
-| Email | ignacioescalonacuevas@gmail.com |
-| User ID | f1698e42-feff-4981-b7a4-e71bd1d9a806 |
-| Rol actual | viewer (por defecto) |
-| Rol deseado | coordinator |
-
-## Cambio Requerido
-
-Ejecutar migración SQL para insertar el rol de coordinator:
-
-```sql
-INSERT INTO public.user_roles (user_id, role, display_name)
-VALUES ('f1698e42-feff-4981-b7a4-e71bd1d9a806', 'coordinator', 'Ignacio Escalona')
-ON CONFLICT (user_id) DO UPDATE SET 
-  role = 'coordinator',
-  display_name = 'Ignacio Escalona';
+```text
+FILTRO ACTUAL:
+┌────────────────────────────────────────────────────────┐
+│ Estado              │ ¿Se esconde?                     │
+├────────────────────────────────────────────────────────┤
+│ registered          │ NO (visible)                     │
+│ to_be_seen          │ NO (visible)                     │
+│ awaiting_results    │ NO (visible)                     │
+│ admission           │ NO (visible) ← PROBLEMA          │
+│ discharged          │ SÍ (escondido)                   │
+│ transferred         │ SÍ (escondido)                   │
+└────────────────────────────────────────────────────────┘
 ```
 
-## Pasos Después de la Migración
+## Solución
 
-1. Refrescar la página o cerrar sesión y volver a entrar
-2. El `AuthContext` cargará tu nuevo rol desde `user_roles`
-3. Verás los botones protegidos por `RoleGate`:
-   - Reset data (↺)
-   - New Patient (+)
-   - Shift Settings (⚙️)
-   - End Shift
+Modificar el filtro para incluir pacientes con admisión completada:
+
+```text
+NUEVO FILTRO:
+┌────────────────────────────────────────────────────────┐
+│ Estado              │ ¿Se esconde?                     │
+├────────────────────────────────────────────────────────┤
+│ registered          │ NO (visible)                     │
+│ to_be_seen          │ NO (visible)                     │
+│ awaiting_results    │ NO (visible)                     │
+│ admission (pending) │ NO (visible)                     │
+│ admission (complete)│ SÍ (escondido) ← ARREGLADO       │
+│ discharged          │ SÍ (escondido)                   │
+│ transferred         │ SÍ (escondido)                   │
+└────────────────────────────────────────────────────────┘
+```
+
+## Cambios
+
+| Archivo | Cambio |
+|---------|--------|
+| `src/store/patientStore.ts` | Modificar la función `getFilteredPatients` para incluir admisiones completadas |
+
+---
+
+## Sección Técnica
+
+### src/store/patientStore.ts
+
+**Líneas 1199-1207: Modificar filtro hideDischargedFromBoard**
+
+```typescript
+// ANTES:
+if (state.hideDischargedFromBoard) {
+  result = result.filter(p => 
+    p.processState !== 'discharged' && 
+    p.processState !== 'transferred' &&
+    p.status !== 'discharged' && 
+    p.status !== 'transferred'
+  );
+}
+
+// DESPUÉS:
+if (state.hideDischargedFromBoard) {
+  result = result.filter(p => {
+    // Hide discharged
+    if (p.processState === 'discharged' || p.status === 'discharged') return false;
+    
+    // Hide transferred
+    if (p.processState === 'transferred' || p.status === 'transferred') return false;
+    
+    // Hide completed admissions (patient already transferred to ward)
+    if (p.admission?.completedAt) return false;
+    
+    return true;
+  });
+}
+```
+
+### Lógica Explicada
+
+1. **Discharged**: Pacientes dados de alta a casa
+2. **Transferred**: Pacientes transferidos a otro hospital
+3. **Admission Completada**: Pacientes cuya admisión ya fue completada (`admission.completedAt` existe), lo que significa que ya están en la cama del ward
+
+Los pacientes en proceso de admisión (sin `completedAt`) seguirán visibles para tracking.
+
+---
 
 ## Resultado Esperado
 
-- Tu rol será `coordinator` con display name "Ignacio Escalona"
-- Tendrás acceso completo a todas las funciones del sistema
-- El botón de configuración de turno (engranaje) estará visible y funcional
+- Pacientes activos (registered, to_be_seen, awaiting_results) → **Visibles**
+- Pacientes en proceso de admisión (sin completar) → **Visibles**
+- Pacientes con admisión completada → **Escondidos con Hide D/C**
+- Pacientes discharged → **Escondidos con Hide D/C**
+- Pacientes transferred → **Escondidos con Hide D/C**
 
