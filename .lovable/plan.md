@@ -1,231 +1,246 @@
 
 
-# Plan: Filtros por Estado de Proceso en la Barra de Conteo
+# Plan: Agregar `did_not_wait` (DNW) como ProcessState
 
 ## Resumen
 
-Transformar la sección "Showing: 25 (16 discharged)" en un sistema interactivo de filtrado por estado. Los coordinadores podrán hacer clic en botones/badges para filtrar el tablero y ver solo pacientes en un estado específico (Registered, To Be Seen, Awaiting Results, Admission, Discharged, Transferred).
+Agregar `'did_not_wait'` como un estado de proceso oficial. Esto permite marcar pacientes que se van antes de ser atendidos y filtrarlos/contarlos correctamente.
 
-## Diseño Visual
+## Flujo Clínico con DNW
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  ANTES (estático)                                                           │
-│  ─────────────────                                                          │
-│  Showing: 25 (16 discharged)                                                │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  DESPUÉS (interactivo)                                                      │
-│  ─────────────────                                                          │
-│  Showing: 25  │  [Reg 2] [TBS 4] [Wait 3] [Adm 5] [D/C 10] [Trans 1]        │
-│                                                                             │
-│  Con filtro activo:                                                         │
-│  Showing: 10 of 25  │  [Reg 2] [TBS 4] [Wait 3] [Adm 5] [D/C●10] [Trans 1]  │
-│                                           (resaltado = filtro activo)       │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-## Comportamiento
-
-1. **Botones de estado**: Cada estado muestra su conteo de pacientes
-2. **Clic para filtrar**: Al hacer clic, se filtra el tablero para mostrar solo pacientes en ese estado
-3. **Clic de nuevo para quitar**: Clicar el mismo botón desactiva el filtro
-4. **Solo un estado a la vez**: Similar a los filtros de estudios pendientes
-5. **Visual activo**: El botón activo se resalta con borde/fondo distintivo
-6. **Interacción con Hide D/C**: 
-   - Si Hide D/C está activado, los botones de D/C, Transferred y Admitted (admisión completada) aparecen deshabilitados
-   - Al activar un filtro de estado terminal, se desactiva temporalmente Hide D/C
-
-## Estados a mostrar
-
-| Estado | Abreviación | Color | Descripción |
-|--------|-------------|-------|-------------|
-| registered | Reg | Gris | Recién registrados |
-| to_be_seen | TBS | Púrpura | Esperando ser vistos |
-| awaiting_results | Wait | Amarillo | Esperando resultados |
-| admission | Adm | Cyan | En proceso de admisión (pendientes) |
-| discharged | D/C | Gris oscuro | Dados de alta |
-| transferred | Trans | Slate | Transferidos |
-| (admission completada) | Adm'd | Verde | Admitidos (ya en cama) |
+| Estado | Significado | Paciente en ED? |
+|--------|-------------|-----------------|
+| `registered` | Recién registrado, esperando triage/atención | **SÍ** |
+| `did_not_wait` | **NUEVO** - Se fue sin ser visto | **NO** |
+| `to_be_seen` | Esperando ser atendido por médico | **SÍ** |
+| `awaiting_results` | En evaluación, esperando resultados | **SÍ** |
+| `admission` | En proceso de admisión (asignando cama, médico) | **SÍ** |
+| `admitted` | Ya admitido, en camino a piso | **NO** |
+| `discharged` | Dado de alta | **NO** |
+| `transferred` | Transferido a otro hospital | **NO** |
 
 ## Cambios
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/store/patientStore.ts` | Agregar `filterByProcessState` y `setFilterByProcessState` |
-| `src/components/FilterIndicator.tsx` | Agregar botones interactivos de estado con conteos |
-| `src/store/patientStore.ts` | Modificar `getFilteredPatients` para incluir filtro por estado |
+| `src/types/patient.ts` | Agregar `'did_not_wait'` al tipo `ProcessState` |
+| `src/types/patient.ts` | Agregar configuración visual en `PROCESS_STATES` |
+| `src/types/patient.ts` | Agregar mapeo en `migrateProcessState` |
+| `src/store/patientStore.ts` | Agregar `'did_not_wait'` al mapeo de status legacy |
+| `src/components/FilterIndicator.tsx` | Agregar botón DNW a los filtros de estado |
+| `src/components/ProcessStateDropdown.tsx` | Mostrará automáticamente DNW (usa `PROCESS_STATES`) |
+| `src/hooks/useAnalytics.ts` | Simplificar conteo de DNW usando el nuevo estado |
 
 ---
 
 ## Sección Técnica
 
-### 1. Store: Agregar nuevo filtro
+### 1. Actualizar el tipo ProcessState
 
-**Archivo:** `src/store/patientStore.ts`
+**Archivo:** `src/types/patient.ts`  
+**Líneas 87-93**
 
-Agregar al interface:
+Agregar `did_not_wait` después de `registered`:
+
 ```typescript
-interface PatientStore {
-  // ... existing
-  filterByProcessState: ProcessState | 'admitted' | null;  // 'admitted' = admisión completada
-  setFilterByProcessState: (state: ProcessState | 'admitted' | null) => void;
+export type ProcessState = 
+  | 'registered'
+  | 'did_not_wait'     // NUEVO: Paciente se fue sin ser atendido
+  | 'to_be_seen'
+  | 'awaiting_results'
+  | 'admission'
+  | 'admitted'         // (de nuestro plan anterior)
+  | 'discharged'
+  | 'transferred';
+```
+
+### 2. Agregar configuración visual
+
+**Archivo:** `src/types/patient.ts`  
+**Array `PROCESS_STATES` (líneas 101-108)**
+
+```typescript
+export const PROCESS_STATES: ProcessStateConfig[] = [
+  { value: 'registered', label: 'Registered', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
+  { value: 'did_not_wait', label: 'Did Not Wait', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },  // NUEVO
+  { value: 'to_be_seen', label: 'To Be Seen', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
+  { value: 'awaiting_results', label: 'Awaiting Results', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
+  { value: 'admission', label: 'Admission', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' },
+  { value: 'admitted', label: 'Admitted', color: 'bg-green-500/20 text-green-400 border-green-500/30' },  // (plan anterior)
+  { value: 'discharged', label: 'Discharged', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
+  { value: 'transferred', label: 'Transferred', color: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
+];
+```
+
+### 3. Actualizar función de migración
+
+**Archivo:** `src/types/patient.ts`  
+**Función `migrateProcessState`**
+
+```typescript
+export function migrateProcessState(state: string): ProcessState {
+  const map: Record<string, ProcessState> = {
+    // ... existing mappings ...
+    'did_not_wait': 'did_not_wait',  // NUEVO
+    'dnw': 'did_not_wait',           // Alias común
+    // ...
+  };
+  return map[state] || 'registered';
 }
 ```
 
-Inicializar en el estado:
-```typescript
-filterByProcessState: null,
-```
-
-Agregar acción:
-```typescript
-setFilterByProcessState: (state) => set({ filterByProcessState: state }),
-```
-
-Agregar a `clearFilters`:
-```typescript
-clearFilters: () => set({
-  searchQuery: '',
-  filterByDoctor: null,
-  filterByNurse: null,
-  filterByPendingStudy: null,
-  filterByProcessState: null,  // <-- nuevo
-}),
-```
-
-### 2. Store: Modificar getFilteredPatients
+### 4. Actualizar store: updatePatientProcessState
 
 **Archivo:** `src/store/patientStore.ts`
 
-Agregar nuevo bloque de filtro (después del filtro de searchQuery):
+Agregar `did_not_wait` al mapeo de legacy status:
+
 ```typescript
-// Filter by process state
-if (state.filterByProcessState) {
-  result = result.filter(p => {
-    if (state.filterByProcessState === 'admitted') {
-      // Show only completed admissions
-      return p.processState === 'admission' && p.admission?.completedAt;
-    }
-    if (state.filterByProcessState === 'admission') {
-      // Show only pending admissions (not completed)
-      return p.processState === 'admission' && !p.admission?.completedAt;
-    }
-    return p.processState === state.filterByProcessState;
-  });
-}
+const statusMap: Record<ProcessState, PatientStatus> = {
+  'registered': 'waiting_room',
+  'did_not_wait': 'discharged',  // DNW es terminal, usa discharged como legacy
+  'to_be_seen': 'treatment_room',
+  'awaiting_results': 'review',
+  'admission': 'admission',
+  'admitted': 'admission',
+  'discharged': 'discharged',
+  'transferred': 'transferred',
+};
 ```
 
-Nota: Si hay un filtro de estado activo para estados terminales (discharged, transferred, admitted), debemos ignorar `hideDischargedFromBoard` para ese filtro:
+### 5. Actualizar store: getFilteredPatients
+
+**Archivo:** `src/store/patientStore.ts`
+
+Agregar `did_not_wait` a la lista de estados terminales (ocultos por Hide D/C):
+
 ```typescript
-// Modify hideDischargedFromBoard logic
 if (state.hideDischargedFromBoard && !state.filterByProcessState) {
-  // Only apply if no process state filter is active
   result = result.filter(p => {
     if (p.processState === 'discharged') return false;
     if (p.processState === 'transferred') return false;
-    if (p.processState === 'admission' && p.admission?.completedAt) return false;
+    if (p.processState === 'did_not_wait') return false;  // NUEVO
+    if (p.processState === 'admitted') return false;
     return true;
   });
 }
 ```
 
-### 3. FilterIndicator: UI interactiva
+### 6. Actualizar FilterIndicator
 
 **Archivo:** `src/components/FilterIndicator.tsx`
 
-Agregar imports y lógica de conteo:
-```typescript
-import { PROCESS_STATES } from '@/types/patient';
-import { Button } from '@/components/ui/button';
+Agregar botón DNW a los filtros:
 
-// Calcular conteos por estado
-const stateCounts = useMemo(() => {
-  const counts: Record<string, number> = {};
-  patients.forEach(p => {
-    // Separar admisiones pendientes de completadas
-    if (p.processState === 'admission') {
-      if (p.admission?.completedAt) {
-        counts['admitted'] = (counts['admitted'] || 0) + 1;
-      } else {
-        counts['admission'] = (counts['admission'] || 0) + 1;
-      }
-    } else {
-      counts[p.processState] = (counts[p.processState] || 0) + 1;
-    }
-  });
-  return counts;
-}, [patients]);
-```
-
-Agregar botones de estado:
 ```typescript
-// Estado buttons config
-const stateButtons = [
-  { key: 'registered', label: 'Reg', color: 'bg-gray-500/20 text-gray-400' },
-  { key: 'to_be_seen', label: 'TBS', color: 'bg-purple-500/20 text-purple-400' },
-  { key: 'awaiting_results', label: 'Wait', color: 'bg-yellow-500/20 text-yellow-400' },
-  { key: 'admission', label: 'Adm', color: 'bg-cyan-500/20 text-cyan-400' },
-  { key: 'admitted', label: "Adm'd", color: 'bg-green-500/20 text-green-400' },
-  { key: 'discharged', label: 'D/C', color: 'bg-gray-500/20 text-gray-400' },
-  { key: 'transferred', label: 'Trans', color: 'bg-slate-500/20 text-slate-400' },
+const stateButtons: Array<{
+  key: ProcessState;  // Ya no necesita | 'admitted' porque admitted es ProcessState
+  label: string;
+  color: string;
+  activeColor: string;
+}> = [
+  { key: 'registered', label: 'Reg', color: 'bg-muted/50 text-muted-foreground hover:bg-muted', activeColor: 'bg-muted text-foreground' },
+  { key: 'did_not_wait', label: 'DNW', color: 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30', activeColor: 'bg-orange-500/40 text-orange-300' },  // NUEVO
+  { key: 'to_be_seen', label: 'TBS', color: 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30', activeColor: 'bg-purple-500/40 text-purple-300' },
+  { key: 'awaiting_results', label: 'Wait', color: 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30', activeColor: 'bg-yellow-500/40 text-yellow-300' },
+  { key: 'admission', label: 'Adm', color: 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30', activeColor: 'bg-cyan-500/40 text-cyan-300' },
+  { key: 'admitted', label: "Adm'd", color: 'bg-green-500/20 text-green-400 hover:bg-green-500/30', activeColor: 'bg-green-500/40 text-green-300' },
+  { key: 'discharged', label: 'D/C', color: 'bg-muted/50 text-muted-foreground hover:bg-muted', activeColor: 'bg-muted text-foreground' },
+  { key: 'transferred', label: 'Trans', color: 'bg-slate-500/20 text-slate-400 hover:bg-slate-500/30', activeColor: 'bg-slate-500/40 text-slate-300' },
 ];
-
-// En el JSX, después de "Showing: X"
-<div className="flex items-center gap-1">
-  {stateButtons.map(({ key, label, color }) => {
-    const count = stateCounts[key] || 0;
-    const isActive = filterByProcessState === key;
-    const isDisabled = hideDischargedFromBoard && 
-      ['discharged', 'transferred', 'admitted'].includes(key);
-    
-    return (
-      <button
-        key={key}
-        onClick={() => setFilterByProcessState(isActive ? null : key)}
-        disabled={isDisabled && count === 0}
-        className={cn(
-          "px-2 py-0.5 rounded text-xs font-medium transition-all",
-          color,
-          isActive && "ring-2 ring-primary ring-offset-1 ring-offset-background",
-          count === 0 && "opacity-40 cursor-not-allowed",
-          isDisabled && "opacity-30"
-        )}
-      >
-        {label} {count}
-      </button>
-    );
-  })}
-</div>
 ```
 
-### 4. Mostrar filtro activo en badges
+También actualizar `isTerminal` para incluir DNW:
 
-Cuando hay un filtro de estado activo, mostrarlo como badge removible:
 ```typescript
-{filterByProcessState && (
-  <Badge variant="secondary" className="gap-1 text-xs">
-    {stateButtons.find(s => s.key === filterByProcessState)?.label || filterByProcessState}
-    <button onClick={() => setFilterByProcessState(null)} className="hover:text-destructive">
-      <X className="h-3 w-3" />
-    </button>
-  </Badge>
-)}
+const isTerminal = ['discharged', 'transferred', 'admitted', 'did_not_wait'].includes(key);
 ```
 
-Actualizar `hasFilters`:
+Y simplificar el tipo de `handleStateClick`:
+
 ```typescript
-const hasFilters = filterByDoctor || filterByNurse || searchQuery || 
-  filterByPendingStudy || filterByProcessState;
+const handleStateClick = (stateKey: ProcessState) => {
+  // ...
+};
 ```
+
+### 7. Simplificar Analytics
+
+**Archivo:** `src/hooks/useAnalytics.ts`  
+**Líneas 142-146**
+
+Ahora el conteo de DNW es directo:
+
+```typescript
+// ANTES (inferido):
+const dnwCount = patients.filter(p => 
+  p.processState === 'discharged' && 
+  !p.events.some(e => e.description.toLowerCase().includes('being seen'))
+).length;
+
+// DESPUÉS (directo):
+const dnwCount = patients.filter(p => p.processState === 'did_not_wait').length;
+```
+
+### 8. Actualizar activePatients en analytics
+
+**Archivo:** `src/hooks/useAnalytics.ts**  
+**Línea 130-132**
+
+```typescript
+const activePatients = patients.filter(p => 
+  !['discharged', 'transferred', 'did_not_wait', 'admitted'].includes(p.processState)
+).length;
+```
+
+### 9. Actualizar tipo de filterByProcessState en store
+
+**Archivo:** `src/store/patientStore.ts**
+
+Cambiar el tipo (ya que `admitted` ahora es ProcessState):
+
+```typescript
+// ANTES:
+filterByProcessState: ProcessState | 'admitted' | null;
+
+// DESPUÉS:
+filterByProcessState: ProcessState | null;
+```
+
+Y el setter correspondiente.
+
+---
+
+## Nota Importante: Plan Combinado
+
+Este plan **combina** los dos cambios pendientes:
+1. Agregar `'admitted'` como ProcessState real (plan anterior aprobado)
+2. Agregar `'did_not_wait'` como ProcessState real (este plan)
+
+Ambos cambios se implementarán juntos para evitar hacer dos actualizaciones separadas al tipo `ProcessState`.
+
+---
+
+## Estados Finales (8 estados)
+
+| Estado | Label | Color | Terminal? |
+|--------|-------|-------|-----------|
+| `registered` | Registered | Gris | No |
+| `did_not_wait` | Did Not Wait | Naranja | **Sí** |
+| `to_be_seen` | To Be Seen | Púrpura | No |
+| `awaiting_results` | Awaiting Results | Amarillo | No |
+| `admission` | Admission | Cyan | No |
+| `admitted` | Admitted | Verde | **Sí** |
+| `discharged` | Discharged | Gris | **Sí** |
+| `transferred` | Transferred | Slate | **Sí** |
 
 ---
 
 ## Resultado Esperado
 
-1. El coordinador ve un conteo visual de pacientes por cada estado
-2. Puede hacer clic en cualquier estado para filtrar el tablero instantáneamente
-3. Puede ver solo los pacientes registrados nuevos, o solo los que esperan resultados
-4. Puede revisar todos los discharged/transferred incluso con Hide D/C activado
-5. El filtro activo aparece como badge removible
-6. Clear all limpia también este filtro
+1. El coordinador puede marcar a un paciente como DNW desde el dropdown de estado
+2. Los DNW aparecen en el filtro de la barra de conteo (botón naranja "DNW")
+3. Los DNW se ocultan con Hide D/C (son terminales)
+4. Las estadísticas de analytics cuentan DNW directamente del estado
+5. El flujo de admisión ahora tiene `admission` → `admitted` claramente separados
 
