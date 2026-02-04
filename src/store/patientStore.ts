@@ -60,6 +60,7 @@ interface PatientStore {
   searchQuery: string;
   filterByDoctor: string | null;
   filterByNurse: string | null;
+  filterByPendingStudy: string | null;
   hideDischargedFromBoard: boolean;
   
   // Actions
@@ -115,6 +116,7 @@ interface PatientStore {
   setSearchQuery: (query: string) => void;
   setFilterByDoctor: (doctor: string | null) => void;
   setFilterByNurse: (nurse: string | null) => void;
+  setFilterByPendingStudy: (study: string | null) => void;
   setHideDischargedFromBoard: (hide: boolean) => void;
   clearFilters: () => void;
   clearShift: () => void;
@@ -211,6 +213,7 @@ export const usePatientStore = create<PatientStore>()(
       searchQuery: '',
       filterByDoctor: null,
       filterByNurse: null,
+      filterByPendingStudy: null,
       hideDischargedFromBoard: true,
 
       addPatient: (patientData) => {
@@ -754,12 +757,14 @@ export const usePatientStore = create<PatientStore>()(
       setSearchQuery: (query) => set({ searchQuery: query }),
       setFilterByDoctor: (doctor) => set({ filterByDoctor: doctor }),
       setFilterByNurse: (nurse) => set({ filterByNurse: nurse }),
+      setFilterByPendingStudy: (study) => set({ filterByPendingStudy: study }),
       setHideDischargedFromBoard: (hide) => set({ hideDischargedFromBoard: hide }),
       
       clearFilters: () => set({
         searchQuery: '',
         filterByDoctor: null,
         filterByNurse: null,
+        filterByPendingStudy: null,
       }),
 
       clearShift: () => set({
@@ -1047,6 +1052,7 @@ export const usePatientStore = create<PatientStore>()(
           searchQuery: '',
           filterByDoctor: null,
           filterByNurse: null,
+          filterByPendingStudy: null,
           hideDischargedFromBoard: true,
         });
       },
@@ -1197,6 +1203,17 @@ export const getFilteredPatients = (state: PatientStore): Patient[] => {
       p.processState !== 'transferred' &&
       p.status !== 'discharged' && 
       p.status !== 'transferred'
+    );
+  }
+  
+  // Filter by pending study
+  if (state.filterByPendingStudy) {
+    result = result.filter(p => 
+      p.stickerNotes.some(note => 
+        note.type === 'study' && 
+        !note.completed && 
+        note.text === state.filterByPendingStudy
+      )
     );
   }
   

@@ -7,17 +7,19 @@ export function FilterIndicator() {
   const { 
     patients, 
     filterByDoctor, 
-    filterByNurse, 
+    filterByNurse,
+    filterByPendingStudy,
     searchQuery,
     hideDischargedFromBoard,
     setFilterByDoctor, 
     setFilterByNurse,
+    setFilterByPendingStudy,
     setSearchQuery,
     clearFilters 
   } = store;
 
   const filteredPatients = getFilteredPatients(store);
-  const hasFilters = filterByDoctor || filterByNurse || searchQuery;
+  const hasFilters = filterByDoctor || filterByNurse || searchQuery || filterByPendingStudy;
   
   const activeCount = patients.filter(p => p.status !== 'discharged' && p.status !== 'transferred').length;
   const dischargedCount = patients.filter(p => p.status === 'discharged' || p.status === 'transferred').length;
@@ -51,6 +53,15 @@ export function FilterIndicator() {
             <Badge variant="secondary" className="gap-1 text-xs">
               {filterByNurse}
               <button onClick={() => setFilterByNurse(null)} className="hover:text-destructive">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          )}
+
+          {filterByPendingStudy && (
+            <Badge variant="secondary" className="gap-1 text-xs bg-primary/20 text-primary border-primary">
+              Pending {filterByPendingStudy}
+              <button onClick={() => setFilterByPendingStudy(null)} className="hover:text-destructive">
                 <X className="h-3 w-3" />
               </button>
             </Badge>

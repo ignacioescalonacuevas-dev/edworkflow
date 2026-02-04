@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { SearchBar } from './SearchBar';
 import { StaffCounters } from './StaffCounters';
+import { StudyFilters } from './StudyFilters';
 import { FilterIndicator } from './FilterIndicator';
 import { NewPatientForm } from './NewPatientForm';
 import { ShiftSetup } from './ShiftSetup';
@@ -178,8 +179,10 @@ export function BoardHeader() {
 
       {/* Staff counters row */}
       {!isViewingHistory && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap gap-2">
           <StaffCounters />
+          <div className="h-4 w-px bg-border" />
+          <StudyFilters />
         </div>
       )}
 
