@@ -83,12 +83,14 @@ export function getLocationAbbreviation(location: string): string {
   return LOCATION_ABBREVIATIONS[location] || location.substring(0, 2).toUpperCase();
 }
 
-// ============= Process States (Clinical Workflow - Simplified) =============
+// ============= Process States (Clinical Workflow - 8 States) =============
 export type ProcessState = 
   | 'registered'
+  | 'did_not_wait'     // Patient left without being seen (terminal)
   | 'to_be_seen'
   | 'awaiting_results'
-  | 'admission'
+  | 'admission'        // Awaiting admission (patient still in ED)
+  | 'admitted'         // Already admitted (patient left ED for ward)
   | 'discharged'
   | 'transferred';
 
@@ -100,9 +102,11 @@ export interface ProcessStateConfig {
 
 export const PROCESS_STATES: ProcessStateConfig[] = [
   { value: 'registered', label: 'Registered', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
+  { value: 'did_not_wait', label: 'Did Not Wait', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
   { value: 'to_be_seen', label: 'To Be Seen', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
   { value: 'awaiting_results', label: 'Awaiting Results', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
   { value: 'admission', label: 'Admission', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' },
+  { value: 'admitted', label: 'Admitted', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
   { value: 'discharged', label: 'Discharged', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
   { value: 'transferred', label: 'Transferred', color: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
 ];
@@ -296,24 +300,27 @@ export function mapStatusToProcessState(status: PatientStatus): ProcessState {
   return map[status] ?? 'registered';
 }
 
-// Migrate old process states to new simplified ones
+// Migrate old process states to new 8-state model
 export function migrateProcessState(state: string): ProcessState {
   const map: Record<string, ProcessState> = {
+    // Current states map to themselves
     'registered': 'registered',
+    'did_not_wait': 'did_not_wait',
+    'dnw': 'did_not_wait',           // Common alias
+    'to_be_seen': 'to_be_seen',
+    'awaiting_results': 'awaiting_results',
+    'admission': 'admission',
+    'admitted': 'admitted',
+    'discharged': 'discharged',
+    'transferred': 'transferred',
+    // Legacy states migration
     'triaged': 'registered',
     'being_seen': 'to_be_seen',
-    'awaiting_results': 'awaiting_results',
     'results_review': 'awaiting_results',
     'disposition': 'awaiting_results',
     'admission_pending': 'admission',
     'bed_assigned': 'admission',
     'ready_transfer': 'admission',
-    'discharged': 'discharged',
-    'transferred': 'transferred',
-    'admitted': 'discharged',
-    // New states map to themselves
-    'to_be_seen': 'to_be_seen',
-    'admission': 'admission',
   };
   return map[state] || 'registered';
 }
