@@ -12,6 +12,7 @@ import { NewPatientForm } from './NewPatientForm';
 import { ShiftSetup } from './ShiftSetup';
 import { ShiftHistoryDialog } from './ShiftHistoryDialog';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
+import { EndShiftDialog } from './EndShiftDialog';
 import RoleGate from './RoleGate';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -144,6 +145,10 @@ export function BoardHeader() {
               
               <RoleGate allowedRoles={['coordinator']}>
                 <ShiftSetup />
+              </RoleGate>
+              
+              <RoleGate allowedRoles={['coordinator']}>
+                <EndShiftDialog />
               </RoleGate>
               
               <ShiftHistoryDialog />
