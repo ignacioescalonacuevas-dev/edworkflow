@@ -340,7 +340,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
     >
 
       {/* Main 3-column grid */}
-      <div className="grid grid-cols-[1fr_72px_44px] gap-1.5 flex-1 min-h-0">
+      <div className="grid grid-cols-[1fr_90px_44px] gap-1.5 flex-1 min-h-0">
         {/* COL 1: Patient Info (vertical stack) */}
         <div className="flex flex-col justify-center min-w-0">
           <div className="flex items-center gap-1">
@@ -386,17 +386,6 @@ export function PatientSticker({ patient }: PatientStickerProps) {
             {patient.appointments?.filter(apt => apt.status === 'pending' || apt.status === 'in_progress').slice(0, 2).map(apt => (
               <AppointmentBadge key={apt.id} appointment={apt} compact />
             ))}
-            <button 
-              type="button"
-              className="text-[11px] text-muted-foreground ml-auto px-1 py-0.5 rounded hover:bg-muted hover:text-foreground transition-all cursor-pointer"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleTimeDisplay();
-              }}
-              title={showArrivalTime ? 'Click para ver tiempo transcurrido' : 'Click para ver hora de llegada'}
-            >
-              {showArrivalTime ? arrivalTimeStr : elapsedTime}
-            </button>
           </div>
         </div>
 
@@ -454,8 +443,8 @@ export function PatientSticker({ patient }: PatientStickerProps) {
         </div>
       </div>
 
-      {/* Footer: Chief Complaint + Process State */}
-      <div className="flex items-center justify-between gap-2 pt-1.5 mt-1.5 border-t border-border/50">
+      {/* Footer: Chief Complaint + Timer + Process State */}
+      <div className="flex items-center gap-2 pt-1.5 mt-1.5 border-t border-border/50">
         {isReadOnly ? (
           <span className="text-xs text-muted-foreground flex-1 truncate">{patient.chiefComplaint}</span>
         ) : (
@@ -464,6 +453,17 @@ export function PatientSticker({ patient }: PatientStickerProps) {
             complaint={patient.chiefComplaint}
           />
         )}
+        <button 
+          type="button"
+          className="text-[10px] text-muted-foreground px-1 py-0.5 rounded hover:bg-muted hover:text-foreground transition-all cursor-pointer shrink-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleTimeDisplay();
+          }}
+          title={showArrivalTime ? 'Click para ver tiempo transcurrido' : 'Click para ver hora de llegada'}
+        >
+          {showArrivalTime ? arrivalTimeStr : elapsedTime}
+        </button>
         <ProcessStateDropdown 
           patientId={patient.id}
           currentState={processState}
