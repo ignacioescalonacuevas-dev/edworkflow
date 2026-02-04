@@ -298,6 +298,10 @@ export function PatientSticker({ patient }: PatientStickerProps) {
   const isInAdmissionProcess = processState === 'admission_pending' || processState === 'bed_assigned' || processState === 'ready_transfer';
   const isDischarged = processState === 'discharged' || processState === 'transferred' || processState === 'admitted';
   
+  // Show admission info if patient has any admission data (even after transfer)
+  const hasAdmissionInfo = patient.admission && 
+    (patient.admission.consultantName || patient.admission.consultant || patient.admission.bedNumber);
+  
   // Check if patient is away from assigned box
   const assignedBox = patient.assignedBox || patient.box || 'Waiting Room';
   const currentLocation = patient.currentLocation || assignedBox;
@@ -356,24 +360,26 @@ export function PatientSticker({ patient }: PatientStickerProps) {
               />
             )}
           </div>
-          {/* Row 2: DOB */}
-          <span className="text-[11px] text-muted-foreground">{patient.dateOfBirth}</span>
-          {/* Row 3: Consultant + Bed (if in admission) */}
-          {isInAdmissionProcess && (
-            <div className="flex items-center gap-1.5">
-              <ConsultantNameDisplay 
-                patientId={patient.id}
-                consultantName={patient.admission?.consultantName || patient.admission?.consultant}
-                admission={patient.admission}
-                readOnly={isReadOnly}
-              />
-              {patient.admission?.bedNumber && (
-                <span className="text-[10px] text-cyan-600 font-medium">
-                  📍{patient.admission.bedNumber}
-                </span>
-              )}
-            </div>
-          )}
+          {/* Row 2: DOB + Consultant/Bed (same line) */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] text-muted-foreground">{patient.dateOfBirth}</span>
+            {/* Show if patient has admission data (even after transfer) */}
+            {hasAdmissionInfo && (
+              <>
+                <ConsultantNameDisplay 
+                  patientId={patient.id}
+                  consultantName={patient.admission?.consultantName || patient.admission?.consultant}
+                  admission={patient.admission}
+                  readOnly={isReadOnly}
+                />
+                {patient.admission?.bedNumber && (
+                  <span className="text-[10px] text-cyan-600 font-medium">
+                    📍{patient.admission.bedNumber}
+                  </span>
+                )}
+              </>
+            )}
+          </div>
           <div className="flex items-baseline gap-1">
             <span className="text-[11px] text-muted-foreground font-mono">{patient.mNumber}</span>
             {/* Appointment badges */}
