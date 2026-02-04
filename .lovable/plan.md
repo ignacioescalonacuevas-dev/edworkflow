@@ -1,100 +1,313 @@
 
+# Plan: Sistema de Agenda y Recordatorios
 
-# Plan: Arreglar Toggle de Hora/Tiempo en Sticker
+## Resumen
 
-## Problema Identificado
-
-El toggle de hora/tiempo **sí está implementado** correctamente en el código, pero no funciona bien porque:
-
-1. **Área de click muy pequeña** - El `<span>` con `text-[10px]` (10 píxeles) es demasiado pequeño para hacer click fácilmente
-2. **Color casi invisible** - `text-muted-foreground/70` (gris al 70% de opacidad) es muy difícil de ver
-3. **Sin indicación visual** - No hay manera de saber que es clickeable (solo un tooltip que aparece al hacer hover)
+Crear un sistema de **Appointments/Citas** que permite:
+1. Programar citas para pacientes (MRI, RACC, Ultrasound, etc.) con hora específica
+2. Mostrar recordatorios automáticos X minutos antes de la hora
+3. Ver un panel/agenda con todas las citas del turno ordenadas cronológicamente
+4. Notificaciones visuales y sonoras cuando se acerca la hora
 
 ---
 
-## Solución
+## Tipos de Appointments Comunes
 
-Hacer el elemento más grande, más visible, y con mejor feedback visual:
+Basado en tu descripción, los tipos de citas más frecuentes son:
 
-### Cambios en PatientSticker.tsx
+| Tipo | Ejemplo |
+|------|---------|
+| **MRI** | MRI a las 18:00 |
+| **RACC** | RACC a las 17:00 |
+| **Ultrasound** | US a las 14:30 |
+| **CT** | CT a las 11:00 |
+| **ECHO** | Echo a las 15:45 |
+| **Procedimiento** | Procedimiento a las 16:00 |
+| **Consulta** | Consulta con cardio a las 13:00 |
+
+---
+
+## Como Funciona
+
+### 1. Agregar Cita a un Paciente
+
+En el sticker del paciente, un nuevo tipo de nota "Appointment" permitira:
+- Seleccionar tipo (MRI, RACC, US, etc.)
+- Poner hora programada (ej: 18:00)
+- Tiempo de recordatorio (30 min antes, 15 min antes, 10 min antes)
 
 ```text
-Antes:
-┌────────────────────────────────┐
-│  M00123456              2h30   │  ← muy pequeño, gris tenue
-└────────────────────────────────┘
-
-Después:
-┌────────────────────────────────┐
-│  M00123456            [2h30]   │  ← más visible, con padding, cursor diferente
-└────────────────────────────────┘
+┌────────────────────────────────────┐
+│  Tipo: [MRI ▼]                     │
+│  Hora: [18:00]                     │
+│  Recordar: [30 min antes ▼]        │
+│  Nota: [paciente ayuno]            │
+│                                    │
+│  [Agregar Appointment]             │
+└────────────────────────────────────┘
 ```
 
-### Mejoras específicas:
+### 2. Visualizacion en el Sticker
 
-| Aspecto | Antes | Después |
-|---------|-------|---------|
-| Tamaño texto | `text-[10px]` | `text-[11px]` |
-| Color | `text-muted-foreground/70` | `text-muted-foreground` |
-| Padding | ninguno | `px-1 py-0.5` |
-| Hover | solo cambia color | fondo sutíl + color |
-| Borde | ninguno | borde fino al hover |
-| Área clickeable | solo texto | texto + padding |
+La cita aparecera como un badge especial en el sticker:
+
+```text
+┌─────────────────────────────────────────┐
+│ △ John Smith                    B4      │
+│   15/03/1985                    DR:TA   │
+│   M00123456    [CT][MRI 18:00]  NR:NE   │
+│   ───────────────────────────────────   │
+│   Chest Pain                   Triaged  │
+└─────────────────────────────────────────┘
+                    ↑
+              Badge con hora
+```
+
+### 3. Panel de Agenda
+
+Un nuevo boton "Agenda" en el header abrira un panel lateral o dialogo mostrando:
+
+```text
+┌─────────────────────────────────────────┐
+│  📅 Agenda del Turno                    │
+├─────────────────────────────────────────┤
+│                                         │
+│  ⏰ PROXIMOS 30 MIN                     │
+│  ───────────────────                    │
+│  ⚠️ 17:45 - MRI - John Smith (B4)       │
+│     Recordar en 15 min                  │
+│                                         │
+│  📋 PENDIENTES HOY                      │
+│  ───────────────────                    │
+│  🔵 18:00 - RACC - Maria Garcia (B2)    │
+│  🔵 19:30 - US - Peter Jones (B1)       │
+│  🔵 20:00 - Cardio - Ana Lopez (TR)     │
+│                                         │
+│  ✓ COMPLETADOS                          │
+│  ───────────────────                    │
+│  ✓ 14:00 - CT - Pablo Ruiz              │
+│  ✓ 15:30 - Echo - Luis Fernandez        │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+### 4. Notificaciones
+
+Cuando llega el tiempo de recordatorio:
+- **Toast notification** prominente en la pantalla
+- **Sonido opcional** (beep corto)
+- **Badge contador** en el boton Agenda mostrando cuantos recordatorios activos hay
+
+```text
+┌─────────────────────────────────────────┐
+│  🔔 RECORDATORIO                        │
+│                                         │
+│  MRI para John Smith en 30 minutos      │
+│  Hora programada: 18:00                 │
+│  Ubicacion actual: Box 4                │
+│                                         │
+│  [Ver Paciente]        [Marcar Listo]   │
+└─────────────────────────────────────────┘
+```
 
 ---
 
-## Archivo a Modificar
+## Flujo de Usuario
 
-| Archivo | Cambio |
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│                     CREAR APPOINTMENT                                  │
+└────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+               ┌─────────────────────────────────────┐
+               │  Click en "+" del sticker           │
+               │  Seleccionar "Appointment"          │
+               │  Elegir tipo + hora + recordatorio  │
+               └─────────────────────────────────────┘
+                                 │
+                                 ▼
+               ┌─────────────────────────────────────┐
+               │  Appointment aparece en sticker     │
+               │  Se agrega a la Agenda              │
+               └─────────────────────────────────────┘
+                                 │
+                                 ▼ (cuando llega la hora - X min)
+               ┌─────────────────────────────────────┐
+               │  Toast notification aparece         │
+               │  Badge en boton Agenda se actualiza │
+               │  (Sonido opcional)                  │
+               └─────────────────────────────────────┘
+                                 │
+                                 ▼
+               ┌─────────────────────────────────────┐
+               │  Coordinador ve recordatorio        │
+               │  Gestiona envio del paciente        │
+               │  Marca como "En camino" o "Listo"   │
+               └─────────────────────────────────────┘
+```
+
+---
+
+## Archivos a Crear/Modificar
+
+| Archivo | Accion |
 |---------|--------|
-| `src/components/PatientSticker.tsx` | Mejorar estilo y área clickeable del toggle de tiempo |
+| `src/types/patient.ts` | Agregar tipo `Appointment` e interface |
+| `src/store/patientStore.ts` | Agregar appointments al paciente y acciones |
+| `src/components/AppointmentBadge.tsx` | **Nuevo**: Badge de cita en sticker |
+| `src/components/AgendaPanel.tsx` | **Nuevo**: Panel con todas las citas |
+| `src/components/AddAppointmentPopover.tsx` | **Nuevo**: Formulario para agregar cita |
+| `src/components/AppointmentReminder.tsx` | **Nuevo**: Hook y componente de notificaciones |
+| `src/components/PatientSticker.tsx` | Mostrar badges de appointments |
+| `src/components/BoardHeader.tsx` | Agregar boton "Agenda" |
 
 ---
 
-## Sección Técnica
+## Seccion Tecnica
 
-### Cambio en PatientSticker.tsx (líneas 375-384)
+### Nuevos Tipos en patient.ts
 
 ```typescript
-// ANTES:
-<span 
-  className="text-[10px] text-muted-foreground/70 ml-auto cursor-pointer hover:text-foreground transition-colors"
-  onClick={(e) => {
-    e.stopPropagation();
-    toggleTimeDisplay();
-  }}
-  title={showArrivalTime ? 'Click para ver tiempo transcurrido' : 'Click para ver hora de llegada'}
->
-  {showArrivalTime ? arrivalTimeStr : elapsedTime}
-</span>
+export type AppointmentType = 
+  | 'mri' | 'ct' | 'ultrasound' | 'echo' | 'xray' 
+  | 'racc' | 'procedure' | 'consult' | 'other';
 
-// DESPUÉS:
-<button 
-  type="button"
-  className="text-[11px] text-muted-foreground ml-auto px-1 py-0.5 rounded hover:bg-muted hover:text-foreground transition-all cursor-pointer"
-  onClick={(e) => {
-    e.stopPropagation();
-    toggleTimeDisplay();
-  }}
-  title={showArrivalTime ? 'Click para ver tiempo transcurrido' : 'Click para ver hora de llegada'}
->
-  {showArrivalTime ? arrivalTimeStr : elapsedTime}
-</button>
+export interface Appointment {
+  id: string;
+  type: AppointmentType;
+  scheduledTime: Date;          // Hora programada (ej: 18:00)
+  reminderMinutes: number;      // Cuanto antes avisar (30, 15, 10)
+  reminderTriggered: boolean;   // Ya se mostro el recordatorio?
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  notes?: string;               // Notas adicionales
+  createdAt: Date;
+}
+
+export const APPOINTMENT_TYPES: Record<AppointmentType, { label: string; color: string }> = {
+  mri: { label: 'MRI', color: 'bg-pink-500' },
+  ct: { label: 'CT', color: 'bg-orange-500' },
+  ultrasound: { label: 'US', color: 'bg-cyan-500' },
+  echo: { label: 'Echo', color: 'bg-indigo-500' },
+  xray: { label: 'X-Ray', color: 'bg-amber-500' },
+  racc: { label: 'RACC', color: 'bg-green-500' },
+  procedure: { label: 'Procedure', color: 'bg-purple-500' },
+  consult: { label: 'Consult', color: 'bg-blue-500' },
+  other: { label: 'Other', color: 'bg-gray-500' },
+};
+
+// Agregar al Patient interface:
+export interface Patient {
+  // ... campos existentes
+  appointments: Appointment[];  // NUEVO
+}
 ```
 
-### Por qué usar `<button>` en vez de `<span>`:
+### Nuevas Acciones en patientStore.ts
 
-1. **Semántica correcta** - Es un elemento interactivo, debe ser un botón
-2. **Accesibilidad** - Los lectores de pantalla lo reconocen como clickeable
-3. **Área de click natural** - Los botones tienen mejor comportamiento de hit-testing
+```typescript
+// Agregar cita
+addAppointment: (patientId: string, appointment: Omit<Appointment, 'id' | 'createdAt' | 'reminderTriggered' | 'status'>) => void;
+
+// Actualizar estado de cita
+updateAppointmentStatus: (patientId: string, appointmentId: string, status: Appointment['status']) => void;
+
+// Marcar recordatorio como visto
+markReminderTriggered: (patientId: string, appointmentId: string) => void;
+
+// Cancelar cita
+cancelAppointment: (patientId: string, appointmentId: string) => void;
+```
+
+### Hook de Recordatorios (useAppointmentReminders.ts)
+
+```typescript
+export function useAppointmentReminders() {
+  const { patients } = usePatientStore();
+  const [pendingReminders, setPendingReminders] = useState<Reminder[]>([]);
+
+  useEffect(() => {
+    const checkReminders = () => {
+      const now = new Date();
+      const reminders: Reminder[] = [];
+
+      patients.forEach(patient => {
+        patient.appointments?.forEach(apt => {
+          if (apt.status !== 'pending' || apt.reminderTriggered) return;
+          
+          const reminderTime = new Date(apt.scheduledTime);
+          reminderTime.setMinutes(reminderTime.getMinutes() - apt.reminderMinutes);
+          
+          if (now >= reminderTime && now < apt.scheduledTime) {
+            reminders.push({
+              patientId: patient.id,
+              patientName: patient.name,
+              appointmentId: apt.id,
+              type: apt.type,
+              scheduledTime: apt.scheduledTime,
+              location: patient.assignedBox,
+            });
+          }
+        });
+      });
+
+      setPendingReminders(reminders);
+    };
+
+    // Verificar cada minuto
+    checkReminders();
+    const interval = setInterval(checkReminders, 60000);
+    return () => clearInterval(interval);
+  }, [patients]);
+
+  return pendingReminders;
+}
+```
+
+### Componente de Notificacion Toast
+
+```typescript
+// En el componente principal, mostrar toasts para recordatorios
+useEffect(() => {
+  pendingReminders.forEach(reminder => {
+    toast.info(
+      `MRI para ${reminder.patientName} en ${reminder.minutesUntil} min`,
+      {
+        duration: 10000,
+        action: {
+          label: 'Ver',
+          onClick: () => scrollToPatient(reminder.patientId),
+        },
+      }
+    );
+  });
+}, [pendingReminders]);
+```
 
 ---
 
-## Resultado
+## Resultado Final
 
-Después de implementar:
-- El tiempo será **más visible** (color más oscuro, tamaño más grande)
-- Tendrá un **efecto hover claro** (fondo gris al pasar el mouse)
-- El **área de click será más grande** (incluye padding)
-- **Click funcionará consistentemente** en todos los stickers
+Despues de implementar:
 
+| Funcionalidad | Estado |
+|---------------|--------|
+| Agregar appointments a pacientes | Nuevo |
+| Badge visual en sticker con hora | Nuevo |
+| Panel Agenda con lista cronologica | Nuevo |
+| Recordatorios automaticos (toast) | Nuevo |
+| Marcar citas como completadas | Nuevo |
+| Contador de recordatorios pendientes | Nuevo |
+| Sonido de notificacion (opcional) | Nuevo |
+
+---
+
+## Opciones de Recordatorio
+
+| Tiempo | Uso tipico |
+|--------|------------|
+| 60 min | Para preparacion larga (ayuno, etc) |
+| 30 min | Default - tiempo para coordinar |
+| 15 min | Recordatorio cercano |
+| 10 min | Ultimo aviso |
+| 5 min | Urgente |
