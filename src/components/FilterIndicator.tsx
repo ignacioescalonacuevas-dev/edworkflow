@@ -21,8 +21,18 @@ export function FilterIndicator() {
   const filteredPatients = getFilteredPatients(store);
   const hasFilters = filterByDoctor || filterByNurse || searchQuery || filterByPendingStudy;
   
-  const activeCount = patients.filter(p => p.status !== 'discharged' && p.status !== 'transferred').length;
-  const dischargedCount = patients.filter(p => p.status === 'discharged' || p.status === 'transferred').length;
+  // Count using processState for consistency with Hide D/C logic
+  const activeCount = patients.filter(p => {
+    if (p.processState === 'discharged') return false;
+    if (p.processState === 'transferred') return false;
+    if (p.processState === 'admission' && p.admission?.completedAt) return false;
+    return true;
+  }).length;
+  const dischargedCount = patients.filter(p => 
+    p.processState === 'discharged' || 
+    p.processState === 'transferred' || 
+    (p.processState === 'admission' && p.admission?.completedAt)
+  ).length;
 
   return (
     <div className="flex items-center gap-3 text-sm">
