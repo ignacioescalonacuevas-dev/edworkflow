@@ -1,68 +1,43 @@
 
 
-# Plan: Translate Shift Management System to English
+# Plan: Add Study Filters for Pending Imaging
 
 ## Overview
 
-The shift management dialogs (End Shift, Previous Shift Warning, and Shift History) contain Spanish text that needs to be translated to English for consistency with the project's English-only UI requirement.
+Add quick filter buttons to show patients who are pending specific imaging studies (CT, MRI, X-Ray, etc.). This helps coordinators quickly identify who needs to go to imaging.
+
+```text
+Current Layout:
+┌────────────────────────────────────────────────────────────────┐
+│ ED Coordination Board                     [Search] [Controls]  │
+├────────────────────────────────────────────────────────────────┤
+│ MD: TAU (5) Joanna (3)  │  RN: Nebin (4) Beatriz (3)          │  ← Staff counters
+├────────────────────────────────────────────────────────────────┤
+│ Showing: 25 of 25                                              │  ← Filter indicator
+└────────────────────────────────────────────────────────────────┘
+
+Proposed Layout:
+┌────────────────────────────────────────────────────────────────┐
+│ ED Coordination Board                     [Search] [Controls]  │
+├────────────────────────────────────────────────────────────────┤
+│ MD: TAU (5) Joanna (3)  │  RN: Nebin (4) Beatriz (3)          │  ← Staff counters
+│ Pending: CT (3) MRI (1) XR (2) ECHO (0) US (1)                 │  ← NEW: Study filters
+├────────────────────────────────────────────────────────────────┤
+│ Showing: 3 of 25  [Pending CT ×]                               │  ← Filter indicator
+└────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Spanish Text Found
+## Behavior
 
-### EndShiftDialog.tsx
-
-| Line | Spanish | English |
-|------|---------|---------|
-| 3 | `import { es } from 'date-fns/locale'` | Remove import |
-| 36 | `'Turno cerrado y guardado en historial'` | `'Shift closed and saved to history'` |
-| 40 | `"EEEE, dd 'de' MMMM", { locale: es }` | `'EEEE, MMMM d'` |
-| 41 | `'Sin fecha'` | `'No date'` |
-| 48 | `Cerrar Turno` | `End Shift` |
-| 55 | `Cerrar Turno` | `End Shift` |
-| 63 | `Resumen del Turno` | `Shift Summary` |
-| 70 | `Total pacientes` | `Total patients` |
-| 78 | `Admisiones` | `Admissions` |
-| 86 | `Altas` | `Discharges` |
-| 94 | `Traslados` | `Transfers` |
-| 103 | `Hay {n} pacientes sin cerrar.` | `There are {n} unclosed patients.` |
-| 105 | `Se guardarán en el historial...` | `They will be saved to history...` |
-| 114 | `Cancelar` | `Cancel` |
-| 117 | `Cerrar y Guardar` | `Close and Save` |
-
-### PreviousShiftWarning.tsx
-
-| Line | Spanish | English |
-|------|---------|---------|
-| 2 | `import { es } from 'date-fns/locale'` | Remove import |
-| 25 | `"EEEE, dd 'de' MMMM", { locale: es }` | `'EEEE, MMMM d'` |
-| 26 | `'fecha desconocida'` | `'unknown date'` |
-| 28 | `"EEEE, dd 'de' MMMM", { locale: es }` | `'EEEE, MMMM d'` |
-| 33 | `'Turno anterior cerrado...'` | `'Previous shift closed. Configure new shift.'` |
-| 38 | `'Continuando con el turno anterior'` | `'Continuing with previous shift'` |
-| 47 | `Turno Anterior Sin Cerrar` | `Previous Shift Not Closed` |
-| 50 | `Se detectó un turno...` | `A shift from a previous day was detected that was not closed.` |
-| 58 | `Turno abierto` | `Open shift` |
-| 66 | `Hoy` | `Today` |
-| 72 | `Puedes cerrar el turno...` | `You can close the previous shift and start a new one, or continue working on the existing shift.` |
-| 83 | `Continuar Turno` | `Continue Shift` |
-| 90 | `Cerrar y Empezar Nuevo` | `Close and Start New` |
-
-### ShiftHistoryDialog.tsx
-
-| Line | Spanish | English |
-|------|---------|---------|
-| 52 | `Turno del ${date} reabierto para edición` | `Shift from ${date} reopened for editing` |
-| 61 | `Historial` | `History` |
-| 68 | `Historial de Turnos` | `Shift History` |
-| 75 | `No hay turnos guardados.` | `No saved shifts.` |
-| 76 | `Los turnos se guardan al cerrar el día.` | `Shifts are saved when closing the day.` |
-| 117 | `Reabrir para edición` | `Reopen for editing` |
-| 126 | `Ver` | `View` |
-| 141 | `¿Reabrir turno?` | `Reopen shift?` |
-| 143-145 | `Tienes un turno activo...` | `You have an active shift. Reopening this shift will replace current data with the selected shift's data.` |
-| 149 | `Cancelar` | `Cancel` |
-| 151 | `Reabrir Turno` | `Reopen Shift` |
+| Action | Result |
+|--------|--------|
+| Click "CT (3)" | Shows only patients with pending CT study |
+| Click again | Clears the filter |
+| Multiple clicks | Only one study filter active at a time |
+| Study count = 0 | Button shown but grayed out, not clickable |
+| Clear in FilterIndicator | Also clears study filter |
 
 ---
 
@@ -70,132 +45,145 @@ The shift management dialogs (End Shift, Previous Shift Warning, and Shift Histo
 
 | File | Changes |
 |------|---------|
-| `src/components/EndShiftDialog.tsx` | Translate 14 strings, remove `es` locale |
-| `src/components/PreviousShiftWarning.tsx` | Translate 12 strings, remove `es` locale |
-| `src/components/ShiftHistoryDialog.tsx` | Translate 11 strings |
+| `src/store/patientStore.ts` | Add `filterByPendingStudy` state and action |
+| `src/components/StudyFilters.tsx` | NEW: Study filter buttons component |
+| `src/components/BoardHeader.tsx` | Include StudyFilters component |
+| `src/components/FilterIndicator.tsx` | Show pending study filter badge |
 
 ---
 
 ## Technical Section
 
-### 1. EndShiftDialog.tsx
+### 1. patientStore.ts - New State and Action
 
-```tsx
-// Line 3: Remove Spanish locale import
-// import { es } from 'date-fns/locale';  // DELETE
+```typescript
+// New state in PatientStore interface
+filterByPendingStudy: string | null;  // e.g., 'CT', 'MRI', 'X-Ray'
 
-// Line 36
-toast.success('Shift closed and saved to history');
+// New action
+setFilterByPendingStudy: (study: string | null) => void;
 
-// Line 39-41
-const formattedDate = shiftDate 
-  ? format(new Date(shiftDate), 'EEEE, MMMM d')
-  : 'No date';
+// Update clearFilters to include study filter
+clearFilters: () => {
+  set({ 
+    searchQuery: '', 
+    filterByDoctor: null, 
+    filterByNurse: null,
+    filterByPendingStudy: null,  // NEW
+  });
+};
 
-// Line 48 - Button
-<XCircle /> End Shift
-
-// Line 55 - DialogTitle
-End Shift
-
-// Line 63
-Shift Summary
-
-// Lines 70, 78, 86, 94 - Stats labels
-Total patients
-Admissions
-Discharges
-Transfers
-
-// Lines 103-106 - Warning message
-<span>There are {pendingPatients} unclosed patients.</span>
-<p>They will be saved to history and you can reopen the shift if needed.</p>
-
-// Lines 114, 117 - Buttons
-Cancel
-Close and Save
+// Update getFilteredPatients
+if (state.filterByPendingStudy) {
+  result = result.filter(p => 
+    p.stickerNotes.some(note => 
+      note.type === 'study' && 
+      !note.completed && 
+      note.text === state.filterByPendingStudy
+    )
+  );
+}
 ```
 
-### 2. PreviousShiftWarning.tsx
+### 2. StudyFilters.tsx - New Component
 
 ```tsx
-// Line 2: Remove Spanish locale import
-// import { es } from 'date-fns/locale';  // DELETE
+import { usePatientStore } from '@/store/patientStore';
+import { cn } from '@/lib/utils';
 
-// Lines 24-28 - Date formatting
-const formattedShiftDate = shiftDate 
-  ? format(new Date(shiftDate), 'EEEE, MMMM d')
-  : 'unknown date';
+const STUDY_TYPES = ['CT', 'MRI', 'X-Ray', 'ECHO', 'US', 'ECG'] as const;
 
-const today = format(new Date(), 'EEEE, MMMM d');
+export function StudyFilters() {
+  const { 
+    patients, 
+    filterByPendingStudy, 
+    setFilterByPendingStudy,
+    hideDischargedFromBoard 
+  } = usePatientStore();
 
-// Line 33
-toast.success('Previous shift closed. Configure the new shift.');
+  // Only count active patients
+  const activePatients = hideDischargedFromBoard
+    ? patients.filter(p => p.status !== 'discharged' && p.status !== 'transferred')
+    : patients;
 
-// Line 38
-toast.info('Continuing with previous shift');
+  // Count pending studies
+  const studyCounts = STUDY_TYPES.map(study => ({
+    name: study,
+    count: activePatients.filter(p => 
+      p.stickerNotes.some(note => 
+        note.type === 'study' && !note.completed && note.text === study
+      )
+    ).length,
+  }));
 
-// Lines 47-50 - Dialog header
-<DialogTitle>Previous Shift Not Closed</DialogTitle>
-<DialogDescription>
-  A shift from a previous day was detected that was not closed.
-</DialogDescription>
-
-// Lines 58, 66 - Labels
-Open shift
-Today
-
-// Line 72 - Description
-You can close the previous shift and start a new one, or continue working on the existing shift.
-
-// Lines 83, 90 - Buttons
-Continue Shift
-Close and Start New
+  return (
+    <div className="flex items-center gap-1">
+      <span className="text-muted-foreground text-xs mr-1">Pending:</span>
+      {studyCounts.map(({ name, count }) => (
+        <button
+          key={name}
+          onClick={() => count > 0 && setFilterByPendingStudy(
+            filterByPendingStudy === name ? null : name
+          )}
+          disabled={count === 0}
+          className={cn(
+            "study-filter text-xs px-2 py-1 rounded border transition-colors",
+            count === 0 && "opacity-40 cursor-not-allowed",
+            filterByPendingStudy === name 
+              ? "bg-blue-500/20 text-blue-400 border-blue-500" 
+              : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+          )}
+        >
+          {name}
+          <span className="ml-1 opacity-70">({count})</span>
+        </button>
+      ))}
+    </div>
+  );
+}
 ```
 
-### 3. ShiftHistoryDialog.tsx
+### 3. BoardHeader.tsx - Include Component
 
 ```tsx
-// Line 52 - Toast
-toast.success(`Shift from ${format(new Date(date), 'MM/dd/yyyy')} reopened for editing`);
+import { StudyFilters } from './StudyFilters';
 
-// Line 61 - Button
-History
+// In the staff counters row, add StudyFilters:
+{!isViewingHistory && (
+  <div className="flex items-center justify-between flex-wrap gap-2">
+    <StaffCounters />
+    <div className="h-4 w-px bg-border" />
+    <StudyFilters />
+  </div>
+)}
+```
 
-// Line 68 - DialogTitle
-Shift History
+### 4. FilterIndicator.tsx - Show Study Filter Badge
 
-// Lines 75-76 - Empty state
-<p>No saved shifts.</p>
-<p>Shifts are saved when closing the day.</p>
+```tsx
+const { filterByPendingStudy, setFilterByPendingStudy, ... } = usePatientStore();
 
-// Line 117 - Tooltip
-title="Reopen for editing"
+const hasFilters = filterByDoctor || filterByNurse || searchQuery || filterByPendingStudy;
 
-// Line 126 - Button
-View
-
-// Lines 141-145 - Alert dialog
-<AlertDialogTitle>Reopen shift?</AlertDialogTitle>
-<AlertDialogDescription>
-  You have an active shift. Reopening this shift will replace current data with the selected shift's data.
-  <br /><br />
-  The current shift <strong>will not be saved</strong> automatically. If you want to keep it, close the shift first.
-</AlertDialogDescription>
-
-// Lines 149, 151 - Buttons
-Cancel
-Reopen Shift
+// Add in the filter badges section:
+{filterByPendingStudy && (
+  <Badge variant="secondary" className="gap-1 text-xs bg-blue-500/20 text-blue-400">
+    Pending {filterByPendingStudy}
+    <button onClick={() => setFilterByPendingStudy(null)} className="hover:text-destructive">
+      <X className="h-3 w-3" />
+    </button>
+  </Badge>
+)}
 ```
 
 ---
 
 ## Expected Result
 
-- All End Shift dialog text in English
-- All Previous Shift Warning dialog text in English
-- All Shift History dialog text in English
-- Date formats in English (without Spanish locale)
-- Toast notifications in English
-- Consistent with project's English-only UI requirement
+- Quick filter buttons for CT, MRI, X-Ray, ECHO, US, ECG
+- Real-time count of patients pending each study
+- Click to filter, click again to clear
+- Grayed out buttons when count is 0
+- Consistent styling with existing staff counters
+- Filter badge in indicator row with clear button
 
