@@ -1,37 +1,54 @@
 
-# Plan: Simplificar Estados del Proceso del Paciente
 
-## Resumen
+# Plan: Agrandar Notas y Mostrar Abreviación al Completar
 
-Reducir los 12 estados actuales del proceso a solo 6 estados más claros y prácticos:
+## Problema Actual
 
-| # | Antes (12 estados) | Después (6 estados) |
-|---|-------------------|---------------------|
-| 1 | registered | **registered** (sin cambio) |
-| 2 | triaged | → eliminado (merge con registered) |
-| 3 | being_seen | **to_be_seen** (renombrado) |
-| 4 | awaiting_results | **awaiting_results** (sin cambio) |
-| 5 | results_review | → eliminado (merge con awaiting_results) |
-| 6 | disposition | → eliminado (merge con awaiting_results) |
-| 7 | admission_pending | **admission** (consolidado) |
-| 8 | bed_assigned | → eliminado (merge con admission) |
-| 9 | ready_transfer | → eliminado (merge con admission) |
-| 10 | discharged | **discharged** (sin cambio) |
-| 11 | transferred | **transferred** (sin cambio) |
-| 12 | admitted | → eliminado (merge con discharged) |
+1. **Notas muy pequeñas**: 22x18px con texto de 9px - difícil de leer
+2. **Al marcar como hecho**: Solo muestra ✓ y se pierde qué estudio fue completado - el coordinador no puede ver qué se hizo
+
+```text
+Antes (problemas):
+┌────┐  ┌────┐
+│ CT │  │ ✓  │  ← ¿Qué estudio fue? No se sabe
+└────┘  └────┘
+ 22px    22px
+
+Después (solución):
+┌──────┐  ┌──────┐
+│  CT  │  │CT ✓  │  ← Abreviación + checkmark visible
+└──────┘  └──────┘
+  28px      28px
+```
 
 ---
 
-## Estados Finales
+## Cambios Visuales
+
+| Aspecto | Antes | Después |
+|---------|-------|---------|
+| Ancho nota | 22px | 28px |
+| Alto nota | 18px | 22px |
+| Tamaño texto | 9px | 10px |
+| Completado | Solo ✓ | Abreviación + ✓ pequeño |
+| Ancho columna | 72px | 90px |
+| Gap entre notas | 0.5 | 1 |
+
+---
+
+## Diseño de Nota Completada
 
 ```text
-1. Registered    → Paciente registrado, esperando ser visto
-2. To Be Seen    → Médico asignado, en proceso de evaluación  
-3. Awaiting Results → Esperando resultados de estudios/labs
-4. Admission     → En proceso de admisión (incluye bed assigned, etc.)
-5. Discharged    → Dado de alta
-6. Transferred   → Transferido a otro hospital
+Nota pendiente:        Nota completada:
+┌──────┐              ┌──────┐
+│  CT  │    →         │CT ✓  │  
+│      │              │      │  Fondo verde + abreviación + checkmark
+└──────┘              └──────┘
 ```
+
+El coordinador siempre puede ver:
+- Qué estudio/nota es (abreviación)
+- Si está completado o no (✓ al lado)
 
 ---
 
@@ -39,83 +56,64 @@ Reducir los 12 estados actuales del proceso a solo 6 estados más claros y prác
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/types/patient.ts` | Actualizar tipo `ProcessState` y array `PROCESS_STATES` |
-| `src/types/patient.ts` | Actualizar función `mapStatusToProcessState()` |
-| `src/store/patientStore.ts` | Actualizar lógica de admisión para usar `admission` en vez de estados múltiples |
-| `src/components/PatientSticker.tsx` | Actualizar condición `isInAdmissionProcess` |
-| `src/components/EndShiftDialog.tsx` | Actualizar filtro de admisiones |
-| `src/hooks/useAnalytics.ts` | Actualizar filtro de admisiones |
-| `src/data/samplePatients.ts` | Actualizar estados de pacientes de ejemplo |
+| `src/components/StickerNoteItem.tsx` | Agrandar notas, mostrar abreviación + ✓ cuando está completado |
+| `src/components/StickerNotesColumn.tsx` | Agrandar slots y columna contenedora |
 
 ---
 
 ## Sección Técnica
 
-### 1. Nuevo Tipo ProcessState
+### StickerNoteItem.tsx
 
-```typescript
-export type ProcessState = 
-  | 'registered'
-  | 'to_be_seen'
-  | 'awaiting_results'
-  | 'admission'
-  | 'discharged'
-  | 'transferred';
-```
-
-### 2. Nuevo Array PROCESS_STATES
-
-```typescript
-export const PROCESS_STATES: ProcessStateConfig[] = [
-  { value: 'registered', label: 'Registered', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
-  { value: 'to_be_seen', label: 'To Be Seen', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
-  { value: 'awaiting_results', label: 'Awaiting Results', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-  { value: 'admission', label: 'Admission', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' },
-  { value: 'discharged', label: 'Discharged', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
-  { value: 'transferred', label: 'Transferred', color: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
-];
-```
-
-### 3. Migración de Estados Existentes
-
-La función de migración mapeará estados viejos a los nuevos:
-
-```typescript
-function migrateProcessState(state: string): ProcessState {
-  const map: Record<string, ProcessState> = {
-    'registered': 'registered',
-    'triaged': 'registered',
-    'being_seen': 'to_be_seen',
-    'awaiting_results': 'awaiting_results',
-    'results_review': 'awaiting_results',
-    'disposition': 'awaiting_results',
-    'admission_pending': 'admission',
-    'bed_assigned': 'admission',
-    'ready_transfer': 'admission',
-    'discharged': 'discharged',
-    'transferred': 'transferred',
-    'admitted': 'discharged',
-  };
-  return map[state] || 'registered';
-}
-```
-
-### 4. Actualizar Condiciones de Admisión
-
-```typescript
+**Cambio en estudios completados:**
+```tsx
 // Antes:
-const isInAdmissionProcess = processState === 'admission_pending' || 
-                             processState === 'bed_assigned' || 
-                             processState === 'ready_transfer';
+{note.completed ? <Check className="h-2.5 w-2.5" /> : abbreviation}
 
 // Después:
-const isInAdmissionProcess = processState === 'admission';
+<>
+  {abbreviation}
+  {note.completed && <Check className="h-2.5 w-2.5 ml-0.5" />}
+</>
+```
+
+**Cambio en tamaños:**
+```tsx
+// Antes:
+"w-[22px] h-[18px] text-[9px]"
+
+// Después:
+"w-[28px] h-[22px] text-[10px]"
+```
+
+### StickerNotesColumn.tsx
+
+**Slots más grandes:**
+```tsx
+// Antes:
+"w-[22px] h-[18px]"
+
+// Después:  
+"w-[28px] h-[22px]"
+```
+
+**Columna contenedora:**
+```tsx
+// Antes:
+"w-[72px]"
+"gap-0.5"
+
+// Después:
+"w-[90px]"
+"gap-1"
 ```
 
 ---
 
-## Consideraciones
+## Resultado Esperado
 
-- Los pacientes existentes con estados antiguos serán migrados automáticamente al cargar
-- El historial de shifts guardados mostrará los nuevos estados correctamente gracias a la migración
-- La info de cama/consultor sigue visible en el estado `admission`
+El coordinador ahora puede:
+- ✅ Leer las notas claramente (más grandes)
+- ✅ Ver qué estudio fue completado (ej: "CT ✓" en vez de solo "✓")
+- ✅ Distinguir pendientes de completados por color + checkmark
+
