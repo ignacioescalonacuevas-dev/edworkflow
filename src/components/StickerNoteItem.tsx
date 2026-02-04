@@ -59,7 +59,7 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
               }}
               onPointerDown={(e) => e.stopPropagation()}
               className={cn(
-                "w-[34px] h-[26px] rounded text-[11px] font-bold flex items-center justify-center border transition-colors",
+                "w-[36px] h-[28px] rounded text-[11px] font-bold flex items-center justify-center border transition-colors",
                 note.completed 
                   ? "bg-green-100 text-green-700 border-green-400"
                   : "bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200"
@@ -102,7 +102,7 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
           )}
         >
           <span className={cn(
-            "w-[34px] h-[26px] rounded text-[11px] font-bold flex items-center justify-center border",
+            "w-[36px] h-[28px] rounded text-[11px] font-bold flex items-center justify-center border",
             config.color
           )}>
             {abbreviation}

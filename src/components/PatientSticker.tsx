@@ -190,7 +190,7 @@ function EditableChiefComplaint({ patientId, complaint }: EditableChiefComplaint
         onChange={(e) => setValue(e.target.value)}
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
-        className="h-5 text-xs px-1.5 py-0 flex-1"
+        className="h-4 text-[10px] px-1 py-0 flex-1"
         onClick={(e) => e.stopPropagation()}
       />
     );
@@ -202,7 +202,7 @@ function EditableChiefComplaint({ patientId, complaint }: EditableChiefComplaint
         e.stopPropagation();
         setIsEditing(true);
       }}
-      className="text-xs text-muted-foreground flex-1 cursor-pointer hover:text-foreground transition-colors truncate"
+      className="text-[10px] text-muted-foreground flex-1 cursor-pointer hover:text-foreground transition-colors truncate"
     >
       {complaint}
     </span>
@@ -416,12 +416,12 @@ export function PatientSticker({ patient }: PatientStickerProps) {
     >
 
       {/* Main 3-column grid */}
-      <div className="grid grid-cols-[1fr_90px_44px] gap-1.5 flex-1 min-h-0">
+      <div className="grid grid-cols-[1fr_114px_44px] gap-1.5 flex-1 min-h-0">
         {/* COL 1: Patient Info (vertical stack) */}
         <div className="flex flex-col justify-center min-w-0">
           <div className="flex items-center gap-1">
             {!isReadOnly && <StickerActionsMenu patientId={patient.id} patientName={patient.name} />}
-            <span className="font-semibold text-sm leading-tight">{patient.name}</span>
+            <span className="font-semibold text-[15px] leading-tight">{patient.name}</span>
             {/* Triage badge - inline next to name */}
             {isReadOnly ? (
               <TriageDropdown patientId={patient.id} currentLevel={triageLevel} readOnly inline />
@@ -528,9 +528,9 @@ export function PatientSticker({ patient }: PatientStickerProps) {
       </div>
 
       {/* Footer: Chief Complaint + Timer + Process State */}
-      <div className="flex items-center gap-2 pt-1.5 mt-1.5 border-t border-border/50">
+      <div className="flex items-center gap-1.5 pt-1 mt-1 border-t border-border/50">
         {isReadOnly ? (
-          <span className="text-xs text-muted-foreground flex-1 truncate">{patient.chiefComplaint}</span>
+          <span className="text-[10px] text-muted-foreground flex-1 truncate">{patient.chiefComplaint}</span>
         ) : (
           <EditableChiefComplaint 
             patientId={patient.id}
@@ -539,7 +539,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
         )}
         <button 
           type="button"
-          className="text-[10px] text-muted-foreground px-1 py-0.5 rounded hover:bg-muted hover:text-foreground transition-all cursor-pointer shrink-0"
+          className="text-[9px] text-muted-foreground px-0.5 py-0.5 rounded hover:bg-muted hover:text-foreground transition-all cursor-pointer shrink-0"
           onClick={(e) => {
             e.stopPropagation();
             toggleTimeDisplay();

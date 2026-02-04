@@ -36,12 +36,12 @@ function Slot({ slotIndex, note, onToggle, onRemove, isAddButton, onAddNote }: S
     return (
       <div
         ref={setNodeRef}
-        className="w-[34px] h-[26px] flex items-center justify-center"
+        className="w-[36px] h-[28px] flex items-center justify-center"
       >
         <Popover>
           <PopoverTrigger asChild>
-            <button 
-              className="w-[34px] h-[26px] rounded border border-dashed border-muted-foreground/40 hover:border-primary/60 hover:bg-primary/10 flex items-center justify-center transition-colors"
+            <button
+              className="w-[36px] h-[28px] rounded border border-dashed border-muted-foreground/40 hover:border-primary/60 hover:bg-primary/10 flex items-center justify-center transition-colors"
             >
               <Plus className="h-2.5 w-2.5 text-muted-foreground" />
             </button>
@@ -59,7 +59,7 @@ function Slot({ slotIndex, note, onToggle, onRemove, isAddButton, onAddNote }: S
     return (
       <div
         ref={setNodeRef}
-        className={`w-[34px] h-[26px] flex items-center justify-center ${isOver ? 'bg-primary/10 rounded' : ''}`}
+        className={`w-[36px] h-[28px] flex items-center justify-center ${isOver ? 'bg-primary/10 rounded' : ''}`}
       >
         <StickerNoteItem
           note={note}
@@ -74,7 +74,7 @@ function Slot({ slotIndex, note, onToggle, onRemove, isAddButton, onAddNote }: S
   return (
     <div
       ref={setNodeRef}
-      className={`w-[34px] h-[26px] rounded transition-colors ${
+      className={`w-[36px] h-[28px] rounded transition-colors ${
         isOver ? 'bg-primary/20 border border-dashed border-primary/40' : 'border border-dashed border-muted-foreground/20'
       }`}
     />
@@ -149,7 +149,7 @@ export function StickerNotesColumn({
 
   return (
     <div 
-      className="w-[110px]"
+      className="w-[114px]"
       onClick={(e) => e.stopPropagation()}
     >
       <DndContext
