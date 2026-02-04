@@ -14,16 +14,284 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      audit_log: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string | null
+          table_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string
+          id: string
+          patient_id: string
+          status: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          id?: string
+          patient_id: string
+          status?: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          id?: string
+          patient_id?: string
+          status?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patient_events: {
+        Row: {
+          created_at: string | null
+          description: string
+          id: string
+          patient_id: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          id?: string
+          patient_id: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          id?: string
+          patient_id?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "patient_events_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      patients: {
+        Row: {
+          arrival_time: string
+          assigned_box: string
+          chief_complaint: string
+          created_at: string | null
+          created_by: string | null
+          current_location: string | null
+          date_of_birth: string
+          discharged_at: string | null
+          doctor: string | null
+          id: string
+          m_number: string
+          name: string
+          nurse: string | null
+          process_state: string
+          shift_date: string
+          transferred_to: string | null
+          triage_level: number
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          arrival_time: string
+          assigned_box: string
+          chief_complaint: string
+          created_at?: string | null
+          created_by?: string | null
+          current_location?: string | null
+          date_of_birth: string
+          discharged_at?: string | null
+          doctor?: string | null
+          id?: string
+          m_number: string
+          name: string
+          nurse?: string | null
+          process_state: string
+          shift_date?: string
+          transferred_to?: string | null
+          triage_level: number
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          arrival_time?: string
+          assigned_box?: string
+          chief_complaint?: string
+          created_at?: string | null
+          created_by?: string | null
+          current_location?: string | null
+          date_of_birth?: string
+          discharged_at?: string | null
+          doctor?: string | null
+          id?: string
+          m_number?: string
+          name?: string
+          nurse?: string | null
+          process_state?: string
+          shift_date?: string
+          transferred_to?: string | null
+          triage_level?: number
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      shift_history: {
+        Row: {
+          id: string
+          saved_at: string | null
+          saved_by: string | null
+          shift_date: string
+          summary: Json
+        }
+        Insert: {
+          id?: string
+          saved_at?: string | null
+          saved_by?: string | null
+          shift_date: string
+          summary: Json
+        }
+        Update: {
+          id?: string
+          saved_at?: string | null
+          saved_by?: string | null
+          shift_date?: string
+          summary?: Json
+        }
+        Relationships: []
+      }
+      sticker_notes: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          patient_id: string
+          slot: number | null
+          text: string
+          type: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          patient_id: string
+          slot?: number | null
+          text: string
+          type: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          patient_id?: string
+          slot?: number | null
+          text?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sticker_notes_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      is_admission_or_above: { Args: { _user_id: string }; Returns: boolean }
+      is_coordinator: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "coordinator" | "admission" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +418,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["coordinator", "admission", "viewer"],
+    },
   },
 } as const

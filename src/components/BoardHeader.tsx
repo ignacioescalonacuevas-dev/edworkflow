@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { Activity, EyeOff, Eye, Calendar, ArrowLeft, BarChart3, RotateCcw } from 'lucide-react';
+import { Activity, EyeOff, Eye, Calendar, ArrowLeft, BarChart3, RotateCcw, LogOut, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { usePatientStore } from '@/store/patientStore';
 import { useShiftHistoryStore } from '@/store/shiftHistoryStore';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/hooks/useUserRole';
 import { SearchBar } from './SearchBar';
 import { StaffCounters } from './StaffCounters';
 import { FilterIndicator } from './FilterIndicator';
@@ -10,20 +12,34 @@ import { NewPatientForm } from './NewPatientForm';
 import { ShiftSetup } from './ShiftSetup';
 import { ShiftHistoryDialog } from './ShiftHistoryDialog';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
+import RoleGate from './RoleGate';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
+const roleLabels: Record<string, string> = {
+  coordinator: 'Coordinador',
+  admission: 'Admisión',
+  viewer: 'Visor',
+};
+
 export function BoardHeader() {
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
   const { shiftDate, hideDischargedFromBoard, setHideDischargedFromBoard, resetToSampleData } = usePatientStore();
   const { viewingDate, setViewingDate, loadShift } = useShiftHistoryStore();
+  const { signOut, user } = useAuth();
+  const { displayName, role, canConfigureShift, canCreatePatients } = useUserRole();
 
   const handleResetData = () => {
     resetToSampleData();
     toast.success('Data reset to 25 sample patients');
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success('Sesión cerrada');
   };
 
   // If viewing history, show that date instead
@@ -56,8 +72,19 @@ export function BoardHeader() {
           )}
         </div>
 
-        {/* Controls */}
+        {/* User info and Controls */}
         <div className="flex items-center gap-3">
+          {/* User display */}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">{displayName || user?.email?.split('@')[0] || 'Usuario'}</span>
+              {role && (
+                <span className="text-xs text-muted-foreground">{roleLabels[role] || role}</span>
+              )}
+            </div>
+          </div>
+
           {isViewingHistory ? (
             <Button 
               variant="outline" 
@@ -99,18 +126,26 @@ export function BoardHeader() {
                 Analytics
               </Button>
 
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={handleResetData}
-                className="gap-2 text-muted-foreground"
-                title="Reset to sample data"
-              >
-                <RotateCcw className="h-4 w-4" />
-              </Button>
+              <RoleGate allowedRoles={['coordinator']}>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleResetData}
+                  className="gap-2 text-muted-foreground"
+                  title="Reset to sample data"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </RoleGate>
 
-              <NewPatientForm />
-              <ShiftSetup />
+              <RoleGate allowedRoles={['coordinator', 'admission']}>
+                <NewPatientForm />
+              </RoleGate>
+              
+              <RoleGate allowedRoles={['coordinator']}>
+                <ShiftSetup />
+              </RoleGate>
+              
               <ShiftHistoryDialog />
               
               <AnalyticsDashboard 
@@ -119,6 +154,17 @@ export function BoardHeader() {
               />
             </>
           )}
+
+          {/* Logout button */}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={handleSignOut}
+            className="gap-2 text-muted-foreground hover:text-destructive"
+            title="Cerrar sesión"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
