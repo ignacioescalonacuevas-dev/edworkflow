@@ -22,12 +22,12 @@ export function EndShiftDialog() {
   // Calculate summary stats
   const totalPatients = patients.length;
   const admissions = patients.filter(p => 
-    ['admission_pending', 'bed_assigned', 'ready_transfer', 'admitted'].includes(p.processState || '')
+    p.processState === 'admission' || p.admission !== undefined
   ).length;
   const discharges = patients.filter(p => p.processState === 'discharged').length;
   const transfers = patients.filter(p => p.processState === 'transferred').length;
   const pendingPatients = patients.filter(p => 
-    !['discharged', 'transferred', 'admitted'].includes(p.processState || '')
+    !['discharged', 'transferred'].includes(p.processState || '')
   ).length;
   
   const handleEndShift = () => {

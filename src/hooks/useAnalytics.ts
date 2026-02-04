@@ -128,12 +128,11 @@ export function useAnalytics(patients: Patient[]): AnalyticsData {
     // General Stats
     const totalPatients = patients.length;
     const activePatients = patients.filter(p => 
-      !['discharged', 'transferred', 'admitted'].includes(p.processState)
+      !['discharged', 'transferred'].includes(p.processState)
     ).length;
     
     const admissions = patients.filter(p => 
-      p.admission !== undefined || 
-      ['admission_pending', 'bed_assigned', 'ready_transfer', 'admitted'].includes(p.processState)
+      p.admission !== undefined || p.processState === 'admission'
     ).length;
     
     const discharges = patients.filter(p => p.processState === 'discharged').length;

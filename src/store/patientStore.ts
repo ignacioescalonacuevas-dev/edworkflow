@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { format } from 'date-fns';
-import { Patient, Order, OrderStatus, AdmissionData, PatientEvent, PatientStatus, PATIENT_STATUSES, StickerNote, StickerNoteType, ProcessState, PROCESS_STATES, TriageLevel, mapStatusToProcessState, Appointment, APPOINTMENT_TYPES } from '@/types/patient';
+import { Patient, Order, OrderStatus, AdmissionData, PatientEvent, PatientStatus, PATIENT_STATUSES, StickerNote, StickerNoteType, ProcessState, PROCESS_STATES, TriageLevel, mapStatusToProcessState, migrateProcessState, Appointment, APPOINTMENT_TYPES } from '@/types/patient';
 import { useShiftHistoryStore } from './shiftHistoryStore';
 import { samplePatients } from '@/data/samplePatients';
 
@@ -160,12 +160,16 @@ interface PatientStore {
 
 // Helper to migrate old patient data to new structure
 function migratePatient(patient: Patient): Patient {
+  // First get the raw process state, then migrate it to new simplified states
+  const rawProcessState = patient.processState ?? mapStatusToProcessState(patient.status);
+  const migratedProcessState = migrateProcessState(rawProcessState);
+  
   return {
     ...patient,
     triageLevel: patient.triageLevel ?? 3,
     assignedBox: patient.assignedBox ?? patient.box ?? 'Waiting Room',
     currentLocation: patient.currentLocation ?? patient.box ?? 'Waiting Room',
-    processState: patient.processState ?? mapStatusToProcessState(patient.status),
+    processState: migratedProcessState,
     appointments: patient.appointments ?? [],
     admission: patient.admission ? {
       ...patient.admission,
@@ -425,10 +429,10 @@ export const usePatientStore = create<PatientStore>()(
         }));
       },
 
-      // NEW: Process state update
+      // Process state update
       updatePatientProcessState: (patientId, processState) => {
         const stateLabel = PROCESS_STATES.find(s => s.value === processState)?.label || processState;
-        const isAdmissionState = ['admission_pending', 'bed_assigned', 'ready_transfer'].includes(processState);
+        const isAdmissionState = processState === 'admission';
         
         set((state) => ({
           patients: state.patients.map((p) => {
@@ -839,14 +843,14 @@ export const usePatientStore = create<PatientStore>()(
             p.id === patientId
               ? {
                   ...p,
-                  status: 'admission',
-                  processState: 'admission_pending',
+                  status: 'admission' as const,
+                  processState: 'admission' as const,
                   admission: {
                     specialty: '',
                     consultantName: '',
                     consultant: '',
                     bedNumber: '',
-                    bedStatus: 'not_assigned',
+                    bedStatus: 'not_assigned' as const,
                     handoverComplete: false,
                     registrarCalled: false,
                     adminComplete: false,
@@ -1190,8 +1194,7 @@ export const getFilteredPatients = (state: PatientStore): Patient[] => {
   if (state.hideDischargedFromBoard) {
     result = result.filter(p => 
       p.processState !== 'discharged' && 
-      p.processState !== 'transferred' && 
-      p.processState !== 'admitted' &&
+      p.processState !== 'transferred' &&
       p.status !== 'discharged' && 
       p.status !== 'transferred'
     );
