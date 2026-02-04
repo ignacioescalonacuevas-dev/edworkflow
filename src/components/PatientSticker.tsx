@@ -409,7 +409,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
   return (
     <div
       className={cn(
-        "sticker transition-all hover:border-primary/50 group h-full flex flex-col p-2.5 relative overflow-hidden",
+        "sticker transition-all hover:border-primary/50 group h-full flex flex-col relative overflow-hidden",
         isInAdmissionProcess && "sticker-admission",
         isDischarged && "sticker-discharged"
       )}
