@@ -1,137 +1,160 @@
 
 
-# Plan: Agregar Campo de Notas Libres para Admisión
+# Plan: Translate Agenda and Notes System to English
 
-## Resumen
+## Overview
 
-Agregar un campo de texto libre debajo del nombre del médico consultor y el número de cama, visible cuando el paciente tiene datos de admisión. Los coordinadores podrán escribir cualquier nota relevante para el proceso de admisión.
+Several UI elements in the Agenda panel and the new free notes feature are in Spanish. This plan will translate all Spanish text to English for consistency with the project's language requirements.
 
-```text
-Antes:
-┌─────────────────────────────────────────┐
-│ John Smith              [T3] [+]        │
-│ 15/03/1985  ▸ Dr. González  📍 5N-23    │  ← Solo consultant + cama
-│ M12345678                               │
-│ ...                                     │
-└─────────────────────────────────────────┘
+---
 
-Después:
-┌─────────────────────────────────────────┐
-│ John Smith              [T3] [+]        │
-│ 15/03/1985  ▸ Dr. González  📍 5N-23    │
-│ M12345678   IV hep ongoing, call 6pm    │  ← Nota libre editable
-│ ...                                     │
-└─────────────────────────────────────────┘
+## Spanish Text Found
+
+| Location | Spanish | English |
+|----------|---------|---------|
+| **AgendaPanel.tsx** | | |
+| Line 3 | `import { es } from 'date-fns/locale'` | Remove (not needed) |
+| Line 119 | `en {item.minutesUntil}m` | `in {item.minutesUntil}m` |
+| Line 124 | `hace {Math.abs(...)}m` | `{Math.abs(...)}m ago` |
+| Line 162 | `En Progreso` | `In Progress` |
+| Line 166 | `Completado` | `Completed` |
+| Line 169 | `Cancelar` | `Cancel` |
+| Line 243 | `Agenda del Turno` | `Shift Agenda` |
+| Line 249 | `Próximos 60 min` | `Next 60 min` |
+| Line 252 | `Sin appointments próximos` | `No upcoming appointments` |
+| Line 256 | `En Progreso` | `In Progress` |
+| Line 262 | `Pendientes` | `Pending` |
+| Line 268 | `Completados` | `Completed` |
+| Line 276 | `No hay appointments programados` | `No scheduled appointments` |
+| Line 278 | `...para agregar` | `...to add` |
+| **AddAppointmentPopover.tsx** | | |
+| Line 29 | `Selecciona una hora para el appointment` | `Please select a time for the appointment` |
+| Line 51 | `programado para ${time}` | `scheduled for ${time}` |
+| Line 67 | `title="Agregar appointment"` | `title="Add appointment"` |
+| Line 79 | `Nuevo Appointment` | `New Appointment` |
+| Line 85 | `Tipo` | `Type` |
+| Line 105 | `Hora Programada` | `Scheduled Time` |
+| Line 116 | `Recordatorio` | `Reminder` |
+| Line 136 | `Notas (opcional)` | `Notes (optional)` |
+| Line 138 | `ej: paciente en ayunas` | `e.g. patient fasting` |
+| Line 151 | `Agregar Appointment` | `Add Appointment` |
+| **types/patient.ts** | | |
+| Line 185-189 | `60 min antes`, etc. | `60 min before`, etc. |
+| **PatientSticker.tsx** | | |
+| Line 77 | `+Cama` | `+Bed` |
+| Line 124 | `Notas de admisión...` | `Admission notes...` |
+| Line 153 | `[+ Nota...]` | `[+ Note...]` |
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/components/AgendaPanel.tsx` | Translate 12 strings |
+| `src/components/AddAppointmentPopover.tsx` | Translate 9 strings |
+| `src/types/patient.ts` | Translate 5 reminder labels |
+| `src/components/PatientSticker.tsx` | Translate 3 strings |
+
+---
+
+## Technical Section
+
+### 1. AgendaPanel.tsx
+
+```tsx
+// Line 3: Remove unused Spanish locale
+// import { es } from 'date-fns/locale';  // DELETE
+
+// Line 119
+<span className="text-[10px] text-muted-foreground">
+  in {item.minutesUntil}m
+</span>
+
+// Line 124
+<span className="text-[10px] text-red-400">
+  {Math.abs(item.minutesUntil)}m ago
+</span>
+
+// Lines 162-169 - Dropdown items
+<DropdownMenuItem>In Progress</DropdownMenuItem>
+<DropdownMenuItem>Completed</DropdownMenuItem>
+<DropdownMenuItem>Cancel</DropdownMenuItem>
+
+// Line 243
+<SheetTitle>Shift Agenda</SheetTitle>
+
+// Lines 248-271 - Section titles
+renderSection('Next 60 min', ..., 'No upcoming appointments')
+renderSection('In Progress', ...)
+renderSection('Pending', ...)
+renderSection('Completed', ...)
+
+// Lines 276-279 - Empty state
+<div>No scheduled appointments</div>
+<div>Use the <CalendarClock /> button on each sticker to add</div>
 ```
 
----
+### 2. AddAppointmentPopover.tsx
 
-## Comportamiento
+```tsx
+// Line 29
+toast.error('Please select a time for the appointment');
 
-| Estado | Visualización |
-|--------|---------------|
-| Sin nota | Placeholder `[+ Nota...]` clicable |
-| Con nota | Texto visible, truncado si es muy largo |
-| Click | Abre input inline para editar |
-| Vacío al guardar | Desaparece el placeholder (queda oculto) |
-| Siempre visible | Cuando paciente tiene datos de admisión |
+// Line 51  
+toast.success(`${typeConfig.label} scheduled for ${time}`);
 
----
+// Line 67
+title="Add appointment"
 
-## Archivos a Modificar
+// Line 79
+<div>New Appointment</div>
 
-| Archivo | Cambio |
-|---------|--------|
-| `src/types/patient.ts` | Agregar campo `freeNote?: string` a `AdmissionData` |
-| `src/components/PatientSticker.tsx` | Agregar componente `EditableFreeNote` y mostrarlo |
-| `src/store/patientStore.ts` | Ya tiene `updateAdmission` que maneja campos parciales |
+// Labels
+<Label>Type</Label>
+<Label>Scheduled Time</Label>
+<Label>Reminder</Label>
+<Label>Notes (optional)</Label>
 
----
+// Line 138
+placeholder="e.g. patient fasting"
 
-## Sección Técnica
+// Line 151
+<Button>Add Appointment</Button>
+```
 
-### 1. types/patient.ts - Nuevo Campo
+### 3. types/patient.ts
 
 ```typescript
-export interface AdmissionData {
-  // ... campos existentes ...
-  freeNote?: string;  // NEW: Nota libre del coordinador
-}
+export const REMINDER_OPTIONS = [
+  { value: 60, label: '60 min before' },
+  { value: 30, label: '30 min before' },
+  { value: 15, label: '15 min before' },
+  { value: 10, label: '10 min before' },
+  { value: 5, label: '5 min before' },
+] as const;
 ```
 
-### 2. PatientSticker.tsx - Nuevo Componente
+### 4. PatientSticker.tsx
 
 ```tsx
-interface EditableFreeNoteProps {
-  patientId: string;
-  note: string;
-}
+// Line 77 - BedNumberDisplay
+{bedNumber || '+Bed'}
 
-function EditableFreeNote({ patientId, note }: EditableFreeNoteProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(note || '');
-  const { updateAdmission } = usePatientStore();
+// Line 124 - EditableFreeNote placeholder
+placeholder="Admission notes..."
 
-  const handleSave = () => {
-    updateAdmission(patientId, { freeNote: value.trim() });
-    setIsEditing(false);
-  };
-
-  // Si está editando, mostrar input
-  // Si hay nota, mostrar texto truncado
-  // Si no hay nota, mostrar placeholder "[+ Nota...]"
-}
-```
-
-### 3. Ubicación en el Sticker
-
-Agregar debajo del M-Number, en la misma fila o en una nueva línea cuando hay datos de admisión:
-
-```tsx
-{/* Row 3: M-Number + Free Note (if admission) */}
-<div className="flex items-baseline gap-1">
-  <span className="text-[11px] text-muted-foreground font-mono">{patient.mNumber}</span>
-  {/* Appointment badges */}
-  {patient.appointments?.filter(...).map(...)}
-</div>
-
-{/* NEW: Free note for admission - debajo del M-Number */}
-{hasAdmissionInfo && (
-  <EditableFreeNote 
-    patientId={patient.id}
-    note={patient.admission?.freeNote || ''}
-    readOnly={isReadOnly}
-  />
-)}
-```
-
-### 4. Estilo del Campo
-
-```tsx
-// Sin nota - placeholder discreto
-<span className="text-[10px] text-muted-foreground/60 cursor-pointer hover:text-muted-foreground">
-  [+ Nota...]
-</span>
-
-// Con nota - texto visible
-<span className="text-[10px] text-cyan-600 cursor-pointer truncate max-w-[180px]">
-  {note}
-</span>
-
-// Editando - input inline
-<Input
-  className="h-4 text-[10px] px-1 py-0 flex-1 max-w-[200px]"
-  placeholder="Notas de admisión..."
-/>
+// Line 153 - Empty state placeholder
+[+ Note...]
 ```
 
 ---
 
-## Resultado Esperado
+## Expected Result
 
-- ✅ Campo de texto libre visible cuando hay datos de admisión
-- ✅ Editable con click (inline editing)
-- ✅ Texto truncado si es muy largo (con tooltip al hover)
-- ✅ Persistente en localStorage junto con otros datos del paciente
-- ✅ Visible en modo read-only (historial de shifts)
+- ✅ All Agenda panel text in English
+- ✅ All appointment popover text in English  
+- ✅ Reminder options in English
+- ✅ Free note placeholders in English
+- ✅ Consistent with project's English-only UI requirement
 
