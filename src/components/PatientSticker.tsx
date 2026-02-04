@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { format } from 'date-fns';
 import { Patient, PATIENT_STATUSES, getLocationAbbreviation, ED_LOCATIONS, PROCESS_STATES } from '@/types/patient';
 import { usePatientStore } from '@/store/patientStore';
 import { useShiftHistoryStore } from '@/store/shiftHistoryStore';
@@ -277,7 +278,7 @@ function getElapsedTime(arrivalTime: Date): string {
 }
 
 export function PatientSticker({ patient }: PatientStickerProps) {
-  const { addStickerNote, toggleStudyCompleted, removeStickerNote, moveNoteToSlot, doctors, nurses, locations } = usePatientStore();
+  const { addStickerNote, toggleStudyCompleted, removeStickerNote, moveNoteToSlot, doctors, nurses, locations, showArrivalTime, toggleTimeDisplay } = usePatientStore();
   
   // Fallback for empty staff arrays (migration from old localStorage)
   const doctorOptions = doctors.length > 0 ? doctors : ['Dr. TAU', 'Dr. Joanna', 'Dr. Caren'];
@@ -287,6 +288,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
   const isReadOnly = viewingDate !== null;
   
   const elapsedTime = useMemo(() => getElapsedTime(patient.arrivalTime), [patient.arrivalTime]);
+  const arrivalTimeStr = useMemo(() => format(new Date(patient.arrivalTime), 'HH:mm'), [patient.arrivalTime]);
   
   // Use processState for display, fallback to old status
   const processState = patient.processState || 'registered';
@@ -370,7 +372,16 @@ export function PatientSticker({ patient }: PatientStickerProps) {
           </div>
           <div className="flex items-baseline gap-1">
             <span className="text-[11px] text-muted-foreground font-mono">{patient.mNumber}</span>
-            <span className="text-[10px] text-muted-foreground/70 ml-auto">{elapsedTime}</span>
+            <span 
+              className="text-[10px] text-muted-foreground/70 ml-auto cursor-pointer hover:text-foreground transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleTimeDisplay();
+              }}
+              title={showArrivalTime ? 'Click para ver tiempo transcurrido' : 'Click para ver hora de llegada'}
+            >
+              {showArrivalTime ? arrivalTimeStr : elapsedTime}
+            </span>
           </div>
         </div>
 

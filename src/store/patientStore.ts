@@ -53,6 +53,9 @@ interface PatientStore {
   shiftDate: Date | null;
   shiftConfigured: boolean;
   
+  // Time display toggle (arrival time vs elapsed time)
+  showArrivalTime: boolean;
+  
   // Board filters
   searchQuery: string;
   filterByDoctor: string | null;
@@ -122,6 +125,10 @@ interface PatientStore {
   loadPreviousShift: () => void;
   endShift: () => void;
   saveCurrentShiftToHistory: () => void;
+  reopenShift: (date: string) => void;
+  
+  // Time display toggle
+  toggleTimeDisplay: () => void;
   
   // Admission
   startAdmission: (patientId: string) => void;
@@ -163,9 +170,6 @@ function migratePatient(patient: Patient): Patient {
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
-// Current shift date (today)
-const SHIFT_DATE = '2026-01-25';
-
 export const usePatientStore = create<PatientStore>()(
   persist(
     (set, get) => ({
@@ -185,9 +189,12 @@ export const usePatientStore = create<PatientStore>()(
       // Note slot preferences
       noteSlotPreferences: {},
       
-      // Shift state - initialized with sample data date
-      shiftDate: new Date(SHIFT_DATE),
-      shiftConfigured: true,
+      // Shift state - start with no configured shift (user must set up)
+      shiftDate: null,
+      shiftConfigured: false,
+      
+      // Time display toggle
+      showArrivalTime: false,
       
       // Board filters
       searchQuery: '',
@@ -763,10 +770,60 @@ export const usePatientStore = create<PatientStore>()(
       
       loadPreviousShift: () => set({ shiftConfigured: true }),
       
-      endShift: () => set({
-        shiftConfigured: false,
-        shiftDate: null,
-      }),
+      endShift: () => {
+        const state = get();
+        
+        // Save current shift to history before closing
+        if (state.shiftDate && state.patients.length > 0) {
+          const dateKey = format(new Date(state.shiftDate), 'yyyy-MM-dd');
+          const snapshot = {
+            date: dateKey,
+            patients: state.patients,
+            doctors: state.doctors,
+            nurses: state.nurses,
+            locations: state.locations,
+            summary: {
+              totalPatients: state.patients.length,
+              admissions: state.patients.filter(p => 
+                ['admission_pending', 'bed_assigned', 'ready_transfer', 'admitted'].includes(p.processState || '')
+              ).length,
+              discharges: state.patients.filter(p => p.processState === 'discharged').length,
+              transfers: state.patients.filter(p => p.processState === 'transferred').length,
+            },
+            savedAt: new Date().toISOString(),
+          };
+          
+          useShiftHistoryStore.getState().saveShift(snapshot);
+        }
+        
+        // Reset for new shift
+        set({
+          shiftConfigured: false,
+          shiftDate: null,
+          patients: [],
+          selectedPatientId: null,
+          searchQuery: '',
+          filterByDoctor: null,
+          filterByNurse: null,
+        });
+      },
+      
+      reopenShift: (date: string) => {
+        const snapshot = useShiftHistoryStore.getState().loadShift(date);
+        if (!snapshot) return;
+        
+        set({
+          shiftDate: new Date(date),
+          shiftConfigured: true,
+          patients: snapshot.patients,
+          doctors: snapshot.doctors,
+          nurses: snapshot.nurses,
+          locations: snapshot.locations,
+        });
+      },
+      
+      // Time display toggle
+      toggleTimeDisplay: () => set((state) => ({ showArrivalTime: !state.showArrivalTime })),
 
       startAdmission: (patientId) => {
         set((state) => ({
@@ -970,7 +1027,7 @@ export const usePatientStore = create<PatientStore>()(
       resetToSampleData: () => {
         set({
           patients: samplePatients,
-          shiftDate: new Date(SHIFT_DATE),
+          shiftDate: new Date(),
           shiftConfigured: true,
           doctors: DEFAULT_DOCTORS,
           nurses: DEFAULT_NURSES,
