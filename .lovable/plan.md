@@ -1,313 +1,143 @@
 
-# Plan: Sistema de Agenda y Recordatorios
+
+# Plan: Triángulo de Triage Apuntando Hacia Arriba con Número
 
 ## Resumen
 
-Crear un sistema de **Appointments/Citas** que permite:
-1. Programar citas para pacientes (MRI, RACC, Ultrasound, etc.) con hora específica
-2. Mostrar recordatorios automáticos X minutos antes de la hora
-3. Ver un panel/agenda con todas las citas del turno ordenadas cronológicamente
-4. Notificaciones visuales y sonoras cuando se acerca la hora
+Cambiar el triángulo de triage para que:
+1. **Apunte hacia arriba** (como ⚠️ señal de advertencia)
+2. **Muestre el número** del nivel de triage dentro
+3. **Sea compacto** para ahorrar espacio
+4. Quede al lado derecho del nombre del paciente
 
 ---
 
-## Tipos de Appointments Comunes
+## Diseño Visual
 
-Basado en tu descripción, los tipos de citas más frecuentes son:
+```text
+Antes (triángulo diagonal en esquina):
+┌─┬─────────────────────────────────┐
+│3│ John Smith                      │
+└─┴─────────────────────────────────┘
 
-| Tipo | Ejemplo |
-|------|---------|
-| **MRI** | MRI a las 18:00 |
-| **RACC** | RACC a las 17:00 |
-| **Ultrasound** | US a las 14:30 |
-| **CT** | CT a las 11:00 |
-| **ECHO** | Echo a las 15:45 |
-| **Procedimiento** | Procedimiento a las 16:00 |
-| **Consulta** | Consulta con cardio a las 13:00 |
+Después (triángulo hacia arriba al lado del nombre):
+┌───────────────────────────────────┐
+│ John Smith ▲3                     │
+└───────────────────────────────────┘
+        ↑
+   Triángulo warning con número dentro
+```
+
+El triángulo tendrá aproximadamente 14px de altura, con el número centrado, y el color correspondiente al nivel de triage.
 
 ---
 
-## Como Funciona
+## Archivo a Modificar
 
-### 1. Agregar Cita a un Paciente
-
-En el sticker del paciente, un nuevo tipo de nota "Appointment" permitira:
-- Seleccionar tipo (MRI, RACC, US, etc.)
-- Poner hora programada (ej: 18:00)
-- Tiempo de recordatorio (30 min antes, 15 min antes, 10 min antes)
-
-```text
-┌────────────────────────────────────┐
-│  Tipo: [MRI ▼]                     │
-│  Hora: [18:00]                     │
-│  Recordar: [30 min antes ▼]        │
-│  Nota: [paciente ayuno]            │
-│                                    │
-│  [Agregar Appointment]             │
-└────────────────────────────────────┘
-```
-
-### 2. Visualizacion en el Sticker
-
-La cita aparecera como un badge especial en el sticker:
-
-```text
-┌─────────────────────────────────────────┐
-│ △ John Smith                    B4      │
-│   15/03/1985                    DR:TA   │
-│   M00123456    [CT][MRI 18:00]  NR:NE   │
-│   ───────────────────────────────────   │
-│   Chest Pain                   Triaged  │
-└─────────────────────────────────────────┘
-                    ↑
-              Badge con hora
-```
-
-### 3. Panel de Agenda
-
-Un nuevo boton "Agenda" en el header abrira un panel lateral o dialogo mostrando:
-
-```text
-┌─────────────────────────────────────────┐
-│  📅 Agenda del Turno                    │
-├─────────────────────────────────────────┤
-│                                         │
-│  ⏰ PROXIMOS 30 MIN                     │
-│  ───────────────────                    │
-│  ⚠️ 17:45 - MRI - John Smith (B4)       │
-│     Recordar en 15 min                  │
-│                                         │
-│  📋 PENDIENTES HOY                      │
-│  ───────────────────                    │
-│  🔵 18:00 - RACC - Maria Garcia (B2)    │
-│  🔵 19:30 - US - Peter Jones (B1)       │
-│  🔵 20:00 - Cardio - Ana Lopez (TR)     │
-│                                         │
-│  ✓ COMPLETADOS                          │
-│  ───────────────────                    │
-│  ✓ 14:00 - CT - Pablo Ruiz              │
-│  ✓ 15:30 - Echo - Luis Fernandez        │
-│                                         │
-└─────────────────────────────────────────┘
-```
-
-### 4. Notificaciones
-
-Cuando llega el tiempo de recordatorio:
-- **Toast notification** prominente en la pantalla
-- **Sonido opcional** (beep corto)
-- **Badge contador** en el boton Agenda mostrando cuantos recordatorios activos hay
-
-```text
-┌─────────────────────────────────────────┐
-│  🔔 RECORDATORIO                        │
-│                                         │
-│  MRI para John Smith en 30 minutos      │
-│  Hora programada: 18:00                 │
-│  Ubicacion actual: Box 4                │
-│                                         │
-│  [Ver Paciente]        [Marcar Listo]   │
-└─────────────────────────────────────────┘
-```
-
----
-
-## Flujo de Usuario
-
-```text
-┌────────────────────────────────────────────────────────────────────────┐
-│                     CREAR APPOINTMENT                                  │
-└────────────────────────────────────────────────────────────────────────┘
-                                 │
-                                 ▼
-               ┌─────────────────────────────────────┐
-               │  Click en "+" del sticker           │
-               │  Seleccionar "Appointment"          │
-               │  Elegir tipo + hora + recordatorio  │
-               └─────────────────────────────────────┘
-                                 │
-                                 ▼
-               ┌─────────────────────────────────────┐
-               │  Appointment aparece en sticker     │
-               │  Se agrega a la Agenda              │
-               └─────────────────────────────────────┘
-                                 │
-                                 ▼ (cuando llega la hora - X min)
-               ┌─────────────────────────────────────┐
-               │  Toast notification aparece         │
-               │  Badge en boton Agenda se actualiza │
-               │  (Sonido opcional)                  │
-               └─────────────────────────────────────┘
-                                 │
-                                 ▼
-               ┌─────────────────────────────────────┐
-               │  Coordinador ve recordatorio        │
-               │  Gestiona envio del paciente        │
-               │  Marca como "En camino" o "Listo"   │
-               └─────────────────────────────────────┘
-```
-
----
-
-## Archivos a Crear/Modificar
-
-| Archivo | Accion |
+| Archivo | Cambio |
 |---------|--------|
-| `src/types/patient.ts` | Agregar tipo `Appointment` e interface |
-| `src/store/patientStore.ts` | Agregar appointments al paciente y acciones |
-| `src/components/AppointmentBadge.tsx` | **Nuevo**: Badge de cita en sticker |
-| `src/components/AgendaPanel.tsx` | **Nuevo**: Panel con todas las citas |
-| `src/components/AddAppointmentPopover.tsx` | **Nuevo**: Formulario para agregar cita |
-| `src/components/AppointmentReminder.tsx` | **Nuevo**: Hook y componente de notificaciones |
-| `src/components/PatientSticker.tsx` | Mostrar badges de appointments |
-| `src/components/BoardHeader.tsx` | Agregar boton "Agenda" |
+| `src/components/TriageBadge.tsx` | Cambiar triángulo inline para apuntar hacia arriba con número visible |
 
 ---
 
-## Seccion Tecnica
+## Sección Técnica
 
-### Nuevos Tipos en patient.ts
+### Cambio en TriageBadge.tsx
 
-```typescript
-export type AppointmentType = 
-  | 'mri' | 'ct' | 'ultrasound' | 'echo' | 'xray' 
-  | 'racc' | 'procedure' | 'consult' | 'other';
-
-export interface Appointment {
-  id: string;
-  type: AppointmentType;
-  scheduledTime: Date;          // Hora programada (ej: 18:00)
-  reminderMinutes: number;      // Cuanto antes avisar (30, 15, 10)
-  reminderTriggered: boolean;   // Ya se mostro el recordatorio?
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
-  notes?: string;               // Notas adicionales
-  createdAt: Date;
-}
-
-export const APPOINTMENT_TYPES: Record<AppointmentType, { label: string; color: string }> = {
-  mri: { label: 'MRI', color: 'bg-pink-500' },
-  ct: { label: 'CT', color: 'bg-orange-500' },
-  ultrasound: { label: 'US', color: 'bg-cyan-500' },
-  echo: { label: 'Echo', color: 'bg-indigo-500' },
-  xray: { label: 'X-Ray', color: 'bg-amber-500' },
-  racc: { label: 'RACC', color: 'bg-green-500' },
-  procedure: { label: 'Procedure', color: 'bg-purple-500' },
-  consult: { label: 'Consult', color: 'bg-blue-500' },
-  other: { label: 'Other', color: 'bg-gray-500' },
-};
-
-// Agregar al Patient interface:
-export interface Patient {
-  // ... campos existentes
-  appointments: Appointment[];  // NUEVO
-}
-```
-
-### Nuevas Acciones en patientStore.ts
+El triángulo actual usa CSS borders para crear una forma diagonal. Lo cambiaremos a un triángulo apuntando hacia arriba usando `clip-path` o SVG inline para poder incluir el número dentro.
 
 ```typescript
-// Agregar cita
-addAppointment: (patientId: string, appointment: Omit<Appointment, 'id' | 'createdAt' | 'reminderTriggered' | 'status'>) => void;
-
-// Actualizar estado de cita
-updateAppointmentStatus: (patientId: string, appointmentId: string, status: Appointment['status']) => void;
-
-// Marcar recordatorio como visto
-markReminderTriggered: (patientId: string, appointmentId: string) => void;
-
-// Cancelar cita
-cancelAppointment: (patientId: string, appointmentId: string) => void;
-```
-
-### Hook de Recordatorios (useAppointmentReminders.ts)
-
-```typescript
-export function useAppointmentReminders() {
-  const { patients } = usePatientStore();
-  const [pendingReminders, setPendingReminders] = useState<Reminder[]>([]);
-
-  useEffect(() => {
-    const checkReminders = () => {
-      const now = new Date();
-      const reminders: Reminder[] = [];
-
-      patients.forEach(patient => {
-        patient.appointments?.forEach(apt => {
-          if (apt.status !== 'pending' || apt.reminderTriggered) return;
-          
-          const reminderTime = new Date(apt.scheduledTime);
-          reminderTime.setMinutes(reminderTime.getMinutes() - apt.reminderMinutes);
-          
-          if (now >= reminderTime && now < apt.scheduledTime) {
-            reminders.push({
-              patientId: patient.id,
-              patientName: patient.name,
-              appointmentId: apt.id,
-              type: apt.type,
-              scheduledTime: apt.scheduledTime,
-              location: patient.assignedBox,
-            });
-          }
-        });
-      });
-
-      setPendingReminders(reminders);
-    };
-
-    // Verificar cada minuto
-    checkReminders();
-    const interval = setInterval(checkReminders, 60000);
-    return () => clearInterval(interval);
-  }, [patients]);
-
-  return pendingReminders;
+// Versión inline - triángulo apuntando hacia arriba con número
+if (inline) {
+  return (
+    <div 
+      className={cn(
+        "inline-flex items-center justify-center shrink-0 relative",
+        interactive && "cursor-pointer hover:opacity-80 transition-opacity",
+        className
+      )}
+      title={`Triage ${level}: ${config.label} (${config.time})`}
+      onClick={onClick}
+    >
+      {/* Triángulo apuntando hacia arriba usando clip-path */}
+      <div 
+        className={cn(
+          "w-4 h-4 flex items-center justify-center",
+          level === 1 && "text-red-500",
+          level === 2 && "text-orange-500",
+          level === 3 && "text-yellow-500",
+          level === 4 && "text-green-500",
+          level === 5 && "text-blue-500",
+        )}
+        style={{
+          clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)',
+          backgroundColor: 'currentColor',
+        }}
+      />
+      {/* Número centrado sobre el triángulo */}
+      <span className={cn(
+        "absolute text-[9px] font-bold bottom-[1px]",
+        level <= 2 ? "text-white" : "text-gray-900"
+      )}>
+        {level}
+      </span>
+    </div>
+  );
 }
 ```
 
-### Componente de Notificacion Toast
+### Alternativa con SVG (más preciso)
 
 ```typescript
-// En el componente principal, mostrar toasts para recordatorios
-useEffect(() => {
-  pendingReminders.forEach(reminder => {
-    toast.info(
-      `MRI para ${reminder.patientName} en ${reminder.minutesUntil} min`,
-      {
-        duration: 10000,
-        action: {
-          label: 'Ver',
-          onClick: () => scrollToPatient(reminder.patientId),
-        },
-      }
-    );
-  });
-}, [pendingReminders]);
+if (inline) {
+  const colors = {
+    1: '#ef4444', // red-500
+    2: '#f97316', // orange-500
+    3: '#eab308', // yellow-500
+    4: '#22c55e', // green-500
+    5: '#3b82f6', // blue-500
+  };
+  
+  return (
+    <div 
+      className={cn(
+        "inline-flex items-center shrink-0 relative",
+        interactive && "cursor-pointer hover:opacity-80 transition-opacity",
+        className
+      )}
+      title={`Triage ${level}: ${config.label} (${config.time})`}
+      onClick={onClick}
+    >
+      <svg width="16" height="14" viewBox="0 0 16 14">
+        <polygon 
+          points="8,0 16,14 0,14" 
+          fill={colors[level]}
+        />
+        <text 
+          x="8" 
+          y="12" 
+          textAnchor="middle" 
+          fontSize="8" 
+          fontWeight="bold"
+          fill={level <= 2 ? 'white' : '#1f2937'}
+        >
+          {level}
+        </text>
+      </svg>
+    </div>
+  );
+}
 ```
 
 ---
 
-## Resultado Final
+## Resultado
 
-Despues de implementar:
+| Aspecto | Antes | Después |
+|---------|-------|---------|
+| Forma | Diagonal (esquina) | Triángulo ▲ hacia arriba |
+| Número | No visible en inline | Visible centrado |
+| Tamaño | 16px diagonal | 16x14px compacto |
+| Posición | Al lado del nombre | Al lado del nombre |
+| Espacio | Ocupa más | Más compacto |
 
-| Funcionalidad | Estado |
-|---------------|--------|
-| Agregar appointments a pacientes | Nuevo |
-| Badge visual en sticker con hora | Nuevo |
-| Panel Agenda con lista cronologica | Nuevo |
-| Recordatorios automaticos (toast) | Nuevo |
-| Marcar citas como completadas | Nuevo |
-| Contador de recordatorios pendientes | Nuevo |
-| Sonido de notificacion (opcional) | Nuevo |
-
----
-
-## Opciones de Recordatorio
-
-| Tiempo | Uso tipico |
-|--------|------------|
-| 60 min | Para preparacion larga (ayuno, etc) |
-| 30 min | Default - tiempo para coordinar |
-| 15 min | Recordatorio cercano |
-| 10 min | Ultimo aviso |
-| 5 min | Urgente |
