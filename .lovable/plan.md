@@ -1,51 +1,40 @@
 
 
-# Plan: Agrandar Notas y Mejorar Contraste de Colores
+# Plan: Agregar Campo de Notas Libres para Admisión
 
-## Problema Actual
+## Resumen
 
-1. **Notas pequeñas**: 28x22px sigue siendo difícil de ver
-2. **Bajo contraste**: Colores claros (`text-blue-300`) sobre fondos con baja opacidad (`bg-blue-500/20`) dificultan la lectura
+Agregar un campo de texto libre debajo del nombre del médico consultor y el número de cama, visible cuando el paciente tiene datos de admisión. Los coordinadores podrán escribir cualquier nota relevante para el proceso de admisión.
 
 ```text
-Antes (bajo contraste):
-┌──────┐
-│  CT  │  ← text-blue-300 sobre bg-blue-500/20 = difícil leer
-└──────┘
-  28px
+Antes:
+┌─────────────────────────────────────────┐
+│ John Smith              [T3] [+]        │
+│ 15/03/1985  ▸ Dr. González  📍 5N-23    │  ← Solo consultant + cama
+│ M12345678                               │
+│ ...                                     │
+└─────────────────────────────────────────┘
 
-Después (alto contraste):
-┌────────┐
-│   CT   │  ← text-blue-700 sobre bg-blue-100 = fácil leer
-└────────┘
-   34px
+Después:
+┌─────────────────────────────────────────┐
+│ John Smith              [T3] [+]        │
+│ 15/03/1985  ▸ Dr. González  📍 5N-23    │
+│ M12345678   IV hep ongoing, call 6pm    │  ← Nota libre editable
+│ ...                                     │
+└─────────────────────────────────────────┘
 ```
 
 ---
 
-## Cambios Visuales
+## Comportamiento
 
-| Aspecto | Antes | Después |
-|---------|-------|---------|
-| Ancho nota | 28px | 34px |
-| Alto nota | 22px | 26px |
-| Tamaño texto | 10px | 11px |
-| Ancho columna | 90px | 110px |
-| Contraste | Bajo (text-xxx-300) | Alto (text-xxx-700) |
-
----
-
-## Nuevos Colores con Alto Contraste
-
-| Tipo | Antes | Después |
-|------|-------|---------|
-| Study (pending) | `bg-blue-500/30 text-blue-300` | `bg-blue-100 text-blue-700 border-blue-300` |
-| Study (done) | `bg-green-500/40 text-green-300` | `bg-green-100 text-green-700 border-green-400` |
-| Follow-up | `bg-green-500/20 text-green-300` | `bg-emerald-100 text-emerald-700 border-emerald-300` |
-| Critical | `bg-red-500/20 text-red-300` | `bg-red-100 text-red-700 border-red-300` |
-| Precaution | `bg-orange-500/20 text-orange-300` | `bg-amber-100 text-amber-700 border-amber-300` |
-| Admitting | `bg-purple-500/20 text-purple-300` | `bg-purple-100 text-purple-700 border-purple-300` |
-| Note | `bg-gray-500/20 text-gray-300` | `bg-slate-100 text-slate-700 border-slate-300` |
+| Estado | Visualización |
+|--------|---------------|
+| Sin nota | Placeholder `[+ Nota...]` clicable |
+| Con nota | Texto visible, truncado si es muy largo |
+| Click | Abre input inline para editar |
+| Vacío al guardar | Desaparece el placeholder (queda oculto) |
+| Siempre visible | Cuando paciente tiene datos de admisión |
 
 ---
 
@@ -53,54 +42,96 @@ Después (alto contraste):
 
 | Archivo | Cambio |
 |---------|--------|
-| `src/types/patient.ts` | Actualizar `NOTE_TYPE_CONFIG` con colores de alto contraste |
-| `src/components/StickerNoteItem.tsx` | Agrandar dimensiones (34x26px) y actualizar colores de estudios |
-| `src/components/StickerNotesColumn.tsx` | Agrandar slots (34x26px) y columna (110px) |
+| `src/types/patient.ts` | Agregar campo `freeNote?: string` a `AdmissionData` |
+| `src/components/PatientSticker.tsx` | Agregar componente `EditableFreeNote` y mostrarlo |
+| `src/store/patientStore.ts` | Ya tiene `updateAdmission` que maneja campos parciales |
 
 ---
 
 ## Sección Técnica
 
-### 1. types/patient.ts - Nuevos Colores
+### 1. types/patient.ts - Nuevo Campo
 
 ```typescript
-export const NOTE_TYPE_CONFIG: Record<StickerNoteType, { label: string; color: string }> = {
-  study: { label: 'Study', color: 'bg-blue-100 text-blue-700 border-blue-300' },
-  followup: { label: 'Follow-up', color: 'bg-emerald-100 text-emerald-700 border-emerald-300' },
-  critical: { label: 'Critical Value', color: 'bg-red-100 text-red-700 border-red-300' },
-  precaution: { label: 'Precaution', color: 'bg-amber-100 text-amber-700 border-amber-300' },
-  admitting: { label: 'Admitting MD', color: 'bg-purple-100 text-purple-700 border-purple-300' },
-  note: { label: 'Note', color: 'bg-slate-100 text-slate-700 border-slate-300' },
-};
+export interface AdmissionData {
+  // ... campos existentes ...
+  freeNote?: string;  // NEW: Nota libre del coordinador
+}
 ```
 
-### 2. StickerNoteItem.tsx - Nuevas Dimensiones y Colores
+### 2. PatientSticker.tsx - Nuevo Componente
 
 ```tsx
-// Tamaño de notas
-"w-[34px] h-[26px] text-[11px]"
+interface EditableFreeNoteProps {
+  patientId: string;
+  note: string;
+}
 
-// Colores de estudios
-note.completed 
-  ? "bg-green-100 text-green-700 border-green-400"
-  : "bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200"
+function EditableFreeNote({ patientId, note }: EditableFreeNoteProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(note || '');
+  const { updateAdmission } = usePatientStore();
+
+  const handleSave = () => {
+    updateAdmission(patientId, { freeNote: value.trim() });
+    setIsEditing(false);
+  };
+
+  // Si está editando, mostrar input
+  // Si hay nota, mostrar texto truncado
+  // Si no hay nota, mostrar placeholder "[+ Nota...]"
+}
 ```
 
-### 3. StickerNotesColumn.tsx - Slots y Columna Agrandados
+### 3. Ubicación en el Sticker
+
+Agregar debajo del M-Number, en la misma fila o en una nueva línea cuando hay datos de admisión:
 
 ```tsx
-// Slots
-"w-[34px] h-[26px]"
+{/* Row 3: M-Number + Free Note (if admission) */}
+<div className="flex items-baseline gap-1">
+  <span className="text-[11px] text-muted-foreground font-mono">{patient.mNumber}</span>
+  {/* Appointment badges */}
+  {patient.appointments?.filter(...).map(...)}
+</div>
 
-// Columna contenedora
-"w-[110px]"
+{/* NEW: Free note for admission - debajo del M-Number */}
+{hasAdmissionInfo && (
+  <EditableFreeNote 
+    patientId={patient.id}
+    note={patient.admission?.freeNote || ''}
+    readOnly={isReadOnly}
+  />
+)}
+```
+
+### 4. Estilo del Campo
+
+```tsx
+// Sin nota - placeholder discreto
+<span className="text-[10px] text-muted-foreground/60 cursor-pointer hover:text-muted-foreground">
+  [+ Nota...]
+</span>
+
+// Con nota - texto visible
+<span className="text-[10px] text-cyan-600 cursor-pointer truncate max-w-[180px]">
+  {note}
+</span>
+
+// Editando - input inline
+<Input
+  className="h-4 text-[10px] px-1 py-0 flex-1 max-w-[200px]"
+  placeholder="Notas de admisión..."
+/>
 ```
 
 ---
 
 ## Resultado Esperado
 
-- ✅ Notas 21% más grandes (34x26 vs 28x22)
-- ✅ Texto legible con alto contraste (colores oscuros sobre fondos claros)
-- ✅ Cada tipo de nota claramente distinguible por color
+- ✅ Campo de texto libre visible cuando hay datos de admisión
+- ✅ Editable con click (inline editing)
+- ✅ Texto truncado si es muy largo (con tooltip al hover)
+- ✅ Persistente en localStorage junto con otros datos del paciente
+- ✅ Visible en modo read-only (historial de shifts)
 
