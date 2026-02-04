@@ -1196,14 +1196,20 @@ export const getFilteredPatients = (state: PatientStore): Patient[] => {
     result = result.filter(p => p.nurse === state.filterByNurse);
   }
   
-  // Hide discharged
+  // Hide discharged, transferred, and completed admissions
   if (state.hideDischargedFromBoard) {
-    result = result.filter(p => 
-      p.processState !== 'discharged' && 
-      p.processState !== 'transferred' &&
-      p.status !== 'discharged' && 
-      p.status !== 'transferred'
-    );
+    result = result.filter(p => {
+      // Hide discharged
+      if (p.processState === 'discharged' || p.status === 'discharged') return false;
+      
+      // Hide transferred
+      if (p.processState === 'transferred' || p.status === 'transferred') return false;
+      
+      // Hide completed admissions (patient already transferred to ward)
+      if (p.admission?.completedAt) return false;
+      
+      return true;
+    });
   }
   
   // Filter by pending study
