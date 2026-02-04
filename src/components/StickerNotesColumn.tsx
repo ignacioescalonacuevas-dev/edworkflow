@@ -36,12 +36,12 @@ function Slot({ slotIndex, note, onToggle, onRemove, isAddButton, onAddNote }: S
     return (
       <div
         ref={setNodeRef}
-        className="w-[22px] h-[18px] flex items-center justify-center"
+        className="w-[28px] h-[22px] flex items-center justify-center"
       >
         <Popover>
           <PopoverTrigger asChild>
             <button 
-              className="w-[22px] h-[18px] rounded border border-dashed border-muted-foreground/40 hover:border-primary/60 hover:bg-primary/10 flex items-center justify-center transition-colors"
+              className="w-[28px] h-[22px] rounded border border-dashed border-muted-foreground/40 hover:border-primary/60 hover:bg-primary/10 flex items-center justify-center transition-colors"
             >
               <Plus className="h-2.5 w-2.5 text-muted-foreground" />
             </button>
@@ -59,7 +59,7 @@ function Slot({ slotIndex, note, onToggle, onRemove, isAddButton, onAddNote }: S
     return (
       <div
         ref={setNodeRef}
-        className={`w-[22px] h-[18px] flex items-center justify-center ${isOver ? 'bg-primary/10 rounded' : ''}`}
+        className={`w-[28px] h-[22px] flex items-center justify-center ${isOver ? 'bg-primary/10 rounded' : ''}`}
       >
         <StickerNoteItem
           note={note}
@@ -74,7 +74,7 @@ function Slot({ slotIndex, note, onToggle, onRemove, isAddButton, onAddNote }: S
   return (
     <div
       ref={setNodeRef}
-      className={`w-[22px] h-[18px] rounded transition-colors ${
+      className={`w-[28px] h-[22px] rounded transition-colors ${
         isOver ? 'bg-primary/20 border border-dashed border-primary/40' : 'border border-dashed border-muted-foreground/20'
       }`}
     />
@@ -149,14 +149,14 @@ export function StickerNotesColumn({
 
   return (
     <div 
-      className="w-[72px]"
+      className="w-[90px]"
       onClick={(e) => e.stopPropagation()}
     >
       <DndContext
         sensors={isReadOnly ? [] : sensors}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-3 grid-rows-2 gap-0.5">
+        <div className="grid grid-cols-3 grid-rows-2 gap-1">
           {Array.from({ length: TOTAL_SLOTS }).map((_, slotIndex) => {
             const note = slotMap.get(slotIndex);
             const isAddButtonSlot = slotIndex === addButtonSlot;

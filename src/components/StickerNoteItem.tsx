@@ -59,13 +59,14 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
               }}
               onPointerDown={(e) => e.stopPropagation()}
               className={cn(
-                "w-[22px] h-[18px] rounded text-[9px] font-bold flex items-center justify-center border transition-colors",
+                "w-[28px] h-[22px] rounded text-[10px] font-bold flex items-center justify-center border transition-colors",
                 note.completed 
                   ? "bg-green-500/40 text-green-300 border-green-500/50"
                   : "bg-blue-500/30 text-blue-300 border-blue-500/40 hover:bg-blue-500/40"
               )}
             >
-              {note.completed ? <Check className="h-2.5 w-2.5" /> : abbreviation}
+              {abbreviation}
+              {note.completed && <Check className="h-2.5 w-2.5 ml-0.5" />}
             </button>
             <button
               onClick={(e) => {
@@ -101,7 +102,7 @@ export function StickerNoteItem({ note, onToggle, onRemove }: StickerNoteItemPro
           )}
         >
           <span className={cn(
-            "w-[22px] h-[18px] rounded text-[9px] font-bold flex items-center justify-center border",
+            "w-[28px] h-[22px] rounded text-[10px] font-bold flex items-center justify-center border",
             config.color
           )}>
             {abbreviation}
