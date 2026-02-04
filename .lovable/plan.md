@@ -1,77 +1,45 @@
 
-# Plan: Corregir Inconsistencia de Padding en Stickers
 
-## Problema Identificado
+# Plan: Asignar Rol de Coordinator a Usuario
 
-Hay un conflicto de estilos que causa que algunos stickers se vean de diferente tamaño:
+## Problema
 
-| Archivo | Línea | Valor | Problema |
-|---------|-------|-------|----------|
-| `src/index.css` | 131 | `p-2` | Define padding base correcto |
-| `src/components/PatientSticker.tsx` | 412 | `p-2.5` | **Sobreescribe el CSS base** |
+La tabla `user_roles` está vacía. El trigger `handle_new_user` no creó el rol cuando te registraste, por lo que el sistema te asigna `viewer` por defecto.
 
-El `p-2.5` en el componente está sobreescribiendo el `p-2` del CSS, creando inconsistencias visuales.
+## Datos del Usuario
 
----
+| Campo | Valor |
+|-------|-------|
+| Email | ignacioescalonacuevas@gmail.com |
+| User ID | f1698e42-feff-4981-b7a4-e71bd1d9a806 |
+| Rol actual | viewer (por defecto) |
+| Rol deseado | coordinator |
 
-## Visualización del Problema
+## Cambio Requerido
 
-```text
-CSS Base (.sticker):     p-2 (8px)
-Componente (inline):     p-2.5 (10px)  ← CONFLICTO
+Ejecutar migración SQL para insertar el rol de coordinator:
 
-Tailwind aplica el último en orden de especificidad, 
-pero el orden puede variar causando inconsistencias visuales.
+```sql
+INSERT INTO public.user_roles (user_id, role, display_name)
+VALUES ('f1698e42-feff-4981-b7a4-e71bd1d9a806', 'coordinator', 'Ignacio Escalona')
+ON CONFLICT (user_id) DO UPDATE SET 
+  role = 'coordinator',
+  display_name = 'Ignacio Escalona';
 ```
 
----
+## Pasos Después de la Migración
 
-## Solución
-
-Eliminar el `p-2.5` del componente `PatientSticker.tsx` para que todos los stickers usen consistentemente el `p-2` definido en el CSS base.
-
----
-
-## Archivo a Modificar
-
-| Archivo | Cambio |
-|---------|--------|
-| `src/components/PatientSticker.tsx` | Eliminar `p-2.5` de la clase del contenedor principal |
-
----
-
-## Sección Técnica
-
-### src/components/PatientSticker.tsx
-
-**Línea 412: Eliminar p-2.5**
-
-```tsx
-// ANTES:
-<div
-  className={cn(
-    "sticker transition-all hover:border-primary/50 group h-full flex flex-col p-2.5 relative overflow-hidden",
-    isInAdmissionProcess && "sticker-admission",
-    isDischarged && "sticker-discharged"
-  )}
->
-
-// DESPUÉS:
-<div
-  className={cn(
-    "sticker transition-all hover:border-primary/50 group h-full flex flex-col relative overflow-hidden",
-    isInAdmissionProcess && "sticker-admission",
-    isDischarged && "sticker-discharged"
-  )}
->
-```
-
-El padding `p-2` viene automáticamente de la clase `.sticker` definida en `index.css` línea 131.
-
----
+1. Refrescar la página o cerrar sesión y volver a entrar
+2. El `AuthContext` cargará tu nuevo rol desde `user_roles`
+3. Verás los botones protegidos por `RoleGate`:
+   - Reset data (↺)
+   - New Patient (+)
+   - Shift Settings (⚙️)
+   - End Shift
 
 ## Resultado Esperado
 
-- Todos los stickers tendrán exactamente el mismo padding (`p-2` = 8px)
-- No habrá conflictos entre estilos CSS e inline
-- Los stickers de la primera fila (Derek Hayes, Rory Quinn, etc.) se verán idénticos a los de las demás filas
+- Tu rol será `coordinator` con display name "Ignacio Escalona"
+- Tendrás acceso completo a todas las funciones del sistema
+- El botón de configuración de turno (engranaje) estará visible y funcional
+
