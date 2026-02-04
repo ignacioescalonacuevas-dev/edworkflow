@@ -372,8 +372,9 @@ export function PatientSticker({ patient }: PatientStickerProps) {
           </div>
           <div className="flex items-baseline gap-1">
             <span className="text-[11px] text-muted-foreground font-mono">{patient.mNumber}</span>
-            <span 
-              className="text-[10px] text-muted-foreground/70 ml-auto cursor-pointer hover:text-foreground transition-colors"
+            <button 
+              type="button"
+              className="text-[11px] text-muted-foreground ml-auto px-1 py-0.5 rounded hover:bg-muted hover:text-foreground transition-all cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 toggleTimeDisplay();
@@ -381,7 +382,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
               title={showArrivalTime ? 'Click para ver tiempo transcurrido' : 'Click para ver hora de llegada'}
             >
               {showArrivalTime ? arrivalTimeStr : elapsedTime}
-            </span>
+            </button>
           </div>
         </div>
 
