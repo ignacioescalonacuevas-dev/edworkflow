@@ -195,12 +195,12 @@ export const FOLLOWUP_OPTIONS = ['GP', "Women's Clinic", 'RACC', 'Fracture Clini
 export const PRECAUTION_OPTIONS = ['Flu A +', 'Flu B +', 'COVID +', 'MRSA', 'Isolation'] as const;
 
 export const NOTE_TYPE_CONFIG: Record<StickerNoteType, { label: string; color: string }> = {
-  study: { label: 'Study', color: 'bg-blue-500/20 text-blue-300 border-blue-500/30' },
-  followup: { label: 'Follow-up', color: 'bg-green-500/20 text-green-300 border-green-500/30' },
-  critical: { label: 'Critical Value', color: 'bg-red-500/20 text-red-300 border-red-500/30' },
-  precaution: { label: 'Precaution', color: 'bg-orange-500/20 text-orange-300 border-orange-500/30' },
-  admitting: { label: 'Admitting MD', color: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
-  note: { label: 'Note', color: 'bg-gray-500/20 text-gray-300 border-gray-500/30' },
+  study: { label: 'Study', color: 'bg-blue-100 text-blue-700 border-blue-300' },
+  followup: { label: 'Follow-up', color: 'bg-emerald-100 text-emerald-700 border-emerald-300' },
+  critical: { label: 'Critical Value', color: 'bg-red-100 text-red-700 border-red-300' },
+  precaution: { label: 'Precaution', color: 'bg-amber-100 text-amber-700 border-amber-300' },
+  admitting: { label: 'Admitting MD', color: 'bg-purple-100 text-purple-700 border-purple-300' },
+  note: { label: 'Note', color: 'bg-slate-100 text-slate-700 border-slate-300' },
 };
 
 export interface Patient {
