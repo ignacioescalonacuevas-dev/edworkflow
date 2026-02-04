@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { usePatientStore } from '@/store/patientStore';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,26 +32,26 @@ export function EndShiftDialog() {
   const handleEndShift = () => {
     endShift();
     setOpen(false);
-    toast.success('Turno cerrado y guardado en historial');
+    toast.success('Shift closed and saved to history');
   };
   
   const formattedDate = shiftDate 
-    ? format(new Date(shiftDate), "EEEE, dd 'de' MMMM", { locale: es })
-    : 'Sin fecha';
+    ? format(new Date(shiftDate), 'EEEE, MMMM d')
+    : 'No date';
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-2">
           <XCircle className="h-4 w-4" />
-          Cerrar Turno
+          End Shift
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Cerrar Turno
+            End Shift
           </DialogTitle>
           <DialogDescription>
             {formattedDate}
@@ -60,14 +59,14 @@ export function EndShiftDialog() {
         </DialogHeader>
         
         <div className="space-y-4 py-4">
-          <h4 className="text-sm font-medium text-muted-foreground">Resumen del Turno</h4>
+          <h4 className="text-sm font-medium text-muted-foreground">Shift Summary</h4>
           
           <div className="grid grid-cols-2 gap-3">
             <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
               <Users className="h-5 w-5 text-primary" />
               <div>
                 <div className="text-2xl font-bold">{totalPatients}</div>
-                <div className="text-xs text-muted-foreground">Total pacientes</div>
+                <div className="text-xs text-muted-foreground">Total patients</div>
               </div>
             </div>
             
@@ -75,7 +74,7 @@ export function EndShiftDialog() {
               <LogIn className="h-5 w-5 text-amber-500" />
               <div>
                 <div className="text-2xl font-bold">{admissions}</div>
-                <div className="text-xs text-muted-foreground">Admisiones</div>
+                <div className="text-xs text-muted-foreground">Admissions</div>
               </div>
             </div>
             
@@ -83,7 +82,7 @@ export function EndShiftDialog() {
               <LogOut className="h-5 w-5 text-green-500" />
               <div>
                 <div className="text-2xl font-bold">{discharges}</div>
-                <div className="text-xs text-muted-foreground">Altas</div>
+                <div className="text-xs text-muted-foreground">Discharges</div>
               </div>
             </div>
             
@@ -91,7 +90,7 @@ export function EndShiftDialog() {
               <Ambulance className="h-5 w-5 text-blue-500" />
               <div>
                 <div className="text-2xl font-bold">{transfers}</div>
-                <div className="text-xs text-muted-foreground">Traslados</div>
+                <div className="text-xs text-muted-foreground">Transfers</div>
               </div>
             </div>
           </div>
@@ -100,9 +99,9 @@ export function EndShiftDialog() {
             <div className="flex items-start gap-2 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
               <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0 mt-0.5" />
               <div className="text-sm">
-                <span className="font-medium">Hay {pendingPatients} pacientes sin cerrar.</span>
+                <span className="font-medium">There are {pendingPatients} unclosed patients.</span>
                 <p className="text-muted-foreground mt-1">
-                  Se guardarán en el historial y podrás reabrir el turno si es necesario.
+                  They will be saved to history and you can reopen the shift if needed.
                 </p>
               </div>
             </div>
@@ -111,10 +110,10 @@ export function EndShiftDialog() {
         
         <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancelar
+            Cancel
           </Button>
           <Button onClick={handleEndShift}>
-            Cerrar y Guardar
+            Close and Save
           </Button>
         </DialogFooter>
       </DialogContent>

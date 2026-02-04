@@ -1,5 +1,4 @@
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { usePatientStore } from '@/store/patientStore';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,20 +21,20 @@ export function PreviousShiftWarning({ open, onOpenChange }: PreviousShiftWarnin
   const { shiftDate, endShift } = usePatientStore();
   
   const formattedShiftDate = shiftDate 
-    ? format(new Date(shiftDate), "EEEE, dd 'de' MMMM", { locale: es })
-    : 'fecha desconocida';
+    ? format(new Date(shiftDate), 'EEEE, MMMM d')
+    : 'unknown date';
   
-  const today = format(new Date(), "EEEE, dd 'de' MMMM", { locale: es });
+  const today = format(new Date(), 'EEEE, MMMM d');
   
   const handleCloseAndStartNew = () => {
     endShift();
     onOpenChange(false);
-    toast.success('Turno anterior cerrado. Configura el nuevo turno.');
+    toast.success('Previous shift closed. Configure the new shift.');
   };
   
   const handleContinue = () => {
     onOpenChange(false);
-    toast.info('Continuando con el turno anterior');
+    toast.info('Continuing with previous shift');
   };
 
   return (
@@ -44,10 +43,10 @@ export function PreviousShiftWarning({ open, onOpenChange }: PreviousShiftWarnin
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-amber-500">
             <AlertTriangle className="h-5 w-5" />
-            Turno Anterior Sin Cerrar
+            Previous Shift Not Closed
           </DialogTitle>
           <DialogDescription>
-            Se detectó un turno de un día anterior que no fue cerrado.
+            A shift from a previous day was detected that was not closed.
           </DialogDescription>
         </DialogHeader>
         
@@ -55,7 +54,7 @@ export function PreviousShiftWarning({ open, onOpenChange }: PreviousShiftWarnin
           <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
             <Calendar className="h-5 w-5 text-muted-foreground" />
             <div>
-              <div className="text-sm font-medium">Turno abierto</div>
+              <div className="text-sm font-medium">Open shift</div>
               <div className="text-sm text-muted-foreground capitalize">{formattedShiftDate}</div>
             </div>
           </div>
@@ -63,13 +62,13 @@ export function PreviousShiftWarning({ open, onOpenChange }: PreviousShiftWarnin
           <div className="flex items-center gap-3 p-3 bg-primary/10 border border-primary/30 rounded-lg">
             <Calendar className="h-5 w-5 text-primary" />
             <div>
-              <div className="text-sm font-medium">Hoy</div>
+              <div className="text-sm font-medium">Today</div>
               <div className="text-sm text-muted-foreground capitalize">{today}</div>
             </div>
           </div>
           
           <p className="text-sm text-muted-foreground">
-            Puedes cerrar el turno anterior y empezar uno nuevo, o continuar trabajando en el turno existente.
+            You can close the previous shift and start a new one, or continue working on the existing shift.
           </p>
         </div>
         
@@ -80,14 +79,14 @@ export function PreviousShiftWarning({ open, onOpenChange }: PreviousShiftWarnin
             className="w-full sm:w-auto gap-2"
           >
             <RotateCcw className="h-4 w-4" />
-            Continuar Turno
+            Continue Shift
           </Button>
           <Button 
             onClick={handleCloseAndStartNew}
             className="w-full sm:w-auto gap-2"
           >
             <ArrowRight className="h-4 w-4" />
-            Cerrar y Empezar Nuevo
+            Close and Start New
           </Button>
         </DialogFooter>
       </DialogContent>
