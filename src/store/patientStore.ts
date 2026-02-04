@@ -61,7 +61,7 @@ interface PatientStore {
   filterByDoctor: string | null;
   filterByNurse: string | null;
   filterByPendingStudy: string | null;
-  filterByProcessState: ProcessState | 'admitted' | null;
+  filterByProcessState: ProcessState | null;
   hideDischargedFromBoard: boolean;
   
   // Actions
@@ -118,7 +118,7 @@ interface PatientStore {
   setFilterByDoctor: (doctor: string | null) => void;
   setFilterByNurse: (nurse: string | null) => void;
   setFilterByPendingStudy: (study: string | null) => void;
-  setFilterByProcessState: (state: ProcessState | 'admitted' | null) => void;
+  setFilterByProcessState: (state: ProcessState | null) => void;
   setHideDischargedFromBoard: (hide: boolean) => void;
   clearFilters: () => void;
   clearShift: () => void;
@@ -164,9 +164,14 @@ interface PatientStore {
 
 // Helper to migrate old patient data to new structure
 function migratePatient(patient: Patient): Patient {
-  // First get the raw process state, then migrate it to new simplified states
+  // First get the raw process state, then migrate it to new 8-state model
   const rawProcessState = patient.processState ?? mapStatusToProcessState(patient.status);
-  const migratedProcessState = migrateProcessState(rawProcessState);
+  let migratedProcessState = migrateProcessState(rawProcessState);
+  
+  // Auto-upgrade patients who have completed admission to 'admitted' state
+  if (migratedProcessState === 'admission' && patient.admission?.completedAt) {
+    migratedProcessState = 'admitted';
+  }
   
   return {
     ...patient,
@@ -443,9 +448,11 @@ export const usePatientStore = create<PatientStore>()(
         // Map processState to legacy status for backwards compatibility
         const statusMap: Record<ProcessState, PatientStatus> = {
           'registered': 'waiting_room',
+          'did_not_wait': 'discharged',  // DNW is terminal, maps to discharged
           'to_be_seen': 'treatment_room',
           'awaiting_results': 'review',
           'admission': 'admission',
+          'admitted': 'admission',       // Admitted maps to admission legacy
           'discharged': 'discharged',
           'transferred': 'transferred',
         };
@@ -950,6 +957,8 @@ export const usePatientStore = create<PatientStore>()(
             p.id === patientId && p.admission
               ? {
                   ...p,
+                  processState: 'admitted',  // Change state to 'admitted'
+                  status: 'admission',        // Keep legacy status
                   admission: { ...p.admission, completedAt: new Date() },
                   events: [
                     ...p.events,
@@ -957,7 +966,7 @@ export const usePatientStore = create<PatientStore>()(
                       id: generateId(),
                       timestamp: new Date(),
                       type: 'admission_completed',
-                      description: `Admission completed - ${p.admission.specialty}`,
+                      description: `Admission completed - patient transferred to ward (${p.admission.specialty})`,
                     },
                   ],
                 }
@@ -1224,30 +1233,16 @@ export const getFilteredPatients = (state: PatientStore): Patient[] => {
   
   // Filter by process state (if active, bypass hideDischargedFromBoard for that state)
   if (state.filterByProcessState) {
-    result = result.filter(p => {
-      if (state.filterByProcessState === 'admitted') {
-        // Show only completed admissions
-        return p.processState === 'admission' && p.admission?.completedAt;
-      }
-      if (state.filterByProcessState === 'admission') {
-        // Show only pending admissions (not completed)
-        return p.processState === 'admission' && !p.admission?.completedAt;
-      }
-      return p.processState === state.filterByProcessState;
-    });
+    // Direct state matching - 'admitted' is now a real ProcessState
+    result = result.filter(p => p.processState === state.filterByProcessState);
   } else if (state.hideDischargedFromBoard) {
     // Only apply hide D/C if no process state filter is active
-    // ONLY use processState (not legacy status) to determine visibility
+    // Hide all terminal states (patient no longer in ED)
     result = result.filter(p => {
-      // Hide discharged
       if (p.processState === 'discharged') return false;
-      
-      // Hide transferred
       if (p.processState === 'transferred') return false;
-      
-      // Hide completed admissions (patient already transferred to ward)
-      if (p.processState === 'admission' && p.admission?.completedAt) return false;
-      
+      if (p.processState === 'admitted') return false;
+      if (p.processState === 'did_not_wait') return false;
       return true;
     });
   }

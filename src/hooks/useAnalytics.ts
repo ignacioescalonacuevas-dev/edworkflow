@@ -127,8 +127,9 @@ export function useAnalytics(patients: Patient[]): AnalyticsData {
   return useMemo(() => {
     // General Stats
     const totalPatients = patients.length;
+    // Active = not in any terminal state
     const activePatients = patients.filter(p => 
-      !['discharged', 'transferred'].includes(p.processState)
+      !['discharged', 'transferred', 'did_not_wait', 'admitted'].includes(p.processState)
     ).length;
     
     const admissions = patients.filter(p => 
@@ -139,11 +140,8 @@ export function useAnalytics(patients: Patient[]): AnalyticsData {
     const transfers = patients.filter(p => p.processState === 'transferred').length;
     const admissionRate = totalPatients > 0 ? (admissions / totalPatients) * 100 : 0;
     
-    // DNW (Did Not Wait) - patients discharged without ever being seen
-    const dnwCount = patients.filter(p => 
-      p.processState === 'discharged' && 
-      !p.events.some(e => e.description.toLowerCase().includes('being seen'))
-    ).length;
+    // DNW (Did Not Wait) - now a direct state lookup
+    const dnwCount = patients.filter(p => p.processState === 'did_not_wait').length;
     
     // Follow-up breakdown
     const followupCounts: Record<string, number> = {};
