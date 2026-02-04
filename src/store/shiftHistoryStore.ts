@@ -67,6 +67,7 @@ function createPatient(
     status,
     orders: options?.orders ?? [],
     stickerNotes: options?.stickerNotes ?? [],
+    appointments: [],
     admission: options?.admission,
     dischargedAt: options?.dischargedAt,
     events: [{ id: `e-${id}`, timestamp: arrivalTime, type: 'arrival', description: 'Patient arrived at ED' }],
@@ -342,6 +343,7 @@ function migrateHistoryPatient(patient: any): Patient {
     assignedBox: patient.assignedBox ?? patient.box ?? 'Waiting Room',
     currentLocation: patient.currentLocation ?? patient.box ?? 'Waiting Room',
     processState: patient.processState ?? mapStatusToProcessState(patient.status),
+    appointments: patient.appointments ?? [],
     admission: patient.admission ? {
       ...patient.admission,
       consultant: consultantValue,

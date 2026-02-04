@@ -111,6 +111,7 @@ function createPatient(
     status: processState === 'discharged' ? 'discharged' : 'treatment_room',
     orders: [],
     stickerNotes,
+    appointments: [],
     admission: options.admission,
     dischargedAt: options.dischargedAt,
     transferredTo: options.transferredTo,
