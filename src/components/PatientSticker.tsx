@@ -411,16 +411,12 @@ export function PatientSticker({ patient }: PatientStickerProps) {
           />
         </div>
 
-        {/* COL 3: Box + Location (if away) + Doctor + Nurse */}
+        {/* COL 3: Box + Doctor + Nurse */}
         <div className="flex flex-col items-center justify-between py-0.5">
           {isReadOnly ? (
             <>
               {/* Box */}
               <span className="text-xs font-semibold">{getLocationAbbreviation(assignedBox)}</span>
-              {/* Current location if away */}
-              {isAwayFromBox && (
-                <span className="text-[10px] text-amber-400 font-medium">→{getLocationAbbreviation(currentLocation)}</span>
-              )}
               {/* Doctor */}
               <span className="text-xs text-primary">{getInitials(patient.doctor)}</span>
               {/* Nurse */}
@@ -435,12 +431,6 @@ export function PatientSticker({ patient }: PatientStickerProps) {
                 currentValue={assignedBox}
                 options={locations.length > 0 ? locations : ED_LOCATIONS}
                 displayValue={getLocationAbbreviation(assignedBox)}
-              />
-              {/* Current location dropdown (if away, or placeholder to send away) */}
-              <LocationDropdown
-                patientId={patient.id}
-                currentLocation={currentLocation}
-                assignedBox={assignedBox}
               />
               {/* Doctor - ALWAYS visible */}
               <StaffDropdown
