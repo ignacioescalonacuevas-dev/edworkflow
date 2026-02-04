@@ -336,13 +336,6 @@ export function PatientSticker({ patient }: PatientStickerProps) {
         isDischarged && "sticker-discharged"
       )}
     >
-      {/* Triage Badge - Top Left Corner */}
-      {isReadOnly ? (
-        <TriageDropdown patientId={patient.id} currentLevel={triageLevel} readOnly />
-      ) : (
-        <TriageDropdown patientId={patient.id} currentLevel={triageLevel} />
-      )}
-      
       {/* Admission Badge - Shows consultant and bed if in admission */}
       {patient.admission && (patient.admission.consultant || patient.admission.consultantName || patient.admission.bedNumber) && (
         <AdmissionBadge 
@@ -353,12 +346,18 @@ export function PatientSticker({ patient }: PatientStickerProps) {
       )}
 
       {/* Main 3-column grid */}
-      <div className="grid grid-cols-[1fr_72px_44px] gap-1.5 flex-1 min-h-0 pl-4">
+      <div className="grid grid-cols-[1fr_72px_44px] gap-1.5 flex-1 min-h-0">
         {/* COL 1: Patient Info (vertical stack) */}
         <div className="flex flex-col justify-center min-w-0">
           <div className="flex items-center gap-1">
             {!isReadOnly && <StickerActionsMenu patientId={patient.id} patientName={patient.name} />}
             <span className="font-semibold text-sm leading-tight">{patient.name}</span>
+            {/* Triage badge - inline next to name */}
+            {isReadOnly ? (
+              <TriageDropdown patientId={patient.id} currentLevel={triageLevel} readOnly inline />
+            ) : (
+              <TriageDropdown patientId={patient.id} currentLevel={triageLevel} inline />
+            )}
             {!isReadOnly && (
               <AddAppointmentPopover 
                 patientId={patient.id} 
