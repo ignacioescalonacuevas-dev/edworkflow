@@ -156,7 +156,7 @@ export function StickerNotesColumn({
         sensors={isReadOnly ? [] : sensors}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-3 grid-rows-2 gap-1">
+        <div className="grid grid-cols-3 grid-rows-2 gap-0.5">
           {Array.from({ length: TOTAL_SLOTS }).map((_, slotIndex) => {
             const note = slotMap.get(slotIndex);
             const isAddButtonSlot = slotIndex === addButtonSlot;

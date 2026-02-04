@@ -23,7 +23,7 @@ export function ProcessStateDropdown({ patientId, currentState, readOnly = false
     return (
       <span
         className={cn(
-          "text-[10px] px-1 py-0.5 shrink-0 rounded border",
+          "text-xs px-1 py-0.5 shrink-0 rounded border",
           stateConfig?.color
         )}
       >
@@ -37,7 +37,7 @@ export function ProcessStateDropdown({ patientId, currentState, readOnly = false
       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
         <button
           className={cn(
-            "text-[10px] px-1 py-0.5 shrink-0 rounded border cursor-pointer hover:opacity-80 transition-opacity",
+            "text-xs px-1 py-0.5 shrink-0 rounded border cursor-pointer hover:opacity-80 transition-opacity",
             stateConfig?.color
           )}
         >
