@@ -1,53 +1,85 @@
 
 
-# Plan: Optimize Sticker Layout - Reduce Footer, Enhance Main Content
+# Plan: Optimize Sticker Spacing - Keep Structure, Remove Whitespace, Increase Fonts
 
 ## Overview
 
-The footer area (chief complaint + process state) currently uses more vertical space than necessary compared to the main patient information. By reducing the footer's padding and font sizes, we can reallocate that space to make the primary content (patient name, notes grid, staff info) larger and more visible.
+Keep the current 3-column + footer structure (which mirrors the paper system) but optimize by reducing unnecessary padding/margins and increasing font sizes for better tablet readability.
 
 ---
 
-## Current vs Proposed Layout
+## Issues Identified
+
+| Issue | Current Value | Impact |
+|-------|---------------|--------|
+| Container padding | `p-2.5` (10px) | Too much internal whitespace |
+| Grid gap | `gap-1.5` (6px) | Could be tighter |
+| Footer top spacing | `pt-1 mt-1` | Could be reduced |
+| Notes grid gap | `gap-1` (4px) | Could be tighter |
+| Patient name | `text-[15px]` | Good, keep |
+| DOB / M-Number | `text-[11px]` | Too small for tablet |
+| Chief complaint | `text-[10px]` | Too small for tablet |
+| Timer | `text-[9px]` | Very hard to read |
+| Process state | `text-[10px]` | Could be larger |
+| Staff column padding | `py-0.5` | Adds unnecessary height |
+
+---
+
+## Proposed Changes
+
+| Element | Current | Proposed | Saved/Gained |
+|---------|---------|----------|--------------|
+| **Container padding** | `p-2.5` | `p-2` | +4px total |
+| **Grid gap** | `gap-1.5` | `gap-1` | +4px horizontal |
+| **Footer spacing** | `pt-1 mt-1` | `pt-0.5 mt-0.5` | +4px vertical |
+| **Notes grid gap** | `gap-1` | `gap-0.5` | Tighter notes |
+| **Staff column py** | `py-0.5` | `py-0` | Removes extra space |
+| **DOB / M-Number** | `text-[11px]` | `text-xs` (12px) | More readable |
+| **Chief complaint** | `text-[10px]` | `text-xs` (12px) | More readable |
+| **Timer** | `text-[9px]` | `text-[11px]` | More readable |
+| **Process state** | `text-[10px]` | `text-xs` (12px) | More readable |
+| **Admission note** | `text-[10px]` | `text-[11px]` | More readable |
+| **Bed number** | `text-[10px]` | `text-[11px]` | More readable |
+
+---
+
+## Visual Comparison
 
 ```text
-CURRENT STICKER (~100px total height)
-┌──────────────────────────────────────────────────────────┐
-│ Name + Triage                    │ Notes │ Box          │
-│ DOB + Consultant/Bed             │ Grid  │ Dr           │  ~60px
-│ M-Number + Appointments          │ (3×2) │ RN           │
-├──────────────────────────────────────────────────────────┤
-│ pt-1.5 mt-1.5                                            │
-│ Chief Complaint          Timer        [Process State]    │  ~35-40px
-│ (large padding & text-xs)                                │
-└──────────────────────────────────────────────────────────┘
+CURRENT (with excessive padding):
+┌──────────────────────────────────────────────────────────────────────┐
+│ ← p-2.5 (10px padding all around)                                    │
+│   ┌─────────────────────┬──────────────────┬─────────────┐           │
+│   │                     │     gap-1.5      │   py-0.5    │           │
+│   │  Name [15px] ✓      │   ┌──┬──┬──┐     │     WR      │           │
+│   │  DOB [11px] ✗       │   │  │  │  │     │     TA      │           │
+│   │  M-Num [11px] ✗     │   ├──┼──┼──┤     │     NB      │           │
+│   │                     │   │  │  │  │     │   py-0.5    │           │
+│   │                     │   └──┴──┴──┘     │             │           │
+│   └─────────────────────┴──────────────────┴─────────────┘           │
+│   ┌──────────────────────────────────────────────────────┐           │
+│   │ pt-1 mt-1                                            │           │
+│   │ Chief [10px] ✗      Timer [9px] ✗   [State 10px] ✗   │           │
+│   └──────────────────────────────────────────────────────┘           │
+└──────────────────────────────────────────────────────────────────────┘
 
-PROPOSED STICKER (~100px total height - rebalanced)
-┌──────────────────────────────────────────────────────────┐
-│ Name + Triage                    │ Notes │ Box          │
-│ DOB + Consultant/Bed             │ Grid  │ Dr           │  ~70px
-│ M-Number + Appointments          │ (3×2) │ RN           │  (+larger)
-├──────────────────────────────────────────────────────────┤
-│ pt-1 mt-1 (compact)                                      │
-│ Chest pain          2h30  [Awaiting]                     │  ~25-28px
-│ (text-[10px] compact)                                    │
-└──────────────────────────────────────────────────────────┘
+OPTIMIZED (same structure, less whitespace, larger fonts):
+┌────────────────────────────────────────────────────────────────────┐
+│ ← p-2 (8px padding all around)                                      │
+│  ┌─────────────────────┬──────────────────┬────────────┐            │
+│  │                     │     gap-1        │    py-0    │            │
+│  │  Name [15px] ✓      │   ┌──┬──┬──┐     │     WR     │            │
+│  │  DOB [12px] ✓       │   │  │  │  │     │     TA     │            │
+│  │  M-Num [12px] ✓     │   ├──┼──┼──┤     │     NB     │            │
+│  │                     │   │  │  │  │     │            │            │
+│  │                     │   └──┴──┴──┘     │            │            │
+│  └─────────────────────┴──────────────────┴────────────┘            │
+│  ┌──────────────────────────────────────────────────────┐           │
+│  │ pt-0.5 mt-0.5 (less border spacing)                  │           │
+│  │ Chief [12px] ✓      Timer [11px] ✓   [State 12px] ✓  │           │
+│  └──────────────────────────────────────────────────────┘           │
+└────────────────────────────────────────────────────────────────────┘
 ```
-
----
-
-## Changes Summary
-
-| Element | Current | Proposed |
-|---------|---------|----------|
-| **Footer padding** | `pt-1.5 mt-1.5` | `pt-1 mt-1` |
-| **Chief complaint font** | `text-xs` (12px) | `text-[10px]` (10px) |
-| **Timer font** | `text-[10px]` | `text-[9px]` (9px) |
-| **Process state font** | `text-[11px]` | `text-[10px]` |
-| **Process state padding** | `px-1.5 py-0.5` | `px-1 py-0.5` |
-| **Patient name font** | `text-sm` (14px) | `text-[15px]` (15px) |
-| **Notes grid slots** | `34×26px` | `36×28px` |
-| **Notes column width** | `110px` | `114px` |
 
 ---
 
@@ -55,151 +87,115 @@ PROPOSED STICKER (~100px total height - rebalanced)
 
 | File | Changes |
 |------|---------|
-| `src/components/PatientSticker.tsx` | Reduce footer padding/sizes, increase name size |
-| `src/components/ProcessStateDropdown.tsx` | Reduce button font and padding |
-| `src/components/StickerNotesColumn.tsx` | Slightly increase slot sizes |
-| `src/components/StickerNoteItem.tsx` | Increase note button sizes |
+| `src/components/PatientSticker.tsx` | Reduce padding, gaps, increase fonts |
+| `src/components/ProcessStateDropdown.tsx` | Increase font to `text-xs` |
+| `src/components/StickerNotesColumn.tsx` | Reduce grid gap |
+| `src/index.css` | Update sticker base padding |
 
 ---
 
 ## Technical Section
 
-### 1. PatientSticker.tsx
+### 1. src/index.css - Base sticker padding
 
-**Footer (lines 530-556):**
-```tsx
-// Change from:
-<div className="flex items-center gap-2 pt-1.5 mt-1.5 border-t border-border/50">
-
-// To:
-<div className="flex items-center gap-1.5 pt-1 mt-1 border-t border-border/50">
+```css
+/* Line 131: Change from p-2.5 to p-2 */
+.sticker {
+  @apply p-2 rounded-lg border bg-card text-sm relative;
+}
 ```
 
-**Chief complaint (line 205):**
+### 2. src/components/PatientSticker.tsx
+
+**Line 412: Container padding already in CSS, just confirm**
+
+**Line 419: Grid gap**
 ```tsx
-// Change from:
+// Change from gap-1.5 to gap-1
+<div className="grid grid-cols-[1fr_114px_44px] gap-1 flex-1 min-h-0">
+```
+
+**Line 441: DOB font**
+```tsx
+// Change from text-[11px] to text-xs
+<span className="text-xs text-muted-foreground">{patient.dateOfBirth}</span>
+```
+
+**Line 452: Bed number font**
+```tsx
+// Change from text-[10px] to text-[11px]
+<span className="text-[11px] text-cyan-600 font-medium">
+```
+
+**Line 460: M-Number font**
+```tsx
+// Change from text-[11px] to text-xs
+<span className="text-xs text-muted-foreground font-mono">{patient.mNumber}</span>
+```
+
+**Line 489: Staff column padding**
+```tsx
+// Remove py-0.5 (change to no vertical padding)
+<div className="flex flex-col items-center justify-between">
+```
+
+**Line 531: Footer spacing**
+```tsx
+// Change from pt-1 mt-1 to pt-0.5 mt-0.5
+<div className="flex items-center gap-1.5 pt-0.5 mt-0.5 border-t border-border/50">
+```
+
+**Line 533: Chief complaint read-only font**
+```tsx
+// Change from text-[10px] to text-xs
+<span className="text-xs text-muted-foreground flex-1 truncate">
+```
+
+**Line 205 (EditableChiefComplaint): Editable font**
+```tsx
+// Change from text-[10px] to text-xs
 className="text-xs text-muted-foreground flex-1 cursor-pointer..."
-
-// To:
-className="text-[10px] text-muted-foreground flex-1 cursor-pointer..."
 ```
 
-**Editable input (line 193):**
+**Line 542: Timer font**
 ```tsx
-// Change from:
-className="h-5 text-xs px-1.5 py-0..."
-
-// To:
-className="h-4 text-[10px] px-1 py-0..."
+// Change from text-[9px] to text-[11px]
+className="text-[11px] text-muted-foreground..."
 ```
 
-**Timer button (line 542):**
+**Lines 109, 137, 151 (EditableFreeNote): Admission note fonts**
 ```tsx
-// Change from:
-className="text-[10px] text-muted-foreground px-1 py-0.5..."
-
-// To:
-className="text-[9px] text-muted-foreground px-0.5 py-0.5..."
+// Change from text-[10px] to text-[11px]
+className="text-[11px] text-cyan-600..."
 ```
 
-**Patient name (line 424):**
+### 3. src/components/ProcessStateDropdown.tsx
+
+**Lines 26 and 40: Badge font**
 ```tsx
-// Change from:
-<span className="font-semibold text-sm leading-tight">
-
-// To:
-<span className="font-semibold text-[15px] leading-tight">
-```
-
-### 2. ProcessStateDropdown.tsx
-
-**Read-only state (lines 25-31):**
-```tsx
-// Change from:
+// Change from text-[10px] to text-xs
 className={cn(
-  "text-[11px] px-1.5 py-0.5 shrink-0 rounded border",
-  ...
-)}
-
-// To:
-className={cn(
-  "text-[10px] px-1 py-0.5 shrink-0 rounded border",
+  "text-xs px-1 py-0.5 shrink-0 rounded border...",
   ...
 )}
 ```
 
-**Editable button (lines 38-45):**
+### 4. src/components/StickerNotesColumn.tsx
+
+**Line 159: Grid gap**
 ```tsx
-// Change from:
-className={cn(
-  "text-[11px] px-1.5 py-0.5 shrink-0 rounded border cursor-pointer...",
-  ...
-)}
-
-// To:
-className={cn(
-  "text-[10px] px-1 py-0.5 shrink-0 rounded border cursor-pointer...",
-  ...
-)}
-```
-
-### 3. StickerNotesColumn.tsx
-
-**Column width (line 152):**
-```tsx
-// Change from:
-className="w-[110px]"
-
-// To:
-className="w-[114px]"
-```
-
-**Slot sizes (lines 39, 62, 77):**
-```tsx
-// Change from:
-className="w-[34px] h-[26px]..."
-
-// To:
-className="w-[36px] h-[28px]..."
-```
-
-### 4. StickerNoteItem.tsx
-
-**Study button (line 62):**
-```tsx
-// Change from:
-className="w-[34px] h-[26px] rounded text-[11px]..."
-
-// To:
-className="w-[36px] h-[28px] rounded text-[11px]..."
-```
-
-**Other notes (line 105):**
-```tsx
-// Change from:
-className="w-[34px] h-[26px] rounded text-[11px]..."
-
-// To:
-className="w-[36px] h-[28px] rounded text-[11px]..."
-```
-
-### 5. Grid column adjustment (PatientSticker.tsx line 419)
-
-```tsx
-// Change from:
-<div className="grid grid-cols-[1fr_90px_44px] gap-1.5 flex-1 min-h-0">
-
-// To:
-<div className="grid grid-cols-[1fr_114px_44px] gap-1.5 flex-1 min-h-0">
+// Change from gap-1 to gap-0.5
+<div className="grid grid-cols-3 grid-rows-2 gap-0.5">
 ```
 
 ---
 
 ## Expected Result
 
-- Footer takes ~25-28px instead of ~35-40px (30% reduction)
-- Patient name larger and more readable (15px vs 14px)
-- Notes grid slightly larger (36×28px vs 34×26px) 
-- Better visual balance between main content and footer
-- Same overall sticker height, just redistributed space
+- Same 3-column + footer structure preserved
+- Reduced internal whitespace (~12px saved vertically)
+- All small fonts upgraded to minimum 11-12px for tablet readability
+- Tighter grid gaps without losing visual separation
+- Better use of available space
+- Familiar layout for users transitioning from paper system
 
