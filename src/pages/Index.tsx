@@ -40,7 +40,7 @@ const Index = () => {
       />
       
       {/* Main Content - Patient Board */}
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 overflow-auto">
         <PatientBoard />
       </main>
 

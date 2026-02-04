@@ -43,12 +43,12 @@ export function PatientBoard() {
     <div className="h-full flex flex-col">
       <BoardHeader />
       
-      <div className="flex-1 flex flex-col min-h-0 p-3">
+      <div className="flex-1 overflow-auto p-3">
         {/* Grid 4×8 con flujo por columnas */}
         <div 
-          className="flex-1 grid grid-cols-4 gap-2"
+          className="grid grid-cols-4 gap-2"
           style={{ 
-            gridTemplateRows: 'repeat(8, 1fr)',
+            gridTemplateRows: 'repeat(8, minmax(100px, auto))',
             gridAutoFlow: 'column' 
           }}
         >
