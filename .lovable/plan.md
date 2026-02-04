@@ -1,49 +1,68 @@
 
 
-# Plan: Translate Agenda and Notes System to English
+# Plan: Translate Shift Management System to English
 
 ## Overview
 
-Several UI elements in the Agenda panel and the new free notes feature are in Spanish. This plan will translate all Spanish text to English for consistency with the project's language requirements.
+The shift management dialogs (End Shift, Previous Shift Warning, and Shift History) contain Spanish text that needs to be translated to English for consistency with the project's English-only UI requirement.
 
 ---
 
 ## Spanish Text Found
 
-| Location | Spanish | English |
-|----------|---------|---------|
-| **AgendaPanel.tsx** | | |
-| Line 3 | `import { es } from 'date-fns/locale'` | Remove (not needed) |
-| Line 119 | `en {item.minutesUntil}m` | `in {item.minutesUntil}m` |
-| Line 124 | `hace {Math.abs(...)}m` | `{Math.abs(...)}m ago` |
-| Line 162 | `En Progreso` | `In Progress` |
-| Line 166 | `Completado` | `Completed` |
-| Line 169 | `Cancelar` | `Cancel` |
-| Line 243 | `Agenda del Turno` | `Shift Agenda` |
-| Line 249 | `Próximos 60 min` | `Next 60 min` |
-| Line 252 | `Sin appointments próximos` | `No upcoming appointments` |
-| Line 256 | `En Progreso` | `In Progress` |
-| Line 262 | `Pendientes` | `Pending` |
-| Line 268 | `Completados` | `Completed` |
-| Line 276 | `No hay appointments programados` | `No scheduled appointments` |
-| Line 278 | `...para agregar` | `...to add` |
-| **AddAppointmentPopover.tsx** | | |
-| Line 29 | `Selecciona una hora para el appointment` | `Please select a time for the appointment` |
-| Line 51 | `programado para ${time}` | `scheduled for ${time}` |
-| Line 67 | `title="Agregar appointment"` | `title="Add appointment"` |
-| Line 79 | `Nuevo Appointment` | `New Appointment` |
-| Line 85 | `Tipo` | `Type` |
-| Line 105 | `Hora Programada` | `Scheduled Time` |
-| Line 116 | `Recordatorio` | `Reminder` |
-| Line 136 | `Notas (opcional)` | `Notes (optional)` |
-| Line 138 | `ej: paciente en ayunas` | `e.g. patient fasting` |
-| Line 151 | `Agregar Appointment` | `Add Appointment` |
-| **types/patient.ts** | | |
-| Line 185-189 | `60 min antes`, etc. | `60 min before`, etc. |
-| **PatientSticker.tsx** | | |
-| Line 77 | `+Cama` | `+Bed` |
-| Line 124 | `Notas de admisión...` | `Admission notes...` |
-| Line 153 | `[+ Nota...]` | `[+ Note...]` |
+### EndShiftDialog.tsx
+
+| Line | Spanish | English |
+|------|---------|---------|
+| 3 | `import { es } from 'date-fns/locale'` | Remove import |
+| 36 | `'Turno cerrado y guardado en historial'` | `'Shift closed and saved to history'` |
+| 40 | `"EEEE, dd 'de' MMMM", { locale: es }` | `'EEEE, MMMM d'` |
+| 41 | `'Sin fecha'` | `'No date'` |
+| 48 | `Cerrar Turno` | `End Shift` |
+| 55 | `Cerrar Turno` | `End Shift` |
+| 63 | `Resumen del Turno` | `Shift Summary` |
+| 70 | `Total pacientes` | `Total patients` |
+| 78 | `Admisiones` | `Admissions` |
+| 86 | `Altas` | `Discharges` |
+| 94 | `Traslados` | `Transfers` |
+| 103 | `Hay {n} pacientes sin cerrar.` | `There are {n} unclosed patients.` |
+| 105 | `Se guardarán en el historial...` | `They will be saved to history...` |
+| 114 | `Cancelar` | `Cancel` |
+| 117 | `Cerrar y Guardar` | `Close and Save` |
+
+### PreviousShiftWarning.tsx
+
+| Line | Spanish | English |
+|------|---------|---------|
+| 2 | `import { es } from 'date-fns/locale'` | Remove import |
+| 25 | `"EEEE, dd 'de' MMMM", { locale: es }` | `'EEEE, MMMM d'` |
+| 26 | `'fecha desconocida'` | `'unknown date'` |
+| 28 | `"EEEE, dd 'de' MMMM", { locale: es }` | `'EEEE, MMMM d'` |
+| 33 | `'Turno anterior cerrado...'` | `'Previous shift closed. Configure new shift.'` |
+| 38 | `'Continuando con el turno anterior'` | `'Continuing with previous shift'` |
+| 47 | `Turno Anterior Sin Cerrar` | `Previous Shift Not Closed` |
+| 50 | `Se detectó un turno...` | `A shift from a previous day was detected that was not closed.` |
+| 58 | `Turno abierto` | `Open shift` |
+| 66 | `Hoy` | `Today` |
+| 72 | `Puedes cerrar el turno...` | `You can close the previous shift and start a new one, or continue working on the existing shift.` |
+| 83 | `Continuar Turno` | `Continue Shift` |
+| 90 | `Cerrar y Empezar Nuevo` | `Close and Start New` |
+
+### ShiftHistoryDialog.tsx
+
+| Line | Spanish | English |
+|------|---------|---------|
+| 52 | `Turno del ${date} reabierto para edición` | `Shift from ${date} reopened for editing` |
+| 61 | `Historial` | `History` |
+| 68 | `Historial de Turnos` | `Shift History` |
+| 75 | `No hay turnos guardados.` | `No saved shifts.` |
+| 76 | `Los turnos se guardan al cerrar el día.` | `Shifts are saved when closing the day.` |
+| 117 | `Reabrir para edición` | `Reopen for editing` |
+| 126 | `Ver` | `View` |
+| 141 | `¿Reabrir turno?` | `Reopen shift?` |
+| 143-145 | `Tienes un turno activo...` | `You have an active shift. Reopening this shift will replace current data with the selected shift's data.` |
+| 149 | `Cancelar` | `Cancel` |
+| 151 | `Reabrir Turno` | `Reopen Shift` |
 
 ---
 
@@ -51,110 +70,132 @@ Several UI elements in the Agenda panel and the new free notes feature are in Sp
 
 | File | Changes |
 |------|---------|
-| `src/components/AgendaPanel.tsx` | Translate 12 strings |
-| `src/components/AddAppointmentPopover.tsx` | Translate 9 strings |
-| `src/types/patient.ts` | Translate 5 reminder labels |
-| `src/components/PatientSticker.tsx` | Translate 3 strings |
+| `src/components/EndShiftDialog.tsx` | Translate 14 strings, remove `es` locale |
+| `src/components/PreviousShiftWarning.tsx` | Translate 12 strings, remove `es` locale |
+| `src/components/ShiftHistoryDialog.tsx` | Translate 11 strings |
 
 ---
 
 ## Technical Section
 
-### 1. AgendaPanel.tsx
+### 1. EndShiftDialog.tsx
 
 ```tsx
-// Line 3: Remove unused Spanish locale
+// Line 3: Remove Spanish locale import
 // import { es } from 'date-fns/locale';  // DELETE
 
-// Line 119
-<span className="text-[10px] text-muted-foreground">
-  in {item.minutesUntil}m
-</span>
+// Line 36
+toast.success('Shift closed and saved to history');
 
-// Line 124
-<span className="text-[10px] text-red-400">
-  {Math.abs(item.minutesUntil)}m ago
-</span>
+// Line 39-41
+const formattedDate = shiftDate 
+  ? format(new Date(shiftDate), 'EEEE, MMMM d')
+  : 'No date';
 
-// Lines 162-169 - Dropdown items
-<DropdownMenuItem>In Progress</DropdownMenuItem>
-<DropdownMenuItem>Completed</DropdownMenuItem>
-<DropdownMenuItem>Cancel</DropdownMenuItem>
+// Line 48 - Button
+<XCircle /> End Shift
 
-// Line 243
-<SheetTitle>Shift Agenda</SheetTitle>
+// Line 55 - DialogTitle
+End Shift
 
-// Lines 248-271 - Section titles
-renderSection('Next 60 min', ..., 'No upcoming appointments')
-renderSection('In Progress', ...)
-renderSection('Pending', ...)
-renderSection('Completed', ...)
+// Line 63
+Shift Summary
 
-// Lines 276-279 - Empty state
-<div>No scheduled appointments</div>
-<div>Use the <CalendarClock /> button on each sticker to add</div>
+// Lines 70, 78, 86, 94 - Stats labels
+Total patients
+Admissions
+Discharges
+Transfers
+
+// Lines 103-106 - Warning message
+<span>There are {pendingPatients} unclosed patients.</span>
+<p>They will be saved to history and you can reopen the shift if needed.</p>
+
+// Lines 114, 117 - Buttons
+Cancel
+Close and Save
 ```
 
-### 2. AddAppointmentPopover.tsx
+### 2. PreviousShiftWarning.tsx
 
 ```tsx
-// Line 29
-toast.error('Please select a time for the appointment');
+// Line 2: Remove Spanish locale import
+// import { es } from 'date-fns/locale';  // DELETE
 
-// Line 51  
-toast.success(`${typeConfig.label} scheduled for ${time}`);
+// Lines 24-28 - Date formatting
+const formattedShiftDate = shiftDate 
+  ? format(new Date(shiftDate), 'EEEE, MMMM d')
+  : 'unknown date';
 
-// Line 67
-title="Add appointment"
+const today = format(new Date(), 'EEEE, MMMM d');
 
-// Line 79
-<div>New Appointment</div>
+// Line 33
+toast.success('Previous shift closed. Configure the new shift.');
 
-// Labels
-<Label>Type</Label>
-<Label>Scheduled Time</Label>
-<Label>Reminder</Label>
-<Label>Notes (optional)</Label>
+// Line 38
+toast.info('Continuing with previous shift');
 
-// Line 138
-placeholder="e.g. patient fasting"
+// Lines 47-50 - Dialog header
+<DialogTitle>Previous Shift Not Closed</DialogTitle>
+<DialogDescription>
+  A shift from a previous day was detected that was not closed.
+</DialogDescription>
 
-// Line 151
-<Button>Add Appointment</Button>
+// Lines 58, 66 - Labels
+Open shift
+Today
+
+// Line 72 - Description
+You can close the previous shift and start a new one, or continue working on the existing shift.
+
+// Lines 83, 90 - Buttons
+Continue Shift
+Close and Start New
 ```
 
-### 3. types/patient.ts
-
-```typescript
-export const REMINDER_OPTIONS = [
-  { value: 60, label: '60 min before' },
-  { value: 30, label: '30 min before' },
-  { value: 15, label: '15 min before' },
-  { value: 10, label: '10 min before' },
-  { value: 5, label: '5 min before' },
-] as const;
-```
-
-### 4. PatientSticker.tsx
+### 3. ShiftHistoryDialog.tsx
 
 ```tsx
-// Line 77 - BedNumberDisplay
-{bedNumber || '+Bed'}
+// Line 52 - Toast
+toast.success(`Shift from ${format(new Date(date), 'MM/dd/yyyy')} reopened for editing`);
 
-// Line 124 - EditableFreeNote placeholder
-placeholder="Admission notes..."
+// Line 61 - Button
+History
 
-// Line 153 - Empty state placeholder
-[+ Note...]
+// Line 68 - DialogTitle
+Shift History
+
+// Lines 75-76 - Empty state
+<p>No saved shifts.</p>
+<p>Shifts are saved when closing the day.</p>
+
+// Line 117 - Tooltip
+title="Reopen for editing"
+
+// Line 126 - Button
+View
+
+// Lines 141-145 - Alert dialog
+<AlertDialogTitle>Reopen shift?</AlertDialogTitle>
+<AlertDialogDescription>
+  You have an active shift. Reopening this shift will replace current data with the selected shift's data.
+  <br /><br />
+  The current shift <strong>will not be saved</strong> automatically. If you want to keep it, close the shift first.
+</AlertDialogDescription>
+
+// Lines 149, 151 - Buttons
+Cancel
+Reopen Shift
 ```
 
 ---
 
 ## Expected Result
 
-- ✅ All Agenda panel text in English
-- ✅ All appointment popover text in English  
-- ✅ Reminder options in English
-- ✅ Free note placeholders in English
-- ✅ Consistent with project's English-only UI requirement
+- All End Shift dialog text in English
+- All Previous Shift Warning dialog text in English
+- All Shift History dialog text in English
+- Date formats in English (without Spanish locale)
+- Toast notifications in English
+- Consistent with project's English-only UI requirement
 
