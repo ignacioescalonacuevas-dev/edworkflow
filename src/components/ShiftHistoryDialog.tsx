@@ -49,7 +49,7 @@ export function ShiftHistoryDialog() {
     reopenShift(date);
     setReopenDate(null);
     setIsOpen(false);
-    toast.success(`Turno del ${format(new Date(date), 'dd/MM/yyyy')} reabierto para edición`);
+    toast.success(`Shift from ${format(new Date(date), 'MM/dd/yyyy')} reopened for editing`);
   };
 
   return (
@@ -58,22 +58,22 @@ export function ShiftHistoryDialog() {
         <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="gap-2">
             <History className="h-4 w-4" />
-            Historial
+            History
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <History className="h-5 w-5 text-primary" />
-              Historial de Turnos
+              Shift History
             </DialogTitle>
           </DialogHeader>
           
           {dates.length === 0 ? (
             <div className="py-8 text-center text-muted-foreground">
               <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No hay turnos guardados.</p>
-              <p className="text-sm mt-1">Los turnos se guardan al cerrar el día.</p>
+              <p>No saved shifts.</p>
+              <p className="text-sm mt-1">Shifts are saved when closing the day.</p>
             </div>
           ) : (
             <ScrollArea className="h-80">
@@ -114,7 +114,7 @@ export function ShiftHistoryDialog() {
                           size="sm" 
                           variant="ghost"
                           onClick={() => handleReopenShift(date)}
-                          title="Reabrir para edición"
+                          title="Reopen for editing"
                         >
                           <RotateCcw className="h-4 w-4" />
                         </Button>
@@ -123,7 +123,7 @@ export function ShiftHistoryDialog() {
                           variant="secondary"
                           onClick={() => handleViewShift(date)}
                         >
-                          Ver
+                          View
                         </Button>
                       </div>
                     </div>
@@ -138,17 +138,17 @@ export function ShiftHistoryDialog() {
       <AlertDialog open={reopenDate !== null} onOpenChange={(open) => !open && setReopenDate(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Reabrir turno?</AlertDialogTitle>
+            <AlertDialogTitle>Reopen shift?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tienes un turno activo. Reabrir este turno reemplazará los datos actuales con los del turno seleccionado.
+              You have an active shift. Reopening this shift will replace current data with the selected shift's data.
               <br /><br />
-              El turno actual <strong>no se guardará</strong> automáticamente. Si quieres conservarlo, cierra el turno primero.
+              The current shift <strong>will not be saved</strong> automatically. If you want to keep it, close the shift first.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => reopenDate && confirmReopen(reopenDate)}>
-              Reabrir Turno
+              Reopen Shift
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
