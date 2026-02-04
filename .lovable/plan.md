@@ -1,158 +1,316 @@
 
-# Plan: Datos de Prueba para Día Actual y Mejoras de Analíticas
+# Plan: Autenticación y Roles para ED Workflow
 
 ## Resumen
 
-1. **Agregar 25 pacientes de muestra para el día actual** (2026-01-25) con un flujo realista de urgencias (10am-11pm)
-2. **Agregar métricas importantes que faltan**: DNW (Did Not Wait), Follow-ups breakdown
-3. **No es necesario cambiar el modo lectura** porque ya existe solo para ver días anteriores desde el historial, y el día actual siempre es editable
+Implementaremos un sistema de autenticación **simple pero seguro** que puedas demostrar al CEO/IT, con la arquitectura preparada para conectarse a Active Directory después.
+
+**Usuarios del sistema (aprox. 31 personas):**
+- 6 CNM1/Coordinadores → rol `coordinator` (modificar todo)
+- 5 Staff de Admisión → rol `admission` (crear pacientes)
+- 8 Médicos + 12 Enfermeros → rol `viewer` (solo ver)
 
 ---
 
-## Diseño de los 25 Pacientes
+## Arquitectura de Seguridad
 
-Considerando que ED cierra admisiones a las 7pm y para las 10-11pm todos deben tener disposición final:
-
-| Hora Llegada | Estado Final | Cantidad |
-|--------------|--------------|----------|
-| 10:00-12:00 | Discharged | 5 |
-| 12:00-14:00 | Discharged | 4 |
-| 14:00-16:00 | Admitted (3) + Discharged (2) | 5 |
-| 16:00-18:00 | Admitted (2) + Discharged (3) | 5 |
-| 18:00-20:00 | Discharged (3) + Transfer (1) + Admitted (1) | 5 |
-| 20:00-22:00 | DNW (1) | 1 (Late arrival that left without being seen) |
-
-**Distribución final:**
-- Discharged: 17
-- Admitted: 6
-- Transferred: 1
-- DNW (Did Not Wait): 1
-- **Total: 25**
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         ARQUITECTURA DE SEGURIDAD                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────────┐    ┌──────────────────┐    ┌──────────────────────┐   │
+│  │   LOGIN PAGE    │───▶│  Supabase Auth   │◀──▶│   user_roles table   │   │
+│  │                 │    │  (email/pass)    │    │  (role assignment)   │   │
+│  │  Hospital ID +  │    │                  │    │                      │   │
+│  │  Password       │    │  En producción:  │    │  coordinator: 6      │   │
+│  │                 │    │  → Active Dir.   │    │  admission: 5        │   │
+│  └─────────────────┘    └──────────────────┘    │  viewer: 20          │   │
+│                                                  └──────────────────────┘   │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                         ROW LEVEL SECURITY                           │   │
+│  ├─────────────────────────────────────────────────────────────────────┤   │
+│  │                                                                       │   │
+│  │  coordinator: SELECT, INSERT, UPDATE, DELETE en todas las tablas     │   │
+│  │  admission:   SELECT todos + INSERT pacientes + UPDATE datos básicos │   │
+│  │  viewer:      SELECT solamente (solo lectura)                        │   │
+│  │                                                                       │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │                         AUDIT LOG                                    │   │
+│  ├─────────────────────────────────────────────────────────────────────┤   │
+│  │  Cada acción queda registrada:                                       │   │
+│  │  • Quién hizo qué                                                    │   │
+│  │  • Cuándo                                                            │   │
+│  │  • Qué paciente afectó                                               │   │
+│  │  • Detalles del cambio                                               │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Nueva Métrica: DNW (Did Not Wait)
+## Pantalla de Login
 
-Los pacientes que se fueron sin esperar se marcan con `processState: 'discharged'` pero sin haber pasado nunca por `being_seen`. Se puede detectar así:
-
-```typescript
-const dnw = patients.filter(p => 
-  p.processState === 'discharged' && 
-  !p.events.some(e => e.description.toLowerCase().includes('being seen'))
-).length;
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│                                                                     │
+│                        🏥 ED Workflow System                        │
+│                                                                     │
+│                    ┌─────────────────────────────┐                 │
+│                    │ Hospital ID / Email         │                 │
+│                    └─────────────────────────────┘                 │
+│                    ┌─────────────────────────────┐                 │
+│                    │ Password                ••••│                 │
+│                    └─────────────────────────────┘                 │
+│                                                                     │
+│                    [        Sign In        ]                       │
+│                                                                     │
+│                    ─────────────────────────────                   │
+│                                                                     │
+│                    Forgot password? Contact IT                     │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-## Nueva Métrica: Follow-ups Breakdown
+---
 
-Contar los follow-ups por tipo desde los stickerNotes:
+## Permisos por Rol (Detalle)
 
-```typescript
-const followupCounts: Record<string, number> = {};
-patients.forEach(p => {
-  p.stickerNotes?.forEach(note => {
-    if (note.type === 'followup') {
-      followupCounts[note.text] = (followupCounts[note.text] || 0) + 1;
-    }
-  });
-});
-```
+| Acción | Coordinator | Admission | Viewer |
+|--------|-------------|-----------|--------|
+| Ver board en tiempo real | ✅ | ✅ | ✅ |
+| Ver detalles de paciente | ✅ | ✅ | ✅ |
+| Crear nuevo paciente | ✅ | ✅ | ❌ |
+| Editar datos básicos (nombre, DOB, M#, queja) | ✅ | ✅ | ❌ |
+| Cambiar triage | ✅ | ❌ | ❌ |
+| Cambiar process state | ✅ | ❌ | ❌ |
+| Asignar médico/enfermero | ✅ | ❌ | ❌ |
+| Agregar notas/stickers | ✅ | ❌ | ❌ |
+| Gestionar órdenes | ✅ | ❌ | ❌ |
+| Gestionar admisiones | ✅ | ❌ | ❌ |
+| Ver analytics | ✅ | ✅ | ✅ |
+| Exportar datos | ✅ | ❌ | ❌ |
+| Configurar turno | ✅ | ❌ | ❌ |
 
 ---
 
 ## Sección Técnica
 
+### Base de Datos (Migraciones Supabase)
+
+**1. Tabla de roles de usuario:**
+
+```sql
+-- Enum de roles
+CREATE TYPE public.app_role AS ENUM ('coordinator', 'admission', 'viewer');
+
+-- Tabla de roles (separada de auth.users por seguridad)
+CREATE TABLE public.user_roles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  role app_role NOT NULL DEFAULT 'viewer',
+  display_name TEXT,  -- "Nurse Mary" para mostrar en UI
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id)
+);
+
+-- Habilitar RLS
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+```
+
+**2. Función para verificar rol (evita recursión RLS):**
+
+```sql
+CREATE OR REPLACE FUNCTION public.get_user_role(_user_id UUID)
+RETURNS app_role
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT role FROM public.user_roles WHERE user_id = _user_id LIMIT 1
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_coordinator(_user_id UUID)
+RETURNS BOOLEAN AS $$
+  SELECT public.get_user_role(_user_id) = 'coordinator'
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.is_admission_or_above(_user_id UUID)
+RETURNS BOOLEAN AS $$
+  SELECT public.get_user_role(_user_id) IN ('coordinator', 'admission')
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
+```
+
+**3. Tabla de pacientes (reemplaza localStorage):**
+
+```sql
+CREATE TABLE public.patients (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  date_of_birth TEXT NOT NULL,
+  m_number TEXT NOT NULL,
+  chief_complaint TEXT NOT NULL,
+  triage_level INTEGER NOT NULL CHECK (triage_level BETWEEN 1 AND 5),
+  process_state TEXT NOT NULL,
+  assigned_box TEXT NOT NULL,
+  current_location TEXT,
+  doctor TEXT,
+  nurse TEXT,
+  arrival_time TIMESTAMPTZ NOT NULL,
+  discharged_at TIMESTAMPTZ,
+  transferred_to TEXT,
+  shift_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  created_by UUID REFERENCES auth.users(id),
+  updated_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+**4. Políticas RLS para pacientes:**
+
+```sql
+ALTER TABLE public.patients ENABLE ROW LEVEL SECURITY;
+
+-- Todos pueden ver
+CREATE POLICY "All authenticated can view patients"
+  ON public.patients FOR SELECT
+  TO authenticated
+  USING (true);
+
+-- Coordinadores pueden hacer todo
+CREATE POLICY "Coordinators can manage patients"
+  ON public.patients FOR ALL
+  TO authenticated
+  USING (public.is_coordinator(auth.uid()))
+  WITH CHECK (public.is_coordinator(auth.uid()));
+
+-- Admission puede insertar
+CREATE POLICY "Admission can create patients"
+  ON public.patients FOR INSERT
+  TO authenticated
+  WITH CHECK (public.is_admission_or_above(auth.uid()));
+
+-- Admission puede actualizar campos básicos
+CREATE POLICY "Admission can update basic fields"
+  ON public.patients FOR UPDATE
+  TO authenticated
+  USING (public.is_admission_or_above(auth.uid()));
+```
+
+**5. Tabla de auditoría:**
+
+```sql
+CREATE TABLE public.audit_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id),
+  action TEXT NOT NULL,  -- 'create_patient', 'update_patient', 'login', etc.
+  table_name TEXT,
+  record_id UUID,
+  old_data JSONB,
+  new_data JSONB,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### Archivos a Crear
+
+| Archivo | Descripción |
+|---------|-------------|
+| `src/contexts/AuthContext.tsx` | Contexto de autenticación con estado del usuario y rol |
+| `src/pages/Login.tsx` | Página de login con formulario |
+| `src/hooks/useAuth.ts` | Hook para login, logout, estado |
+| `src/hooks/useUserRole.ts` | Hook para obtener rol del usuario actual |
+| `src/components/ProtectedRoute.tsx` | Wrapper que redirige a login si no autenticado |
+| `src/components/RoleGate.tsx` | Componente que muestra/oculta según rol |
+| `src/lib/supabase.ts` | Cliente de Supabase |
+| `src/integrations/supabase/types.ts` | Tipos TypeScript para tablas |
+
 ### Archivos a Modificar
 
 | Archivo | Cambios |
 |---------|---------|
-| `src/store/patientStore.ts` | Reemplazar `samplePatients` vacío con 25 pacientes realistas |
-| `src/hooks/useAnalytics.ts` | Agregar `dnwCount` y `followupCounts` al AnalyticsData |
-| `src/components/AnalyticsDashboard.tsx` | Mostrar DNW y Follow-ups en el dashboard |
+| `src/App.tsx` | Envolver en AuthProvider, agregar ruta /login, proteger rutas |
+| `src/components/BoardHeader.tsx` | Mostrar nombre de usuario + logout |
+| `src/components/NewPatientForm.tsx` | Solo visible para admission/coordinator |
+| `src/components/PatientCard.tsx` | Deshabilitar edición para viewers |
+| `src/components/PatientDetail.tsx` | Controles condicionados por rol |
+| `src/store/patientStore.ts` | Conectar a Supabase en lugar de localStorage |
 
-### Estructura de Pacientes de Muestra
+### Componente RoleGate (Ejemplo de uso)
 
-```typescript
-const SHIFT_DATE = '2026-01-25';
+```tsx
+// Uso en cualquier componente:
+<RoleGate allowedRoles={['coordinator', 'admission']}>
+  <NewPatientForm />
+</RoleGate>
 
-// Helper function ya existe en shiftHistoryStore.ts, la reutilizamos
-const samplePatients: Patient[] = [
-  // 10:00 - Discharged
-  createPatient('t1', 'John McCarthy', '12/05/1985', 'M00100001', 
-    'Headache x 3 days', 'Box 1', 'Dr. TAU', 'Nebin',
-    new Date(`${SHIFT_DATE}T10:15:00`), 'discharged', 3, {
-      stickerNotes: [
-        { id: 'ts1', type: 'study', text: 'CT', completed: true, createdAt: new Date(`${SHIFT_DATE}T10:45:00`) },
-        { id: 'ts2', type: 'followup', text: 'GP', createdAt: new Date(`${SHIFT_DATE}T12:30:00`) },
-      ],
-      dischargedAt: new Date(`${SHIFT_DATE}T12:30:00`),
-  }),
-  // ... 24 more patients
-];
-```
+<RoleGate allowedRoles={['coordinator']}>
+  <Button onClick={handleDelete}>Delete Patient</Button>
+</RoleGate>
 
-### Distribución por Médico y Enfermero
-
-Para mantener la carga laboral realista:
-- **Dr. TAU**: 6 pacientes
-- **Dr. Joanna**: 5 pacientes  
-- **Dr. Caren**: 5 pacientes
-- **Dr. Alysha**: 5 pacientes
-- **Dr. Salah**: 4 pacientes
-
-- **Nebin**: 7 pacientes
-- **Beatriz**: 6 pacientes
-- **Rinku**: 6 pacientes
-- **Rafa**: 6 pacientes
-
-### Nuevas Métricas en AnalyticsData
-
-```typescript
-export interface AnalyticsData {
-  // ... existing fields
-  
-  // NEW
-  dnwCount: number;           // Did Not Wait
-  followupCounts: Record<string, number>;  // GP: 5, RACC: 2, etc.
-}
-```
-
-### Display en Dashboard
-
-Agregar una nueva sección "End of Day Summary" con:
-- Total arrivals
-- DNW (Did Not Wait)
-- Admissions
-- Transfers  
-- Follow-ups by type (GP, RACC, MRI Scheduled, Ortho Clinic, etc.)
-
----
-
-## Flujo de Eventos por Paciente (Ejemplo Realista)
-
-```typescript
-events: [
-  { type: 'arrival', description: 'Patient arrived at ED', timestamp: 10:15 },
-  { type: 'triage_change', description: 'Triage level: 3', timestamp: 10:20 },
-  { type: 'process_state_change', description: 'Process state changed to: Triaged', timestamp: 10:20 },
-  { type: 'doctor_assigned', description: 'Physician assigned: Dr. TAU', timestamp: 10:30 },
-  { type: 'process_state_change', description: 'Process state changed to: Being Seen', timestamp: 10:30 },
-  { type: 'process_state_change', description: 'Process state changed to: Awaiting Results', timestamp: 11:00 },
-  { type: 'process_state_change', description: 'Process state changed to: Disposition', timestamp: 12:00 },
-  { type: 'process_state_change', description: 'Process state changed to: Discharged', timestamp: 12:30 },
-]
+// Para deshabilitar en vez de ocultar:
+<RoleGate allowedRoles={['coordinator']} fallback={<DisabledButton />}>
+  <EditButton />
+</RoleGate>
 ```
 
 ---
 
-## Resultado Esperado
+## Usuarios de Prueba para Demo
 
-1. **25 pacientes cargados** en el día actual para poder probar todas las funciones
-2. **Analíticas completas** mostrando:
-   - Total de llegadas: 25
-   - DNW: 1
-   - Admisiones: 6
-   - Transfers: 1
-   - Altas: 17
-   - Follow-ups: GP (X), RACC (X), Fracture Clinic (X), etc.
-3. **Poder editar** todos los pacientes ya que es el día actual (no modo lectura)
-4. **Estadísticas de fin de día** con toda la información necesaria para el cierre de turno
+Para la demostración, crearemos 3 usuarios de prueba:
+
+| Email | Contraseña | Rol | Nombre |
+|-------|------------|-----|--------|
+| coordinator@demo.hospital | Demo123! | coordinator | CNM1 Demo |
+| admission@demo.hospital | Demo123! | admission | Admission Staff |
+| viewer@demo.hospital | Demo123! | viewer | Dr. Demo |
+
+Esto permite demostrar los 3 niveles de acceso sin necesidad de Active Directory.
+
+---
+
+## Migración a Producción (Para IT)
+
+Cuando IT esté listo para producción:
+
+1. **Base de datos**: Supabase puede ser self-hosted en servidores del hospital, o usar Supabase Cloud Enterprise (HIPAA compliant)
+
+2. **Active Directory**: Supabase soporta SSO/SAML. IT solo necesita:
+   - Proporcionar el Identity Provider URL
+   - Configurar el mapeo de grupos AD → roles de la app
+   - Ejemplo: Grupo AD "ED-Coordinators" → rol `coordinator`
+
+3. **Intranet**: La app es 100% web, accesible desde cualquier navegador en la intranet
+
+4. **Certificaciones disponibles**: SOC 2 Type II, HIPAA, GDPR (con Supabase Enterprise)
+
+---
+
+## Pasos de Implementación
+
+1. **Conectar Lovable Cloud** (Supabase gestionado)
+2. **Crear migraciones** para tablas y RLS
+3. **Implementar AuthContext** y páginas de login
+4. **Crear componente RoleGate** para control de UI
+5. **Migrar patientStore** de localStorage a Supabase
+6. **Crear usuarios de prueba** para demo
+7. **Agregar auditoría** de acciones
+
+---
+
+## Resultado Final
+
+- ✅ Login seguro con email/contraseña (demo) o Active Directory (producción)
+- ✅ 3 roles con permisos específicos
+- ✅ Datos en PostgreSQL con encriptación
+- ✅ Row Level Security a nivel de base de datos
+- ✅ Auditoría completa de accesos y cambios
+- ✅ Código preparado para migrar a servidores del hospital
+- ✅ Documentación lista para presentar a IT/CEO
