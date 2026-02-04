@@ -182,11 +182,11 @@ export const APPOINTMENT_TYPES: Record<AppointmentType, { label: string; color: 
 };
 
 export const REMINDER_OPTIONS = [
-  { value: 60, label: '60 min antes' },
-  { value: 30, label: '30 min antes' },
-  { value: 15, label: '15 min antes' },
-  { value: 10, label: '10 min antes' },
-  { value: 5, label: '5 min antes' },
+  { value: 60, label: '60 min before' },
+  { value: 30, label: '30 min before' },
+  { value: 15, label: '15 min before' },
+  { value: 10, label: '10 min before' },
+  { value: 5, label: '5 min before' },
 ] as const;
 
 export const STUDY_OPTIONS = ['CT', 'ECHO', 'ECG', 'US', 'X-Ray', 'Vascular'] as const;

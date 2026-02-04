@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { format, isToday } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { usePatientStore } from '@/store/patientStore';
 import { APPOINTMENT_TYPES, Appointment } from '@/types/patient';
 import { useAppointmentReminders } from '@/hooks/useAppointmentReminders';
@@ -116,12 +115,12 @@ export function AgendaPanel() {
           </span>
           {item.appointment.status === 'pending' && item.minutesUntil > 0 && (
             <span className="text-[10px] text-muted-foreground">
-              en {item.minutesUntil}m
+              in {item.minutesUntil}m
             </span>
           )}
           {isPast && item.appointment.status === 'pending' && (
             <span className="text-[10px] text-red-400">
-              hace {Math.abs(item.minutesUntil)}m
+              {Math.abs(item.minutesUntil)}m ago
             </span>
           )}
         </div>
@@ -159,15 +158,15 @@ export function AgendaPanel() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => updateAppointmentStatus(item.patientId, item.appointment.id, 'in_progress')}>
                 <AlertCircle className="h-4 w-4 mr-2 text-blue-400" />
-                En Progreso
+                In Progress
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => updateAppointmentStatus(item.patientId, item.appointment.id, 'completed')}>
                 <CheckCircle2 className="h-4 w-4 mr-2 text-green-400" />
-                Completado
+                Completed
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => updateAppointmentStatus(item.patientId, item.appointment.id, 'cancelled')}>
                 <XCircle className="h-4 w-4 mr-2 text-red-400" />
-                Cancelar
+                Cancel
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -240,32 +239,32 @@ export function AgendaPanel() {
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <CalendarClock className="h-5 w-5" />
-            Agenda del Turno
+            Shift Agenda
           </SheetTitle>
         </SheetHeader>
         
         <div className="mt-6 space-y-6">
           {renderSection(
-            'Próximos 60 min',
+            'Next 60 min',
             upcoming,
             <AlertCircle className="h-4 w-4 text-yellow-400" />,
-            'Sin appointments próximos'
+            'No upcoming appointments'
           )}
           
           {renderSection(
-            'En Progreso',
+            'In Progress',
             inProgress,
             <Clock className="h-4 w-4 text-blue-400" />
           )}
           
           {renderSection(
-            'Pendientes',
+            'Pending',
             pending,
             <Clock className="h-4 w-4" />
           )}
           
           {renderSection(
-            'Completados',
+            'Completed',
             completed,
             <CheckCircle2 className="h-4 w-4 text-green-400" />
           )}
@@ -273,9 +272,9 @@ export function AgendaPanel() {
           {agendaItems.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               <CalendarClock className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <div className="text-sm">No hay appointments programados</div>
+              <div className="text-sm">No scheduled appointments</div>
               <div className="text-xs mt-1">
-                Usa el botón <CalendarClock className="h-3 w-3 inline" /> en cada sticker para agregar
+                Use the <CalendarClock className="h-3 w-3 inline" /> button on each sticker to add
               </div>
             </div>
           )}

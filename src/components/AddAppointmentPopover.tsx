@@ -26,7 +26,7 @@ export function AddAppointmentPopover({ patientId, patientName, disabled }: AddA
 
   const handleAdd = () => {
     if (!time) {
-      toast.error('Selecciona una hora para el appointment');
+      toast.error('Please select a time for the appointment');
       return;
     }
 
@@ -48,7 +48,7 @@ export function AddAppointmentPopover({ patientId, patientName, disabled }: AddA
     });
 
     const typeConfig = APPOINTMENT_TYPES[appointmentType];
-    toast.success(`${typeConfig.label} programado para ${time}`);
+    toast.success(`${typeConfig.label} scheduled for ${time}`);
 
     // Reset form
     setTime('');
@@ -64,7 +64,7 @@ export function AddAppointmentPopover({ patientId, patientName, disabled }: AddA
           size="sm"
           disabled={disabled}
           className="h-6 px-1.5 text-xs gap-1 text-muted-foreground hover:text-foreground"
-          title="Agregar appointment"
+          title="Add appointment"
         >
           <CalendarClock className="h-3.5 w-3.5" />
         </Button>
@@ -76,13 +76,13 @@ export function AddAppointmentPopover({ patientId, patientName, disabled }: AddA
       >
         <div className="space-y-3">
           <div className="text-sm font-medium">
-            Nuevo Appointment
+            New Appointment
             <span className="text-xs text-muted-foreground ml-2">{patientName}</span>
           </div>
 
           {/* Appointment Type */}
           <div className="space-y-1.5">
-            <Label className="text-xs">Tipo</Label>
+            <Label className="text-xs">Type</Label>
             <Select value={appointmentType} onValueChange={(v) => setAppointmentType(v as AppointmentType)}>
               <SelectTrigger className="h-8 text-xs">
                 <SelectValue />
@@ -102,7 +102,7 @@ export function AddAppointmentPopover({ patientId, patientName, disabled }: AddA
 
           {/* Time */}
           <div className="space-y-1.5">
-            <Label className="text-xs">Hora Programada</Label>
+            <Label className="text-xs">Scheduled Time</Label>
             <Input
               type="time"
               value={time}
@@ -113,7 +113,7 @@ export function AddAppointmentPopover({ patientId, patientName, disabled }: AddA
 
           {/* Reminder */}
           <div className="space-y-1.5">
-            <Label className="text-xs">Recordatorio</Label>
+            <Label className="text-xs">Reminder</Label>
             <Select 
               value={String(reminderMinutes)} 
               onValueChange={(v) => setReminderMinutes(Number(v))}
@@ -133,9 +133,9 @@ export function AddAppointmentPopover({ patientId, patientName, disabled }: AddA
 
           {/* Notes */}
           <div className="space-y-1.5">
-            <Label className="text-xs">Notas (opcional)</Label>
+            <Label className="text-xs">Notes (optional)</Label>
             <Input
-              placeholder="ej: paciente en ayunas"
+              placeholder="e.g. patient fasting"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               className="h-8 text-xs"
@@ -148,7 +148,7 @@ export function AddAppointmentPopover({ patientId, patientName, disabled }: AddA
             className="w-full h-8 text-xs"
             size="sm"
           >
-            Agregar Appointment
+            Add Appointment
           </Button>
         </div>
       </PopoverContent>

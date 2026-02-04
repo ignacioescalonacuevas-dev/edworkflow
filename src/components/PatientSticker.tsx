@@ -74,7 +74,7 @@ function EditableBedNumber({ patientId, bedNumber }: EditableBedNumberProps) {
       }}
       className="absolute top-1 right-1 bg-blue-500 text-white text-[11px] px-1.5 py-0.5 rounded font-medium cursor-pointer hover:bg-blue-600"
     >
-      {bedNumber || '+Cama'}
+      {bedNumber || '+Bed'}
     </div>
   );
 }
@@ -121,7 +121,7 @@ function EditableFreeNote({ patientId, note, readOnly }: EditableFreeNoteProps) 
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
         className="h-4 text-[10px] px-1 py-0 flex-1 max-w-[200px]"
-        placeholder="Notas de admisión..."
+        placeholder="Admission notes..."
         onClick={(e) => e.stopPropagation()}
       />
     );
@@ -150,7 +150,7 @@ function EditableFreeNote({ patientId, note, readOnly }: EditableFreeNoteProps) 
       }}
       className="text-[10px] text-muted-foreground/60 cursor-pointer hover:text-muted-foreground"
     >
-      [+ Nota...]
+      [+ Note...]
     </span>
   );
 }
