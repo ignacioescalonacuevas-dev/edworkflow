@@ -13,6 +13,7 @@ import { ShiftSetup } from './ShiftSetup';
 import { ShiftHistoryDialog } from './ShiftHistoryDialog';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { EndShiftDialog } from './EndShiftDialog';
+import { AgendaPanel } from './AgendaPanel';
 import RoleGate from './RoleGate';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -126,6 +127,8 @@ export function BoardHeader() {
                 <BarChart3 className="h-4 w-4" />
                 Analytics
               </Button>
+
+              <AgendaPanel />
 
               <RoleGate allowedRoles={['coordinator']}>
                 <Button 

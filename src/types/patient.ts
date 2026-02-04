@@ -164,6 +164,42 @@ export interface StickerNote {
   slotIndex?: number;   // Position in the grid (0-8 for 3x3)
 }
 
+// ============= Appointments =============
+export type AppointmentType = 
+  | 'mri' | 'ct' | 'ultrasound' | 'echo' | 'xray' 
+  | 'racc' | 'procedure' | 'consult' | 'other';
+
+export interface Appointment {
+  id: string;
+  type: AppointmentType;
+  scheduledTime: Date;          // Hora programada (ej: 18:00)
+  reminderMinutes: number;      // Cuanto antes avisar (30, 15, 10)
+  reminderTriggered: boolean;   // Ya se mostro el recordatorio?
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  notes?: string;               // Notas adicionales
+  createdAt: Date;
+}
+
+export const APPOINTMENT_TYPES: Record<AppointmentType, { label: string; color: string; abbrev: string }> = {
+  mri: { label: 'MRI', color: 'bg-pink-500', abbrev: 'MRI' },
+  ct: { label: 'CT', color: 'bg-orange-500', abbrev: 'CT' },
+  ultrasound: { label: 'Ultrasound', color: 'bg-cyan-500', abbrev: 'US' },
+  echo: { label: 'Echo', color: 'bg-indigo-500', abbrev: 'EC' },
+  xray: { label: 'X-Ray', color: 'bg-amber-500', abbrev: 'XR' },
+  racc: { label: 'RACC', color: 'bg-green-500', abbrev: 'RA' },
+  procedure: { label: 'Procedure', color: 'bg-purple-500', abbrev: 'PR' },
+  consult: { label: 'Consult', color: 'bg-blue-500', abbrev: 'CO' },
+  other: { label: 'Other', color: 'bg-gray-500', abbrev: 'OT' },
+};
+
+export const REMINDER_OPTIONS = [
+  { value: 60, label: '60 min antes' },
+  { value: 30, label: '30 min antes' },
+  { value: 15, label: '15 min antes' },
+  { value: 10, label: '10 min antes' },
+  { value: 5, label: '5 min antes' },
+] as const;
+
 export const STUDY_OPTIONS = ['CT', 'ECHO', 'ECG', 'US', 'X-Ray', 'Vascular'] as const;
 
 export const FOLLOWUP_OPTIONS = ['GP', "Women's Clinic", 'RACC', 'Fracture Clinic', 'Surgical Clinic'] as const;
@@ -203,6 +239,7 @@ export interface Patient {
   
   orders: Order[];
   stickerNotes: StickerNote[];  // Notes for the sticker column
+  appointments: Appointment[];  // Scheduled appointments (MRI, RACC, etc.)
   admission?: AdmissionData;
   dischargedAt?: Date;
   transferredTo?: string;

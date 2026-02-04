@@ -9,6 +9,8 @@ import { AdmissionBadge } from './AdmissionBadge';
 import { ProcessStateDropdown } from './ProcessStateDropdown';
 import { LocationDropdown } from './LocationDropdown';
 import { ConsultantNameDisplay } from './ConsultantNameDisplay';
+import { AddAppointmentPopover } from './AddAppointmentPopover';
+import { AppointmentBadge } from './AppointmentBadge';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { MoreVertical, Trash2 } from 'lucide-react';
@@ -357,6 +359,13 @@ export function PatientSticker({ patient }: PatientStickerProps) {
           <div className="flex items-center gap-1">
             {!isReadOnly && <StickerActionsMenu patientId={patient.id} patientName={patient.name} />}
             <span className="font-semibold text-sm leading-tight">{patient.name}</span>
+            {!isReadOnly && (
+              <AddAppointmentPopover 
+                patientId={patient.id} 
+                patientName={patient.name}
+                disabled={isDischarged}
+              />
+            )}
           </div>
           {/* Row 2: DOB + Consultant (if in admission) */}
           <div className="flex items-center gap-1.5">
@@ -372,6 +381,10 @@ export function PatientSticker({ patient }: PatientStickerProps) {
           </div>
           <div className="flex items-baseline gap-1">
             <span className="text-[11px] text-muted-foreground font-mono">{patient.mNumber}</span>
+            {/* Appointment badges */}
+            {patient.appointments?.filter(apt => apt.status === 'pending' || apt.status === 'in_progress').slice(0, 2).map(apt => (
+              <AppointmentBadge key={apt.id} appointment={apt} compact />
+            ))}
             <button 
               type="button"
               className="text-[11px] text-muted-foreground ml-auto px-1 py-0.5 rounded hover:bg-muted hover:text-foreground transition-all cursor-pointer"

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { format } from 'date-fns';
-import { Patient, Order, OrderStatus, AdmissionData, PatientEvent, PatientStatus, PATIENT_STATUSES, StickerNote, StickerNoteType, ProcessState, PROCESS_STATES, TriageLevel, mapStatusToProcessState } from '@/types/patient';
+import { Patient, Order, OrderStatus, AdmissionData, PatientEvent, PatientStatus, PATIENT_STATUSES, StickerNote, StickerNoteType, ProcessState, PROCESS_STATES, TriageLevel, mapStatusToProcessState, Appointment, APPOINTMENT_TYPES } from '@/types/patient';
 import { useShiftHistoryStore } from './shiftHistoryStore';
 import { samplePatients } from '@/data/samplePatients';
 
@@ -63,7 +63,7 @@ interface PatientStore {
   hideDischargedFromBoard: boolean;
   
   // Actions
-  addPatient: (patient: Omit<Patient, 'id' | 'events' | 'orders' | 'stickerNotes'>) => void;
+  addPatient: (patient: Omit<Patient, 'id' | 'events' | 'orders' | 'stickerNotes' | 'appointments'>) => void;
   selectPatient: (id: string | null) => void;
   setFilterDoctor: (doctor: string | null) => void;
   setViewMode: (mode: 'active' | 'history') => void;
@@ -148,6 +148,12 @@ interface PatientStore {
   // Events
   addEvent: (patientId: string, event: Omit<PatientEvent, 'id'>) => void;
   
+  // Appointments
+  addAppointment: (patientId: string, appointment: Omit<Appointment, 'id' | 'createdAt' | 'reminderTriggered' | 'status'>) => void;
+  updateAppointmentStatus: (patientId: string, appointmentId: string, status: Appointment['status']) => void;
+  markReminderTriggered: (patientId: string, appointmentId: string) => void;
+  cancelAppointment: (patientId: string, appointmentId: string) => void;
+  
   // Reset data to sample patients (for testing)
   resetToSampleData: () => void;
 }
@@ -160,6 +166,7 @@ function migratePatient(patient: Patient): Patient {
     assignedBox: patient.assignedBox ?? patient.box ?? 'Waiting Room',
     currentLocation: patient.currentLocation ?? patient.box ?? 'Waiting Room',
     processState: patient.processState ?? mapStatusToProcessState(patient.status),
+    appointments: patient.appointments ?? [],
     admission: patient.admission ? {
       ...patient.admission,
       consultant: patient.admission.consultant ?? patient.admission.consultantName ?? '',
@@ -213,6 +220,7 @@ export const usePatientStore = create<PatientStore>()(
           processState: patientData.processState ?? 'registered',
           orders: [],
           stickerNotes: [],
+          appointments: [],
           events: [
             {
               id: generateId(),
@@ -1037,6 +1045,82 @@ export const usePatientStore = create<PatientStore>()(
           filterByNurse: null,
           hideDischargedFromBoard: true,
         });
+      },
+
+      // Appointment actions
+      addAppointment: (patientId, appointmentData) => {
+        const newAppointment: Appointment = {
+          ...appointmentData,
+          id: generateId(),
+          createdAt: new Date(),
+          reminderTriggered: false,
+          status: 'pending',
+        };
+        const typeLabel = APPOINTMENT_TYPES[appointmentData.type]?.label || appointmentData.type;
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? {
+                  ...p,
+                  appointments: [...(p.appointments || []), newAppointment],
+                  events: [
+                    ...p.events,
+                    {
+                      id: generateId(),
+                      timestamp: new Date(),
+                      type: 'note',
+                      description: `Appointment scheduled: ${typeLabel}`,
+                    },
+                  ],
+                }
+              : p
+          ),
+        }));
+      },
+
+      updateAppointmentStatus: (patientId, appointmentId, status) => {
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? {
+                  ...p,
+                  appointments: (p.appointments || []).map((apt) =>
+                    apt.id === appointmentId ? { ...apt, status } : apt
+                  ),
+                }
+              : p
+          ),
+        }));
+      },
+
+      markReminderTriggered: (patientId, appointmentId) => {
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? {
+                  ...p,
+                  appointments: (p.appointments || []).map((apt) =>
+                    apt.id === appointmentId ? { ...apt, reminderTriggered: true } : apt
+                  ),
+                }
+              : p
+          ),
+        }));
+      },
+
+      cancelAppointment: (patientId, appointmentId) => {
+        set((state) => ({
+          patients: state.patients.map((p) =>
+            p.id === patientId
+              ? {
+                  ...p,
+                  appointments: (p.appointments || []).map((apt) =>
+                    apt.id === appointmentId ? { ...apt, status: 'cancelled' } : apt
+                  ),
+                }
+              : p
+          ),
+        }));
       },
     }),
     {

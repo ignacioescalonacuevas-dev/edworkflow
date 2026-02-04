@@ -4,10 +4,14 @@ import { PatientBoard } from '@/components/PatientBoard';
 import { DaySetup } from '@/components/DaySetup';
 import { PreviousShiftWarning } from '@/components/PreviousShiftWarning';
 import { usePatientStore } from '@/store/patientStore';
+import { useAppointmentReminders } from '@/hooks/useAppointmentReminders';
 
 const Index = () => {
   const { shiftConfigured, shiftDate } = usePatientStore();
   const [showPreviousShiftWarning, setShowPreviousShiftWarning] = useState(false);
+  
+  // Initialize appointment reminders system
+  useAppointmentReminders();
   
   // Check if there's an unclosed shift from a previous day
   useEffect(() => {
