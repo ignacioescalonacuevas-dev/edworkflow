@@ -79,6 +79,82 @@ function EditableBedNumber({ patientId, bedNumber }: EditableBedNumberProps) {
   );
 }
 
+interface EditableFreeNoteProps {
+  patientId: string;
+  note: string;
+  readOnly?: boolean;
+}
+
+function EditableFreeNote({ patientId, note, readOnly }: EditableFreeNoteProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [value, setValue] = useState(note || '');
+  const { updateAdmission } = usePatientStore();
+
+  const handleSave = () => {
+    updateAdmission(patientId, { freeNote: value.trim() });
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') handleSave();
+    if (e.key === 'Escape') {
+      setValue(note);
+      setIsEditing(false);
+    }
+  };
+
+  if (readOnly) {
+    if (!note) return null;
+    return (
+      <span className="text-[10px] text-cyan-600 truncate max-w-[180px]" title={note}>
+        {note}
+      </span>
+    );
+  }
+
+  if (isEditing) {
+    return (
+      <Input
+        autoFocus
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={handleKeyDown}
+        className="h-4 text-[10px] px-1 py-0 flex-1 max-w-[200px]"
+        placeholder="Notas de admisión..."
+        onClick={(e) => e.stopPropagation()}
+      />
+    );
+  }
+
+  if (note) {
+    return (
+      <span 
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsEditing(true);
+        }}
+        className="text-[10px] text-cyan-600 cursor-pointer truncate max-w-[180px] hover:text-cyan-500"
+        title={note}
+      >
+        {note}
+      </span>
+    );
+  }
+
+  return (
+    <span 
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsEditing(true);
+      }}
+      className="text-[10px] text-muted-foreground/60 cursor-pointer hover:text-muted-foreground"
+    >
+      [+ Nota...]
+    </span>
+  );
+}
+
 interface EditableChiefComplaintProps {
   patientId: string;
   complaint: string;
@@ -380,12 +456,20 @@ export function PatientSticker({ patient }: PatientStickerProps) {
               </>
             )}
           </div>
-          <div className="flex items-baseline gap-1">
+          <div className="flex items-baseline gap-1 flex-wrap">
             <span className="text-[11px] text-muted-foreground font-mono">{patient.mNumber}</span>
             {/* Appointment badges */}
             {patient.appointments?.filter(apt => apt.status === 'pending' || apt.status === 'in_progress').slice(0, 2).map(apt => (
               <AppointmentBadge key={apt.id} appointment={apt} compact />
             ))}
+            {/* Free note for admission */}
+            {hasAdmissionInfo && (
+              <EditableFreeNote 
+                patientId={patient.id}
+                note={patient.admission?.freeNote || ''}
+                readOnly={isReadOnly}
+              />
+            )}
           </div>
         </div>
 

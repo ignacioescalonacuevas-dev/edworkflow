@@ -130,6 +130,7 @@ export interface AdmissionData {
   mrsaSwabs: boolean;
   fallsAssessment: boolean;
   handoverNotes: string;
+  freeNote?: string;            // NEW: Nota libre del coordinador
   startedAt: Date;
   completedAt?: Date;
 }
