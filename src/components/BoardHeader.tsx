@@ -20,9 +20,9 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
 const roleLabels: Record<string, string> = {
-  coordinator: 'Coordinador',
-  admission: 'Admisión',
-  viewer: 'Visor',
+  coordinator: 'Coordinator',
+  admission: 'Admission',
+  viewer: 'Viewer',
 };
 
 export function BoardHeader() {
@@ -39,7 +39,7 @@ export function BoardHeader() {
 
   const handleSignOut = async () => {
     await signOut();
-    toast.success('Sesión cerrada');
+    toast.success('Signed out');
   };
 
   // If viewing history, show that date instead
@@ -78,7 +78,7 @@ export function BoardHeader() {
           <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
             <User className="h-4 w-4 text-muted-foreground" />
             <div className="flex flex-col">
-              <span className="text-sm font-medium">{displayName || user?.email?.split('@')[0] || 'Usuario'}</span>
+              <span className="text-sm font-medium">{displayName || user?.email?.split('@')[0] || 'User'}</span>
               {role && (
                 <span className="text-xs text-muted-foreground">{roleLabels[role] || role}</span>
               )}
@@ -161,7 +161,7 @@ export function BoardHeader() {
             size="sm" 
             onClick={handleSignOut}
             className="gap-2 text-muted-foreground hover:text-destructive"
-            title="Cerrar sesión"
+            title="Sign out"
           >
             <LogOut className="h-4 w-4" />
           </Button>

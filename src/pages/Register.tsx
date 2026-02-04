@@ -28,7 +28,7 @@ const Register = () => {
 
     if (error) {
       toast({
-        title: 'Error de registro',
+        title: 'Registration Error',
         description: error.message,
         variant: 'destructive',
       });
@@ -37,8 +37,8 @@ const Register = () => {
     }
 
     toast({
-      title: 'Usuario creado',
-      description: 'Revisa tu email para confirmar tu cuenta.',
+      title: 'User Created',
+      description: 'Check your email to confirm your account.',
     });
 
     navigate('/login');
@@ -52,9 +52,9 @@ const Register = () => {
             <Hospital className="w-8 h-8 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-2xl font-bold">Registro de Usuario</CardTitle>
+            <CardTitle className="text-2xl font-bold">User Registration</CardTitle>
             <CardDescription className="mt-2">
-              Crea un usuario de prueba para el sistema
+              Create a test user for the system
             </CardDescription>
           </div>
         </CardHeader>
@@ -62,11 +62,11 @@ const Register = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="displayName">Nombre a mostrar</Label>
+              <Label htmlFor="displayName">Display Name</Label>
               <Input
                 id="displayName"
                 type="text"
-                placeholder="Ej: CNM1 María"
+                placeholder="e.g., CNM1 Mary"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 required
@@ -79,7 +79,7 @@ const Register = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="usuario@hospital.com"
+                placeholder="user@hospital.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -88,11 +88,11 @@ const Register = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Mínimo 6 caracteres"
+                placeholder="Minimum 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -102,15 +102,15 @@ const Register = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="role">Rol</Label>
+              <Label htmlFor="role">Role</Label>
               <Select value={role} onValueChange={(value) => setRole(value as AppRole)} disabled={isLoading}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecciona un rol" />
+                  <SelectValue placeholder="Select a role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="coordinator">Coordinador (CNM1) - Acceso completo</SelectItem>
-                  <SelectItem value="admission">Admisión - Crear/editar pacientes</SelectItem>
-                  <SelectItem value="viewer">Visor - Solo lectura</SelectItem>
+                  <SelectItem value="coordinator">Coordinator (CNM1) - Full access</SelectItem>
+                  <SelectItem value="admission">Admission - Create/edit patients</SelectItem>
+                  <SelectItem value="viewer">Viewer - Read only</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -120,7 +120,7 @@ const Register = () => {
               className="w-full" 
               disabled={isLoading}
             >
-              {isLoading ? 'Creando usuario...' : 'Crear Usuario'}
+              {isLoading ? 'Creating user...' : 'Create User'}
             </Button>
           </form>
 
@@ -128,15 +128,15 @@ const Register = () => {
             <Link to="/login">
               <Button variant="ghost" className="w-full gap-2">
                 <ArrowLeft className="h-4 w-4" />
-                Volver al Login
+                Back to Login
               </Button>
             </Link>
           </div>
 
           <div className="mt-4 p-4 bg-muted/50 rounded-lg">
             <p className="text-xs text-muted-foreground">
-              <strong>Nota:</strong> Esta página es solo para crear usuarios de prueba. 
-              En producción, los usuarios se gestionarían a través de Active Directory.
+              <strong>Note:</strong> This page is only for creating test users. 
+              In production, users would be managed through Active Directory.
             </p>
           </div>
         </CardContent>
