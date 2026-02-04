@@ -11,9 +11,14 @@ export function StudyFilters() {
     hideDischargedFromBoard 
   } = usePatientStore();
 
-  // Only count active patients
+  // Only count active patients using processState (exclude terminal states if hidden)
   const activePatients = hideDischargedFromBoard
-    ? patients.filter(p => p.status !== 'discharged' && p.status !== 'transferred')
+    ? patients.filter(p => {
+        if (p.processState === 'discharged') return false;
+        if (p.processState === 'transferred') return false;
+        if (p.processState === 'admission' && p.admission?.completedAt) return false;
+        return true;
+      })
     : patients;
 
   // Count pending studies

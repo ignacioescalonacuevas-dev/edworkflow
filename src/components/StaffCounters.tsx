@@ -13,9 +13,14 @@ export function StaffCounters() {
     hideDischargedFromBoard 
   } = usePatientStore();
 
-  // Count active patients (exclude discharged/transferred if hidden)
+  // Count active patients using processState (exclude terminal states if hidden)
   const activePatients = hideDischargedFromBoard
-    ? patients.filter(p => p.status !== 'discharged' && p.status !== 'transferred')
+    ? patients.filter(p => {
+        if (p.processState === 'discharged') return false;
+        if (p.processState === 'transferred') return false;
+        if (p.processState === 'admission' && p.admission?.completedAt) return false;
+        return true;
+      })
     : patients;
 
   const doctorCounts = doctors.map(doctor => ({
