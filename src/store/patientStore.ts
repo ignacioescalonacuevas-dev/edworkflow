@@ -61,6 +61,7 @@ interface PatientStore {
   filterByDoctor: string | null;
   filterByNurse: string | null;
   filterByPendingStudy: string | null;
+  filterByProcessState: ProcessState | 'admitted' | null;
   hideDischargedFromBoard: boolean;
   
   // Actions
@@ -117,6 +118,7 @@ interface PatientStore {
   setFilterByDoctor: (doctor: string | null) => void;
   setFilterByNurse: (nurse: string | null) => void;
   setFilterByPendingStudy: (study: string | null) => void;
+  setFilterByProcessState: (state: ProcessState | 'admitted' | null) => void;
   setHideDischargedFromBoard: (hide: boolean) => void;
   clearFilters: () => void;
   clearShift: () => void;
@@ -214,6 +216,7 @@ export const usePatientStore = create<PatientStore>()(
       filterByDoctor: null,
       filterByNurse: null,
       filterByPendingStudy: null,
+      filterByProcessState: null,
       hideDischargedFromBoard: true,
 
       addPatient: (patientData) => {
@@ -778,6 +781,7 @@ export const usePatientStore = create<PatientStore>()(
       setFilterByDoctor: (doctor) => set({ filterByDoctor: doctor }),
       setFilterByNurse: (nurse) => set({ filterByNurse: nurse }),
       setFilterByPendingStudy: (study) => set({ filterByPendingStudy: study }),
+      setFilterByProcessState: (processState) => set({ filterByProcessState: processState }),
       setHideDischargedFromBoard: (hide) => set({ hideDischargedFromBoard: hide }),
       
       clearFilters: () => set({
@@ -785,6 +789,7 @@ export const usePatientStore = create<PatientStore>()(
         filterByDoctor: null,
         filterByNurse: null,
         filterByPendingStudy: null,
+        filterByProcessState: null,
       }),
 
       clearShift: () => set({
@@ -1073,6 +1078,7 @@ export const usePatientStore = create<PatientStore>()(
           filterByDoctor: null,
           filterByNurse: null,
           filterByPendingStudy: null,
+          filterByProcessState: null,
           hideDischargedFromBoard: true,
         });
       },
@@ -1216,9 +1222,22 @@ export const getFilteredPatients = (state: PatientStore): Patient[] => {
     result = result.filter(p => p.nurse === state.filterByNurse);
   }
   
-  // Hide discharged, transferred, and completed admissions
-  // ONLY use processState (not legacy status) to determine visibility
-  if (state.hideDischargedFromBoard) {
+  // Filter by process state (if active, bypass hideDischargedFromBoard for that state)
+  if (state.filterByProcessState) {
+    result = result.filter(p => {
+      if (state.filterByProcessState === 'admitted') {
+        // Show only completed admissions
+        return p.processState === 'admission' && p.admission?.completedAt;
+      }
+      if (state.filterByProcessState === 'admission') {
+        // Show only pending admissions (not completed)
+        return p.processState === 'admission' && !p.admission?.completedAt;
+      }
+      return p.processState === state.filterByProcessState;
+    });
+  } else if (state.hideDischargedFromBoard) {
+    // Only apply hide D/C if no process state filter is active
+    // ONLY use processState (not legacy status) to determine visibility
     result = result.filter(p => {
       // Hide discharged
       if (p.processState === 'discharged') return false;
