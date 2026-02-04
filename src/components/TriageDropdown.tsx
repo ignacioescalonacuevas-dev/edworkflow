@@ -13,20 +13,21 @@ interface TriageDropdownProps {
   patientId: string;
   currentLevel: TriageLevel;
   readOnly?: boolean;
+  inline?: boolean; // New: compact inline mode
 }
 
-export function TriageDropdown({ patientId, currentLevel, readOnly = false }: TriageDropdownProps) {
+export function TriageDropdown({ patientId, currentLevel, readOnly = false, inline = false }: TriageDropdownProps) {
   const { updatePatientTriage } = usePatientStore();
 
   if (readOnly) {
-    return <TriageBadge level={currentLevel} />;
+    return <TriageBadge level={currentLevel} inline={inline} />;
   }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
         <div>
-          <TriageBadge level={currentLevel} interactive />
+          <TriageBadge level={currentLevel} interactive inline={inline} />
         </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent 
