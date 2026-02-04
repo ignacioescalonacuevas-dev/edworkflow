@@ -5,9 +5,7 @@ import { usePatientStore } from '@/store/patientStore';
 import { useShiftHistoryStore } from '@/store/shiftHistoryStore';
 import { StickerNotesColumn } from './StickerNotesColumn';
 import { TriageDropdown } from './TriageDropdown';
-import { AdmissionBadge } from './AdmissionBadge';
 import { ProcessStateDropdown } from './ProcessStateDropdown';
-import { LocationDropdown } from './LocationDropdown';
 import { ConsultantNameDisplay } from './ConsultantNameDisplay';
 import { AddAppointmentPopover } from './AddAppointmentPopover';
 import { AppointmentBadge } from './AppointmentBadge';
@@ -336,14 +334,6 @@ export function PatientSticker({ patient }: PatientStickerProps) {
         isDischarged && "sticker-discharged"
       )}
     >
-      {/* Admission Badge - Shows consultant and bed if in admission */}
-      {patient.admission && (patient.admission.consultant || patient.admission.consultantName || patient.admission.bedNumber) && (
-        <AdmissionBadge 
-          patientId={patient.id}
-          admission={patient.admission}
-          readOnly={isReadOnly}
-        />
-      )}
 
       {/* Main 3-column grid */}
       <div className="grid grid-cols-[1fr_72px_44px] gap-1.5 flex-1 min-h-0">
@@ -366,18 +356,24 @@ export function PatientSticker({ patient }: PatientStickerProps) {
               />
             )}
           </div>
-          {/* Row 2: DOB + Consultant (if in admission) */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-muted-foreground">{patient.dateOfBirth}</span>
-            {isInAdmissionProcess && (
+          {/* Row 2: DOB */}
+          <span className="text-[11px] text-muted-foreground">{patient.dateOfBirth}</span>
+          {/* Row 3: Consultant + Bed (if in admission) */}
+          {isInAdmissionProcess && (
+            <div className="flex items-center gap-1.5">
               <ConsultantNameDisplay 
                 patientId={patient.id}
                 consultantName={patient.admission?.consultantName || patient.admission?.consultant}
                 admission={patient.admission}
                 readOnly={isReadOnly}
               />
-            )}
-          </div>
+              {patient.admission?.bedNumber && (
+                <span className="text-[10px] text-cyan-600 font-medium">
+                  📍{patient.admission.bedNumber}
+                </span>
+              )}
+            </div>
+          )}
           <div className="flex items-baseline gap-1">
             <span className="text-[11px] text-muted-foreground font-mono">{patient.mNumber}</span>
             {/* Appointment badges */}
@@ -469,21 +465,6 @@ export function PatientSticker({ patient }: PatientStickerProps) {
         />
       </div>
 
-      {/* Bed number for admissions - editable (only show if NOT using new AdmissionBadge) */}
-      {isInAdmissionProcess && !patient.admission?.consultant && !patient.admission?.bedNumber && (
-        isReadOnly ? (
-          patient.admission?.bedNumber && (
-            <div className="absolute top-1 right-1 bg-blue-500 text-white text-[11px] px-1.5 py-0.5 rounded font-medium">
-              {patient.admission.bedNumber}
-            </div>
-          )
-        ) : (
-          <EditableBedNumber 
-            patientId={patient.id}
-            bedNumber={patient.admission?.bedNumber || ''}
-          />
-        )
-      )}
     </div>
   );
 }
