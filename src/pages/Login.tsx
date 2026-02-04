@@ -25,9 +25,9 @@ const Login = () => {
 
     if (error) {
       toast({
-        title: 'Error de autenticación',
+        title: 'Authentication Error',
         description: error.message === 'Invalid login credentials' 
-          ? 'Credenciales inválidas. Verifica tu email y contraseña.'
+          ? 'Invalid credentials. Please check your email and password.'
           : error.message,
         variant: 'destructive',
       });
@@ -36,8 +36,8 @@ const Login = () => {
     }
 
     toast({
-      title: 'Bienvenido',
-      description: 'Has iniciado sesión correctamente.',
+      title: 'Welcome',
+      description: 'You have successfully signed in.',
     });
 
     navigate('/');
@@ -52,8 +52,8 @@ const Login = () => {
           </div>
           <div>
             <CardTitle className="text-2xl font-bold">ED Workflow System</CardTitle>
-            <CardDescription className="mt-2">
-              Ingresa tus credenciales para acceder al sistema
+          <CardDescription className="mt-2">
+              Enter your credentials to access the system
             </CardDescription>
           </div>
         </CardHeader>
@@ -65,7 +65,7 @@ const Login = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="usuario@hospital.com"
+                placeholder="user@hospital.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -75,7 +75,7 @@ const Login = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -104,26 +104,26 @@ const Login = () => {
               className="w-full" 
               disabled={isLoading}
             >
-              {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
 
           <div className="mt-6 pt-6 border-t text-center space-y-2">
             <p className="text-sm text-muted-foreground">
-              ¿Olvidaste tu contraseña?{' '}
-              <span className="text-primary font-medium">Contacta a IT</span>
+              Forgot your password?{' '}
+              <span className="text-primary font-medium">Contact IT</span>
             </p>
             <p className="text-sm text-muted-foreground">
-              ¿No tienes cuenta?{' '}
+              Don't have an account?{' '}
               <a href="/register" className="text-primary font-medium hover:underline">
-                Registrar usuario de prueba
+                Register test user
               </a>
             </p>
           </div>
 
           <div className="mt-4 p-4 bg-muted/50 rounded-lg">
             <p className="text-xs text-muted-foreground text-center">
-              🔒 Conexión segura • Datos encriptados
+              🔒 Secure connection • Encrypted data
             </p>
           </div>
         </CardContent>
