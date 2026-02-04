@@ -106,7 +106,7 @@ function EditableFreeNote({ patientId, note, readOnly }: EditableFreeNoteProps) 
   if (readOnly) {
     if (!note) return null;
     return (
-      <span className="text-[10px] text-cyan-600 truncate max-w-[180px]" title={note}>
+      <span className="text-[11px] text-cyan-600 truncate max-w-[180px]" title={note}>
         {note}
       </span>
     );
@@ -134,7 +134,7 @@ function EditableFreeNote({ patientId, note, readOnly }: EditableFreeNoteProps) 
           e.stopPropagation();
           setIsEditing(true);
         }}
-        className="text-[10px] text-cyan-600 cursor-pointer truncate max-w-[180px] hover:text-cyan-500"
+        className="text-[11px] text-cyan-600 cursor-pointer truncate max-w-[180px] hover:text-cyan-500"
         title={note}
       >
         {note}
@@ -148,7 +148,7 @@ function EditableFreeNote({ patientId, note, readOnly }: EditableFreeNoteProps) 
         e.stopPropagation();
         setIsEditing(true);
       }}
-      className="text-[10px] text-muted-foreground/60 cursor-pointer hover:text-muted-foreground"
+      className="text-[11px] text-muted-foreground/60 cursor-pointer hover:text-muted-foreground"
     >
       [+ Note...]
     </span>
@@ -202,7 +202,7 @@ function EditableChiefComplaint({ patientId, complaint }: EditableChiefComplaint
         e.stopPropagation();
         setIsEditing(true);
       }}
-      className="text-[10px] text-muted-foreground flex-1 cursor-pointer hover:text-foreground transition-colors truncate"
+      className="text-xs text-muted-foreground flex-1 cursor-pointer hover:text-foreground transition-colors truncate"
     >
       {complaint}
     </span>
@@ -416,7 +416,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
     >
 
       {/* Main 3-column grid */}
-      <div className="grid grid-cols-[1fr_114px_44px] gap-1.5 flex-1 min-h-0">
+      <div className="grid grid-cols-[1fr_114px_44px] gap-1 flex-1 min-h-0">
         {/* COL 1: Patient Info (vertical stack) */}
         <div className="flex flex-col justify-center min-w-0">
           <div className="flex items-center gap-1">
@@ -438,7 +438,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
           </div>
           {/* Row 2: DOB + Consultant/Bed (same line) */}
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-muted-foreground">{patient.dateOfBirth}</span>
+            <span className="text-xs text-muted-foreground">{patient.dateOfBirth}</span>
             {/* Show if patient has admission data (even after transfer) */}
             {hasAdmissionInfo && (
               <>
@@ -449,7 +449,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
                   readOnly={isReadOnly}
                 />
                 {patient.admission?.bedNumber && (
-                  <span className="text-[10px] text-cyan-600 font-medium">
+                  <span className="text-[11px] text-cyan-600 font-medium">
                     📍{patient.admission.bedNumber}
                   </span>
                 )}
@@ -457,7 +457,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
             )}
           </div>
           <div className="flex items-baseline gap-1 flex-wrap">
-            <span className="text-[11px] text-muted-foreground font-mono">{patient.mNumber}</span>
+            <span className="text-xs text-muted-foreground font-mono">{patient.mNumber}</span>
             {/* Appointment badges */}
             {patient.appointments?.filter(apt => apt.status === 'pending' || apt.status === 'in_progress').slice(0, 2).map(apt => (
               <AppointmentBadge key={apt.id} appointment={apt} compact />
@@ -486,7 +486,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
         </div>
 
         {/* COL 3: Box + Doctor + Nurse */}
-        <div className="flex flex-col items-center justify-between py-0.5">
+        <div className="flex flex-col items-center justify-between">
           {isReadOnly ? (
             <>
               {/* Box */}
@@ -528,9 +528,9 @@ export function PatientSticker({ patient }: PatientStickerProps) {
       </div>
 
       {/* Footer: Chief Complaint + Timer + Process State */}
-      <div className="flex items-center gap-1.5 pt-1 mt-1 border-t border-border/50">
+      <div className="flex items-center gap-1.5 pt-0.5 mt-0.5 border-t border-border/50">
         {isReadOnly ? (
-          <span className="text-[10px] text-muted-foreground flex-1 truncate">{patient.chiefComplaint}</span>
+          <span className="text-xs text-muted-foreground flex-1 truncate">{patient.chiefComplaint}</span>
         ) : (
           <EditableChiefComplaint 
             patientId={patient.id}
@@ -539,7 +539,7 @@ export function PatientSticker({ patient }: PatientStickerProps) {
         )}
         <button 
           type="button"
-          className="text-[9px] text-muted-foreground px-0.5 py-0.5 rounded hover:bg-muted hover:text-foreground transition-all cursor-pointer shrink-0"
+          className="text-[11px] text-muted-foreground px-0.5 py-0.5 rounded hover:bg-muted hover:text-foreground transition-all cursor-pointer shrink-0"
           onClick={(e) => {
             e.stopPropagation();
             toggleTimeDisplay();
