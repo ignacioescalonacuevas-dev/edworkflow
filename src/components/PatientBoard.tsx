@@ -48,8 +48,7 @@ export function PatientBoard() {
         <div 
           className="grid grid-cols-4 gap-2"
           style={{ 
-            gridTemplateRows: 'repeat(8, minmax(100px, auto))',
-            gridAutoFlow: 'column' 
+            gridTemplateRows: 'repeat(8, minmax(100px, auto))'
           }}
         >
           {Array.from({ length: PATIENTS_PER_PAGE }).map((_, index) => {
