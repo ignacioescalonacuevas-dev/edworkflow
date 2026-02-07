@@ -14,11 +14,18 @@ import {
 import { XCircle, Users, LogIn, LogOut, Ambulance, Clock, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 
-export function EndShiftDialog() {
-  const [open, setOpen] = useState(false);
+interface EndShiftDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function EndShiftDialog({ open: controlledOpen, onOpenChange }: EndShiftDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = controlledOpen ?? internalOpen;
+  const setIsOpen = onOpenChange ?? setInternalOpen;
+
   const { patients, shiftDate, endShift } = usePatientStore();
   
-  // Calculate summary stats
   const totalPatients = patients.length;
   const admissions = patients.filter(p => 
     p.processState === 'admission' || p.admission !== undefined
@@ -31,7 +38,7 @@ export function EndShiftDialog() {
   
   const handleEndShift = () => {
     endShift();
-    setOpen(false);
+    setIsOpen(false);
     toast.success('Shift closed and saved to history');
   };
   
@@ -39,14 +46,18 @@ export function EndShiftDialog() {
     ? format(new Date(shiftDate), 'EEEE, MMMM d')
     : 'No date';
 
+  const isControlled = controlledOpen !== undefined;
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <XCircle className="h-4 w-4" />
-          End Shift
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-2">
+            <XCircle className="h-4 w-4" />
+            End Shift
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -109,7 +120,7 @@ export function EndShiftDialog() {
         </div>
         
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => setOpen(false)}>
+          <Button variant="outline" onClick={() => setIsOpen(false)}>
             Cancel
           </Button>
           <Button onClick={handleEndShift}>

@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
-import { X } from 'lucide-react';
+import { X, ChevronDown } from 'lucide-react';
 import { usePatientStore, getFilteredPatients } from '@/store/patientStore';
 import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ProcessState } from '@/types/patient';
 import { cn } from '@/lib/utils';
 
-// State buttons configuration - now using ProcessState directly (8 states)
+// State buttons configuration
 const stateButtons: Array<{
   key: ProcessState;
   label: string;
@@ -22,7 +23,6 @@ const stateButtons: Array<{
   { key: 'transferred', label: 'Trans', color: 'bg-slate-500/20 text-slate-400 hover:bg-slate-500/30', activeColor: 'bg-slate-500/40 text-slate-300' },
 ];
 
-// Terminal states (hidden by Hide D/C toggle)
 const TERMINAL_STATES: ProcessState[] = ['discharged', 'transferred', 'admitted', 'did_not_wait'];
 
 export function FilterIndicator() {
@@ -46,8 +46,6 @@ export function FilterIndicator() {
   const filteredPatients = getFilteredPatients(store);
   const hasFilters = filterByDoctor || filterByNurse || searchQuery || filterByPendingStudy || filterByProcessState;
   
-  // Count patients by state (using all patients, not filtered)
-  // Now direct counting since 'admitted' is a real ProcessState
   const stateCounts = useMemo(() => {
     const counts: Record<ProcessState, number> = {
       registered: 0,
@@ -66,11 +64,6 @@ export function FilterIndicator() {
     });
     return counts;
   }, [patients]);
-  
-  // Count active patients (non-terminal states)
-  const activeCount = useMemo(() => {
-    return patients.filter(p => !TERMINAL_STATES.includes(p.processState)).length;
-  }, [patients]);
 
   const handleStateClick = (stateKey: ProcessState) => {
     if (filterByProcessState === stateKey) {
@@ -81,11 +74,11 @@ export function FilterIndicator() {
   };
 
   return (
-    <div className="flex items-center gap-3 text-sm flex-wrap">
+    <div className="flex items-center gap-2 text-sm flex-wrap">
       {/* Active filters badges */}
       {hasFilters && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-muted-foreground text-xs">Filtering:</span>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="text-muted-foreground text-xs">Filter:</span>
           
           {searchQuery && (
             <Badge variant="secondary" className="gap-1 text-xs">
@@ -136,47 +129,50 @@ export function FilterIndicator() {
             onClick={clearFilters}
             className="text-xs text-muted-foreground hover:text-foreground underline"
           >
-            Clear all
+            Clear
           </button>
         </div>
       )}
 
-      {/* Patient counts with interactive state buttons */}
+      {/* Patients popover with state buttons */}
       <div className="flex items-center gap-2 ml-auto">
-        <span className="text-xs text-muted-foreground">
-          Showing: <span className="text-foreground font-medium">{filteredPatients.length}</span>
-          {hasFilters && ` of ${patients.length}`}
-        </span>
-        
-        <div className="h-4 w-px bg-border" />
-        
-        {/* State filter buttons */}
-        <div className="flex items-center gap-1">
-          {stateButtons.map(({ key, label, color, activeColor }) => {
-            const count = stateCounts[key] || 0;
-            const isActive = filterByProcessState === key;
-            const isTerminal = TERMINAL_STATES.includes(key);
-            const isHiddenByToggle = hideDischargedFromBoard && isTerminal && !filterByProcessState;
-            
-            return (
-              <button
-                key={key}
-                onClick={() => handleStateClick(key)}
-                disabled={count === 0}
-                className={cn(
-                  "px-2 py-0.5 rounded text-xs font-medium transition-all",
-                  isActive ? activeColor : color,
-                  isActive && "ring-2 ring-primary ring-offset-1 ring-offset-background",
-                  count === 0 && "opacity-40 cursor-not-allowed",
-                  isHiddenByToggle && count > 0 && "opacity-60"
-                )}
-                title={isHiddenByToggle && count > 0 ? `Hidden by "Hide D/C" toggle. Click to view.` : undefined}
-              >
-                {label} {count}
-              </button>
-            );
-          })}
-        </div>
+        <Popover>
+          <PopoverTrigger asChild>
+            <button className="flex items-center gap-1 text-xs px-2 py-1 rounded border border-border bg-muted/50 hover:bg-muted transition-colors">
+              Patients <span className="font-medium">{filteredPatients.length}</span>
+              {hasFilters && <span className="text-muted-foreground">/{patients.length}</span>}
+              <ChevronDown className="h-3 w-3 ml-0.5" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-2" align="end">
+            <div className="flex items-center gap-1 flex-wrap">
+              {stateButtons.map(({ key, label, color, activeColor }) => {
+                const count = stateCounts[key] || 0;
+                const isActive = filterByProcessState === key;
+                const isTerminal = TERMINAL_STATES.includes(key);
+                const isHiddenByToggle = hideDischargedFromBoard && isTerminal && !filterByProcessState;
+                
+                return (
+                  <button
+                    key={key}
+                    onClick={() => handleStateClick(key)}
+                    disabled={count === 0}
+                    className={cn(
+                      "px-2 py-0.5 rounded text-xs font-medium transition-all",
+                      isActive ? activeColor : color,
+                      isActive && "ring-2 ring-primary ring-offset-1 ring-offset-background",
+                      count === 0 && "opacity-40 cursor-not-allowed",
+                      isHiddenByToggle && count > 0 && "opacity-60"
+                    )}
+                    title={isHiddenByToggle && count > 0 ? `Hidden by "Hide D/C" toggle. Click to view.` : undefined}
+                  >
+                    {label} {count}
+                  </button>
+                );
+              })}
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   );

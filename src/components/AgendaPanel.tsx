@@ -36,8 +36,16 @@ interface AgendaItem {
   minutesUntil: number;
 }
 
-export function AgendaPanel() {
-  const [open, setOpen] = useState(false);
+interface AgendaPanelProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function AgendaPanel({ open: controlledOpen, onOpenChange }: AgendaPanelProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = controlledOpen ?? internalOpen;
+  const setIsOpen = onOpenChange ?? setInternalOpen;
+  
   const patients = usePatientStore((state) => state.patients);
   const updateAppointmentStatus = usePatientStore((state) => state.updateAppointmentStatus);
   const { upcomingCount } = useAppointmentReminders();
@@ -61,13 +69,11 @@ export function AgendaPanel() {
       });
     });
 
-    // Sort by scheduled time
     return items.sort((a, b) => 
       new Date(a.appointment.scheduledTime).getTime() - new Date(b.appointment.scheduledTime).getTime()
     );
   }, [patients]);
 
-  // Categorize items
   const upcoming = agendaItems.filter(item => 
     item.appointment.status === 'pending' && 
     item.minutesUntil > 0 && 
@@ -105,7 +111,6 @@ export function AgendaPanel() {
           item.appointment.status === 'cancelled' && "opacity-40 line-through"
         )}
       >
-        {/* Time */}
         <div className="flex flex-col items-center w-12 shrink-0">
           <span className={cn(
             "text-lg font-mono font-semibold",
@@ -125,7 +130,6 @@ export function AgendaPanel() {
           )}
         </div>
 
-        {/* Type badge */}
         <div 
           className={cn(
             "w-12 h-6 rounded flex items-center justify-center text-xs font-medium text-white shrink-0",
@@ -135,7 +139,6 @@ export function AgendaPanel() {
           {config.abbrev}
         </div>
 
-        {/* Patient info */}
         <div className="flex-1 min-w-0">
           <div className="font-medium text-sm truncate">{item.patientName}</div>
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -147,7 +150,6 @@ export function AgendaPanel() {
           </div>
         </div>
 
-        {/* Actions */}
         {item.appointment.status === 'pending' && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -219,22 +221,26 @@ export function AgendaPanel() {
     );
   };
 
+  const isControlled = controlledOpen !== undefined;
+
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 relative">
-          <CalendarClock className="h-4 w-4" />
-          Agenda
-          {upcomingCount > 0 && (
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-1.5 -right-1.5 h-5 w-5 p-0 flex items-center justify-center text-[10px] animate-pulse"
-            >
-              {upcomingCount}
-            </Badge>
-          )}
-        </Button>
-      </SheetTrigger>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      {!isControlled && (
+        <SheetTrigger asChild>
+          <Button variant="outline" size="sm" className="gap-2 relative">
+            <CalendarClock className="h-4 w-4" />
+            Agenda
+            {upcomingCount > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="absolute -top-1.5 -right-1.5 h-5 w-5 p-0 flex items-center justify-center text-[10px] animate-pulse"
+              >
+                {upcomingCount}
+              </Badge>
+            )}
+          </Button>
+        </SheetTrigger>
+      )}
       <SheetContent className="w-[400px] sm:w-[450px] overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">

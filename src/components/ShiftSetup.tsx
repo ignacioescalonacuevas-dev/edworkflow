@@ -7,8 +7,16 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePatientStore } from '@/store/patientStore';
 
-export function ShiftSetup() {
-  const [isOpen, setIsOpen] = useState(false);
+interface ShiftSetupProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function ShiftSetup({ open: controlledOpen, onOpenChange }: ShiftSetupProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = controlledOpen ?? internalOpen;
+  const setIsOpen = onOpenChange ?? setInternalOpen;
+
   const [newDoctorName, setNewDoctorName] = useState('');
   const [newNurseName, setNewNurseName] = useState('');
   const [newLocationName, setNewLocationName] = useState('');
@@ -22,7 +30,6 @@ export function ShiftSetup() {
   const [editingNurses, setEditingNurses] = useState<Record<string, string>>({});
   const [editingLocations, setEditingLocations] = useState<Record<string, string>>({});
 
-  // Doctor handlers
   const handleAddDoctor = () => {
     const trimmed = newDoctorName.trim();
     if (trimmed && !doctors.includes(trimmed)) {
@@ -59,7 +66,6 @@ export function ShiftSetup() {
     }
   };
 
-  // Nurse handlers
   const handleAddNurse = () => {
     const trimmed = newNurseName.trim();
     if (trimmed && !nurses.includes(trimmed)) {
@@ -96,7 +102,6 @@ export function ShiftSetup() {
     }
   };
 
-  // Location handlers
   const handleAddLocation = () => {
     const trimmed = newLocationName.trim();
     if (trimmed && !locations.includes(trimmed)) {
@@ -133,13 +138,17 @@ export function ShiftSetup() {
     }
   };
 
+  const isControlled = controlledOpen !== undefined;
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-9 w-9">
-          <Settings className="h-5 w-5" />
-        </Button>
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-9 w-9">
+            <Settings className="h-5 w-5" />
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="bg-card border-border max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -164,12 +173,8 @@ export function ShiftSetup() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Physicians Tab */}
           <TabsContent value="physicians" className="space-y-4 mt-4">
-            <div className="text-sm text-muted-foreground">
-              Today's Physicians
-            </div>
-
+            <div className="text-sm text-muted-foreground">Today's Physicians</div>
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {doctors.map((doctor) => (
                 <div key={doctor} className="flex items-center gap-2">
@@ -180,45 +185,22 @@ export function ShiftSetup() {
                     onKeyDown={(e) => handleDoctorKeyDown(e, doctor)}
                     className="bg-input border-border flex-1"
                   />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => removeDoctor(doctor)}
-                    disabled={doctors.length <= 1}
-                  >
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => removeDoctor(doctor)} disabled={doctors.length <= 1}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
             </div>
-
             <div className="flex items-center gap-2 pt-2 border-t border-border">
-              <Input
-                placeholder="Add new physician..."
-                value={newDoctorName}
-                onChange={(e) => setNewDoctorName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddDoctor()}
-                className="bg-input border-border flex-1"
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9"
-                onClick={handleAddDoctor}
-                disabled={!newDoctorName.trim()}
-              >
+              <Input placeholder="Add new physician..." value={newDoctorName} onChange={(e) => setNewDoctorName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddDoctor()} className="bg-input border-border flex-1" />
+              <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleAddDoctor} disabled={!newDoctorName.trim()}>
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
           </TabsContent>
 
-          {/* Nurses Tab */}
           <TabsContent value="nurses" className="space-y-4 mt-4">
-            <div className="text-sm text-muted-foreground">
-              Today's Nurses
-            </div>
-
+            <div className="text-sm text-muted-foreground">Today's Nurses</div>
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {nurses.map((nurse) => (
                 <div key={nurse} className="flex items-center gap-2">
@@ -229,45 +211,22 @@ export function ShiftSetup() {
                     onKeyDown={(e) => handleNurseKeyDown(e, nurse)}
                     className="bg-input border-border flex-1"
                   />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => removeNurse(nurse)}
-                    disabled={nurses.length <= 1}
-                  >
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => removeNurse(nurse)} disabled={nurses.length <= 1}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
             </div>
-
             <div className="flex items-center gap-2 pt-2 border-t border-border">
-              <Input
-                placeholder="Add new nurse..."
-                value={newNurseName}
-                onChange={(e) => setNewNurseName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddNurse()}
-                className="bg-input border-border flex-1"
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9"
-                onClick={handleAddNurse}
-                disabled={!newNurseName.trim()}
-              >
+              <Input placeholder="Add new nurse..." value={newNurseName} onChange={(e) => setNewNurseName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddNurse()} className="bg-input border-border flex-1" />
+              <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleAddNurse} disabled={!newNurseName.trim()}>
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
           </TabsContent>
 
-          {/* Locations Tab */}
           <TabsContent value="locations" className="space-y-4 mt-4">
-            <div className="text-sm text-muted-foreground">
-              Available Locations
-            </div>
-
+            <div className="text-sm text-muted-foreground">Available Locations</div>
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {locations.map((location) => (
                 <div key={location} className="flex items-center gap-2">
@@ -278,34 +237,15 @@ export function ShiftSetup() {
                     onKeyDown={(e) => handleLocationKeyDown(e, location)}
                     className="bg-input border-border flex-1"
                   />
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => removeLocation(location)}
-                    disabled={locations.length <= 1}
-                  >
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => removeLocation(location)} disabled={locations.length <= 1}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
             </div>
-
             <div className="flex items-center gap-2 pt-2 border-t border-border">
-              <Input
-                placeholder="Add new location..."
-                value={newLocationName}
-                onChange={(e) => setNewLocationName(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleAddLocation()}
-                className="bg-input border-border flex-1"
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-9 w-9"
-                onClick={handleAddLocation}
-                disabled={!newLocationName.trim()}
-              >
+              <Input placeholder="Add new location..." value={newLocationName} onChange={(e) => setNewLocationName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddLocation()} className="bg-input border-border flex-1" />
+              <Button variant="outline" size="icon" className="h-9 w-9" onClick={handleAddLocation} disabled={!newLocationName.trim()}>
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
@@ -313,13 +253,7 @@ export function ShiftSetup() {
         </Tabs>
 
         <div className="flex gap-2 mt-4 pt-4 border-t border-border">
-          <Button
-            className="flex-1"
-            onClick={() => setIsOpen(false)}
-          >
-            Done
-          </Button>
-          
+          <Button className="flex-1" onClick={() => setIsOpen(false)}>Done</Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" className="gap-2">
@@ -330,21 +264,11 @@ export function ShiftSetup() {
             <AlertDialogContent className="bg-card border-border">
               <AlertDialogHeader>
                 <AlertDialogTitle>Clear All Shift Data?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will remove all patients from the board. This action cannot be undone.
-                </AlertDialogDescription>
+                <AlertDialogDescription>This will remove all patients from the board. This action cannot be undone.</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => {
-                    clearShift();
-                    setIsOpen(false);
-                  }}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  Clear Shift
-                </AlertDialogAction>
+                <AlertDialogAction onClick={() => { clearShift(); setIsOpen(false); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Clear Shift</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

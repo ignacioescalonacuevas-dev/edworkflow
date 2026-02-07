@@ -1,4 +1,4 @@
-import { History, Calendar, Users, UserCheck, LogOut, RotateCcw, Copy } from 'lucide-react';
+import { History, Calendar, Users, UserCheck, LogOut, RotateCcw } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,8 +24,16 @@ import { usePatientStore } from '@/store/patientStore';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
-export function ShiftHistoryDialog() {
-  const [isOpen, setIsOpen] = useState(false);
+interface ShiftHistoryDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function ShiftHistoryDialog({ open: controlledOpen, onOpenChange }: ShiftHistoryDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isOpen = controlledOpen ?? internalOpen;
+  const setIsOpen = onOpenChange ?? setInternalOpen;
+
   const [reopenDate, setReopenDate] = useState<string | null>(null);
   const { getAvailableDates, loadShift, setViewingDate } = useShiftHistoryStore();
   const { reopenShift, shiftConfigured } = usePatientStore();
@@ -37,7 +45,6 @@ export function ShiftHistoryDialog() {
   };
 
   const handleReopenShift = (date: string) => {
-    // If there's an active shift, warn first
     if (shiftConfigured) {
       setReopenDate(date);
     } else {
@@ -52,15 +59,19 @@ export function ShiftHistoryDialog() {
     toast.success(`Shift from ${format(new Date(date), 'MM/dd/yyyy')} reopened for editing`);
   };
 
+  const isControlled = controlledOpen !== undefined;
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button variant="outline" size="sm" className="gap-2">
-            <History className="h-4 w-4" />
-            History
-          </Button>
-        </DialogTrigger>
+        {!isControlled && (
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="gap-2">
+              <History className="h-4 w-4" />
+              History
+            </Button>
+          </DialogTrigger>
+        )}
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
