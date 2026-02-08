@@ -84,7 +84,7 @@ export function BoardHeader() {
             </span>
           )}
           {isViewingHistory && (
-            <Badge variant="secondary" className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+            <Badge variant="secondary" className="bg-yellow-100 text-yellow-700 border-yellow-300">
               READ-ONLY
             </Badge>
           )}
