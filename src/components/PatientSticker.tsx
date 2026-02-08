@@ -376,7 +376,8 @@ export function PatientSticker({ patient }: PatientStickerProps) {
   
   // Show admission info if patient has any admission data (even after transfer)
   const hasAdmissionInfo = patient.admission && 
-    (patient.admission.consultantName || patient.admission.consultant || patient.admission.bedNumber);
+    (processState === 'admission' || processState === 'admitted' || 
+     patient.admission.consultantName || patient.admission.consultant || patient.admission.bedNumber);
   
   // Check if patient is away from assigned box
   const assignedBox = patient.assignedBox || patient.box || 'Waiting Room';
