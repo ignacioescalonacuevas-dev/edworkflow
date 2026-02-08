@@ -13,14 +13,14 @@ const stateButtons: Array<{
   color: string;
   activeColor: string;
 }> = [
-  { key: 'registered', label: 'Reg', color: 'bg-muted/50 text-muted-foreground hover:bg-muted', activeColor: 'bg-muted text-foreground' },
-  { key: 'did_not_wait', label: 'DNW', color: 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30', activeColor: 'bg-orange-500/40 text-orange-300' },
-  { key: 'to_be_seen', label: 'TBS', color: 'bg-purple-500/20 text-purple-400 hover:bg-purple-500/30', activeColor: 'bg-purple-500/40 text-purple-300' },
-  { key: 'awaiting_results', label: 'Wait', color: 'bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30', activeColor: 'bg-yellow-500/40 text-yellow-300' },
-  { key: 'admission', label: 'Adm', color: 'bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30', activeColor: 'bg-cyan-500/40 text-cyan-300' },
-  { key: 'admitted', label: "Adm'd", color: 'bg-green-500/20 text-green-400 hover:bg-green-500/30', activeColor: 'bg-green-500/40 text-green-300' },
-  { key: 'discharged', label: 'D/C', color: 'bg-muted/50 text-muted-foreground hover:bg-muted', activeColor: 'bg-muted text-foreground' },
-  { key: 'transferred', label: 'Trans', color: 'bg-slate-500/20 text-slate-400 hover:bg-slate-500/30', activeColor: 'bg-slate-500/40 text-slate-300' },
+  { key: 'registered', label: 'Reg', color: 'bg-gray-100 text-gray-700 hover:bg-gray-200', activeColor: 'bg-gray-200 text-gray-900' },
+  { key: 'did_not_wait', label: 'DNW', color: 'bg-orange-100 text-orange-700 hover:bg-orange-200', activeColor: 'bg-orange-200 text-orange-900' },
+  { key: 'to_be_seen', label: 'TBS', color: 'bg-purple-100 text-purple-700 hover:bg-purple-200', activeColor: 'bg-purple-200 text-purple-900' },
+  { key: 'awaiting_results', label: 'Wait', color: 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200', activeColor: 'bg-yellow-200 text-yellow-900' },
+  { key: 'admission', label: 'Adm', color: 'bg-cyan-100 text-cyan-700 hover:bg-cyan-200', activeColor: 'bg-cyan-200 text-cyan-900' },
+  { key: 'admitted', label: "Adm'd", color: 'bg-green-100 text-green-700 hover:bg-green-200', activeColor: 'bg-green-200 text-green-900' },
+  { key: 'discharged', label: 'D/C', color: 'bg-gray-100 text-gray-700 hover:bg-gray-200', activeColor: 'bg-gray-200 text-gray-900' },
+  { key: 'transferred', label: 'Trans', color: 'bg-slate-100 text-slate-700 hover:bg-slate-200', activeColor: 'bg-slate-200 text-slate-900' },
 ];
 
 const TERMINAL_STATES: ProcessState[] = ['discharged', 'transferred', 'admitted', 'did_not_wait'];

@@ -101,14 +101,14 @@ export interface ProcessStateConfig {
 }
 
 export const PROCESS_STATES: ProcessStateConfig[] = [
-  { value: 'registered', label: 'Registered', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
-  { value: 'did_not_wait', label: 'Did Not Wait', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30' },
-  { value: 'to_be_seen', label: 'To Be Seen', color: 'bg-purple-500/20 text-purple-400 border-purple-500/30' },
-  { value: 'awaiting_results', label: 'Awaiting Results', color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' },
-  { value: 'admission', label: 'Admission', color: 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' },
-  { value: 'admitted', label: 'Admitted', color: 'bg-green-500/20 text-green-400 border-green-500/30' },
-  { value: 'discharged', label: 'Discharged', color: 'bg-gray-500/20 text-gray-400 border-gray-500/30' },
-  { value: 'transferred', label: 'Transferred', color: 'bg-slate-500/20 text-slate-400 border-slate-500/30' },
+  { value: 'registered', label: 'Registered', color: 'bg-gray-100 text-gray-700 border-gray-300' },
+  { value: 'did_not_wait', label: 'Did Not Wait', color: 'bg-orange-100 text-orange-700 border-orange-300' },
+  { value: 'to_be_seen', label: 'To Be Seen', color: 'bg-purple-100 text-purple-700 border-purple-300' },
+  { value: 'awaiting_results', label: 'Awaiting Results', color: 'bg-yellow-100 text-yellow-700 border-yellow-300' },
+  { value: 'admission', label: 'Admission', color: 'bg-cyan-100 text-cyan-700 border-cyan-300' },
+  { value: 'admitted', label: 'Admitted', color: 'bg-green-100 text-green-700 border-green-300' },
+  { value: 'discharged', label: 'Discharged', color: 'bg-gray-100 text-gray-700 border-gray-300' },
+  { value: 'transferred', label: 'Transferred', color: 'bg-slate-100 text-slate-700 border-slate-300' },
 ];
 
 export interface Order {
