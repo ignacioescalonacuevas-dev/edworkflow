@@ -146,6 +146,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    
+    // Clear all patient/shift data from localStorage to prevent
+    // data leakage between users on shared workstations
+    localStorage.removeItem('patient-store');
+    localStorage.removeItem('shift-history-store');
+    
     setUser(null);
     setSession(null);
     setRole(null);
